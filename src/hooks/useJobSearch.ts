@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Profile, JobRecord, Step, LevelFilter } from '../types';
+import { Profile, JobRecord, Step, LevelFilter, UserPreferences } from '../types';
 import { fetchGitHubUser, fetchGitHubRepos, extractSkills } from '../services/github';
 import { searchJobs } from '../services/jobs';
 
@@ -11,7 +11,7 @@ interface UseJobSearchReturn {
   error: string;
   filter: LevelFilter;
   setFilter: (level: LevelFilter) => void;
-  search: (username: string) => Promise<void>;
+  search: (username: string, preferences?: UserPreferences) => Promise<void>;
   removeJob: (id: string) => void;
 }
 
@@ -23,7 +23,7 @@ export function useJobSearch(): UseJobSearchReturn {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<LevelFilter>('all');
 
-  async function search(username: string) {
+  async function search(username: string, preferences?: UserPreferences) {
     if (!username.trim()) return;
     setLoading(true);
     setError('');
@@ -41,7 +41,7 @@ export function useJobSearch(): UseJobSearchReturn {
       setProfile(currentProfile);
       setStep('jobs');
 
-      const { jobs: foundJobs } = await searchJobs(currentProfile);
+      const { jobs: foundJobs } = await searchJobs(currentProfile, preferences);
       setJobs(foundJobs.filter((j) => !j.dismissed));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro ao buscar perfil.');

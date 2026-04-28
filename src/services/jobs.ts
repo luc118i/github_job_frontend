@@ -1,9 +1,10 @@
-import { JobRecord, Profile } from '../types';
+import { JobRecord, Profile, UserPreferences } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 export async function searchJobs(
-  profile: Profile
+  profile: Profile,
+  preferences?: UserPreferences
 ): Promise<{ jobs: JobRecord[]; searchId: string }> {
   const topRepos = profile.repos
     .filter((r) => !r.fork)
@@ -20,6 +21,7 @@ export async function searchJobs(
       skills: profile.skills,
       topRepos,
       followers: profile.user.followers,
+      preferences,
     }),
   });
 

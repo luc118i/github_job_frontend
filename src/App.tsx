@@ -11,7 +11,9 @@ import { JobList } from './components/JobList';
 import { SearchHistory } from './components/SearchHistory';
 import { CvEditor } from './components/CvEditor';
 import { ProfessionView } from './components/ProfessionView';
+import { PreferencesPanel } from './components/PreferencesPanel';
 import { useJobSearch } from './hooks/useJobSearch';
+import { usePreferences } from './hooks/usePreferences';
 
 interface CvState {
   job: JobRecord;
@@ -25,6 +27,7 @@ export default function App() {
   const [linkedInData, setLinkedInData] = useState<LinkedInData | null>(null);
 
   const { profile, jobs, loading, step, error, filter, setFilter, search, removeJob } = useJobSearch();
+  const { preferences, setPreferences } = usePreferences();
 
   function openCv(job: JobRecord, cvProfile: Profile) {
     setCvState({ job, profile: cvProfile });
@@ -90,12 +93,16 @@ export default function App() {
                     onClear={() => setLinkedInData(null)}
                   />
                 </div>
+                <PreferencesPanel
+                  preferences={preferences}
+                  onChange={setPreferences}
+                />
                 <SearchForm
                   username={username}
                   loading={loading}
                   error={error}
                   onChange={setUsername}
-                  onSearch={() => search(username)}
+                  onSearch={() => search(username, preferences)}
                 />
               </div>
 
@@ -133,6 +140,7 @@ export default function App() {
         {view === 'outros' && (
           <ProfessionView
             linkedIn={linkedInData}
+            preferences={preferences}
             onImport={setLinkedInData}
             onClear={() => setLinkedInData(null)}
             onGenerateCv={openCvFromProfession}

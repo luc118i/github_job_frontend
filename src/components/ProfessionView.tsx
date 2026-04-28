@@ -1,4 +1,4 @@
-import { LinkedInData, ProfessionJobRecord } from '../types';
+import { LinkedInData, ProfessionJobRecord, UserPreferences } from '../types';
 import { LinkedInImport } from './LinkedInImport';
 import { TagFilterBar } from './TagFilterBar';
 import { JobCard } from './JobCard';
@@ -6,12 +6,13 @@ import { useProfessionSearch } from '../hooks/useProfessionSearch';
 
 interface ProfessionViewProps {
   linkedIn: LinkedInData | null;
+  preferences?: UserPreferences;
   onImport: (data: LinkedInData) => void;
   onClear: () => void;
   onGenerateCv: (job: ProfessionJobRecord) => void;
 }
 
-export function ProfessionView({ linkedIn, onImport, onClear, onGenerateCv }: ProfessionViewProps) {
+export function ProfessionView({ linkedIn, preferences, onImport, onClear, onGenerateCv }: ProfessionViewProps) {
   const {
     jobs,
     loading,
@@ -19,7 +20,7 @@ export function ProfessionView({ linkedIn, onImport, onClear, onGenerateCv }: Pr
     profileSummary,
     tagFilter,
     setTagFilter,
-  } = useProfessionSearch(linkedIn);
+  } = useProfessionSearch(linkedIn, preferences);
 
   const allTags = [...new Set(jobs.flatMap((j) => j.skills))];
   const filtered =

@@ -81,6 +81,14 @@ export interface LinkedInData {
 export type Step = 'idle' | 'profile' | 'jobs';
 export type LevelFilter = 'all' | 'Junior' | 'Pleno' | 'Senior';
 
+export interface UserPreferences {
+  modality: 'any' | 'remote' | 'presencial' | 'hybrid';
+  location: string;
+  salaryMin: string;
+  salaryMax: string;
+  level: 'any' | 'Junior' | 'Pleno' | 'Senior';
+}
+
 export interface CvRequest {
   job: {
     id: string;
