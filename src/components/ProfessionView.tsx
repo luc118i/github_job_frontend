@@ -19,7 +19,6 @@ export function ProfessionView({ linkedIn, onImport, onClear, onGenerateCv }: Pr
     profileSummary,
     tagFilter,
     setTagFilter,
-    removeJob,
   } = useProfessionSearch(linkedIn);
 
   const allTags = [...new Set(jobs.flatMap((j) => j.skills))];

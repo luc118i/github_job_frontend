@@ -602,8 +602,33 @@ h1 {
   color: #67e8f9;
 }
 
-.job-seen { opacity: 0.7; }
-.job-seen:hover { opacity: 1; }
+.job-seen {
+  opacity: 0.55;
+  border-color: rgba(255,255,255,0.04) !important;
+}
+.job-seen:hover { opacity: 0.9; }
+
+.job-unseen {
+  border-left: 2px solid rgba(124,58,237,0.6);
+}
+.job-unseen:hover {
+  border-left-color: #7c3aed;
+}
+
+.job-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unseen-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #7c3aed;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(124,58,237,0.6);
+}
 
 /* ── Link status ── */
 
@@ -681,6 +706,92 @@ h1 {
 
 .feed-card-loading {
   color: rgba(196,181,253,0.5);
+}
+
+/* ── History Filter Bar ── */
+
+.history-filter-bar {
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-filter-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.history-filter-seen-row {
+  display: flex;
+  gap: 4px;
+}
+
+.history-filter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-filter-search {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px;
+  padding: 9px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #e8e4dc;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.history-filter-search::placeholder {
+  color: rgba(232,228,220,0.2);
+}
+
+.history-filter-search:focus {
+  border-color: rgba(124,58,237,0.5);
+}
+
+.history-filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.history-filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding-top: 4px;
+}
+
+.filter-tag-chip {
+  padding: 3px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 2px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: rgba(232,228,220,0.4);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.03em;
+}
+
+.filter-tag-chip:hover {
+  border-color: rgba(124,58,237,0.4);
+  color: rgba(232,228,220,0.8);
+}
+
+.filter-tag-chip.active {
+  background: rgba(124,58,237,0.18);
+  border-color: #7c3aed;
+  color: #c4b5fd;
 }
 
 /* ── History (legacy, kept for safety) ── */
@@ -1673,6 +1784,21 @@ h1 {
     padding: 10px 16px;
     min-height: 44px;
     font-size: 13px;
+  }
+
+  /* History filter bar */
+  .history-filter-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .history-filter-seen-row {
+    flex-wrap: wrap;
+  }
+
+  .history-filter-row {
+    flex-direction: column;
+    gap: 6px;
   }
 
   /* History */

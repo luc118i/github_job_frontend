@@ -1,10 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { JobFeedItem, LinkedInData, Profile } from '../types';
 import { fetchJobFeed } from '../services/searches';
 import { fetchGitHubUser, fetchGitHubRepos, extractSkills } from '../services/github';
 import { JobCard } from './JobCard';
 
 type DateGroup = 'hoje' | 'semana' | 'anteriores';
+type LevelFilter = 'all' | 'Junior' | 'Pleno' | 'Senior';
+type RemoteFilter = 'all' | 'remote' | 'presencial';
+type SeenFilter = 'all' | 'unseen' | 'seen';
+
+interface HistoryFilters {
+  text: string;
+  level: LevelFilter;
+  remote: RemoteFilter;
+  tag: string;
+  seen: SeenFilter;
+}
 
 function getGroup(iso: string): DateGroup {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -21,6 +32,113 @@ const GROUP_LABELS: Record<DateGroup, string> = {
 };
 
 const GROUP_ORDER: DateGroup[] = ['hoje', 'semana', 'anteriores'];
+
+// ── Filter bar ──────────────────────────────────────────────
+
+interface HistoryFilterBarProps {
+  filters: HistoryFilters;
+  allTags: string[];
+  total: number;
+  filtered: number;
+  onChange: (f: HistoryFilters) => void;
+}
+
+function HistoryFilterBar({ filters, allTags, total, filtered, onChange }: HistoryFilterBarProps) {
+  const levels: LevelFilter[] = ['all', 'Junior', 'Pleno', 'Senior'];
+  const remotes: { value: RemoteFilter; label: string }[] = [
+    { value: 'all', label: 'qualquer local' },
+    { value: 'remote', label: 'remoto' },
+    { value: 'presencial', label: 'presencial' },
+  ];
+  const seenOpts: { value: SeenFilter; label: string }[] = [
+    { value: 'all', label: 'todas' },
+    { value: 'unseen', label: 'não vistas' },
+    { value: 'seen', label: 'vistas' },
+  ];
+
+  function set<K extends keyof HistoryFilters>(key: K, val: HistoryFilters[K]) {
+    onChange({ ...filters, [key]: val });
+  }
+
+  return (
+    <div className="history-filter-bar">
+      <div className="history-filter-top">
+        <span className="section-title">
+          {filtered === total ? `${total} vagas` : `${filtered} de ${total} vagas`}
+        </span>
+        <div className="history-filter-seen-row">
+          {seenOpts.map((o) => (
+            <button
+              key={o.value}
+              className={`filter-tab ${filters.seen === o.value ? 'active' : ''}`}
+              onClick={() => set('seen', o.value)}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="history-filter-controls">
+        <input
+          className="history-filter-search"
+          type="text"
+          placeholder="buscar por título ou empresa..."
+          value={filters.text}
+          onChange={(e) => set('text', e.target.value)}
+        />
+
+        <div className="history-filter-row">
+          <div className="filter-tabs">
+            {levels.map((l) => (
+              <button
+                key={l}
+                className={`filter-tab ${filters.level === l ? 'active' : ''}`}
+                onClick={() => set('level', l)}
+              >
+                {l === 'all' ? 'nível' : l}
+              </button>
+            ))}
+          </div>
+
+          <div className="filter-tabs">
+            {remotes.map((r) => (
+              <button
+                key={r.value}
+                className={`filter-tab ${filters.remote === r.value ? 'active' : ''}`}
+                onClick={() => set('remote', r.value)}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {allTags.length > 0 && (
+          <div className="history-filter-tags">
+            <button
+              className={`filter-tag-chip ${filters.tag === '' ? 'active' : ''}`}
+              onClick={() => set('tag', '')}
+            >
+              todas skills
+            </button>
+            {allTags.map((t) => (
+              <button
+                key={t}
+                className={`filter-tag-chip ${filters.tag === t ? 'active' : ''}`}
+                onClick={() => set('tag', filters.tag === t ? '' : t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Feed card ────────────────────────────────────────────────
 
 interface FeedCardProps {
   job: JobFeedItem;
@@ -77,15 +195,26 @@ function FeedCard({ job, index, linkedInData, onGenerateCv }: FeedCardProps) {
   );
 }
 
+// ── Main component ───────────────────────────────────────────
+
 interface SearchHistoryProps {
   linkedInData: LinkedInData | null;
   onGenerateCv: (job: JobFeedItem, profile: Profile) => void;
 }
 
+const DEFAULT_FILTERS: HistoryFilters = {
+  text: '',
+  level: 'all',
+  remote: 'all',
+  tag: '',
+  seen: 'all',
+};
+
 export function SearchHistory({ linkedInData, onGenerateCv }: SearchHistoryProps) {
   const [jobs, setJobs] = useState<JobFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [filters, setFilters] = useState<HistoryFilters>(DEFAULT_FILTERS);
 
   useEffect(() => {
     fetchJobFeed()
@@ -93,6 +222,38 @@ export function SearchHistory({ linkedInData, onGenerateCv }: SearchHistoryProps
       .catch(() => setError('Erro ao carregar histórico.'))
       .finally(() => setLoading(false));
   }, []);
+
+  // Pre-populate text filter with LinkedIn job title
+  useEffect(() => {
+    if (linkedInData?.positions[0]?.title && filters.text === '') {
+      // Don't auto-fill — let user decide, but keep hint via placeholder
+    }
+  }, [linkedInData]);
+
+  const allTags = useMemo(() => {
+    const freq = new Map<string, number>();
+    jobs.forEach((j) => j.skills.forEach((s) => freq.set(s, (freq.get(s) ?? 0) + 1)));
+    return [...freq.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20)
+      .map(([tag]) => tag);
+  }, [jobs]);
+
+  const filtered = useMemo(() => {
+    return jobs.filter((j) => {
+      if (filters.text) {
+        const q = filters.text.toLowerCase();
+        if (!j.title.toLowerCase().includes(q) && !j.company.toLowerCase().includes(q)) return false;
+      }
+      if (filters.level !== 'all' && j.level !== filters.level) return false;
+      if (filters.remote === 'remote' && !j.remote) return false;
+      if (filters.remote === 'presencial' && j.remote) return false;
+      if (filters.tag && !j.skills.includes(filters.tag)) return false;
+      if (filters.seen === 'unseen' && j.seen) return false;
+      if (filters.seen === 'seen' && !j.seen) return false;
+      return true;
+    });
+  }, [jobs, filters]);
 
   if (loading) {
     return (
@@ -108,32 +269,46 @@ export function SearchHistory({ linkedInData, onGenerateCv }: SearchHistoryProps
     return <div className="empty" style={{ marginTop: 48 }}>Nenhuma vaga encontrada ainda.</div>;
   }
 
-  const jobIndex = new Map(jobs.map((job, i) => [job.id, i]));
+  const jobIndex = new Map(filtered.map((job, i) => [job.id, i]));
 
   const grouped = GROUP_ORDER.reduce<Record<DateGroup, JobFeedItem[]>>(
     (acc, g) => ({ ...acc, [g]: [] }),
     { hoje: [], semana: [], anteriores: [] }
   );
-  jobs.forEach((job) => grouped[getGroup(job.created_at)].push(job));
+  filtered.forEach((job) => grouped[getGroup(job.created_at)].push(job));
 
   return (
-    <div className="feed-list">
-      {GROUP_ORDER.filter((g) => grouped[g].length > 0).map((group) => (
-        <section key={group} className="feed-group">
-          <h3 className="feed-group-label">{GROUP_LABELS[group]}</h3>
-          <div className="jobs-grid">
-            {grouped[group].map((job) => (
-              <FeedCard
-                key={job.id}
-                job={job}
-                index={jobIndex.get(job.id) ?? 0}
-                linkedInData={linkedInData}
-                onGenerateCv={onGenerateCv}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+    <div>
+      <HistoryFilterBar
+        filters={filters}
+        allTags={allTags}
+        total={jobs.length}
+        filtered={filtered.length}
+        onChange={setFilters}
+      />
+
+      {filtered.length === 0 ? (
+        <div className="empty" style={{ marginTop: 32 }}>Nenhuma vaga corresponde aos filtros.</div>
+      ) : (
+        <div className="feed-list">
+          {GROUP_ORDER.filter((g) => grouped[g].length > 0).map((group) => (
+            <section key={group} className="feed-group">
+              <h3 className="feed-group-label">{GROUP_LABELS[group]}</h3>
+              <div className="jobs-grid">
+                {grouped[group].map((job) => (
+                  <FeedCard
+                    key={job.id}
+                    job={job}
+                    index={jobIndex.get(job.id) ?? 0}
+                    linkedInData={linkedInData}
+                    onGenerateCv={onGenerateCv}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

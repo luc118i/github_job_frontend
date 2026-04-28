@@ -33,13 +33,16 @@ export function JobCard({ job, index, match, onGenerateCv }: JobCardProps) {
 
   return (
     <div
-      className={`job-card ${seen ? 'job-seen' : ''}`}
+      className={`job-card ${seen ? 'job-seen' : 'job-unseen'}`}
       style={{ animationDelay: `${index * 80}ms`, cursor: 'pointer' }}
       onClick={handleToggle}
     >
       <div className="job-header">
         <div className="job-meta">
-          <span className="job-title">{job.title}</span>
+          <div className="job-title-row">
+            {!seen && <span className="unseen-dot" title="não vista" />}
+            <span className="job-title">{job.title}</span>
+          </div>
           <span className="job-company">{job.company}</span>
         </div>
         <div className="job-badges">
