@@ -12,6 +12,7 @@ import { SearchHistory } from './components/SearchHistory';
 import { CvEditor } from './components/CvEditor';
 import { ProfessionView } from './components/ProfessionView';
 import { PreferencesPanel } from './components/PreferencesPanel';
+import { Footer } from './components/Footer';
 import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
 
@@ -149,6 +150,7 @@ export default function App() {
           />
         )}
       </main>
+      <Footer />
     </div>
   );
 }
