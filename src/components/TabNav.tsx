@@ -15,16 +15,16 @@ export function TabNav({ active, onChange }: TabNavProps) {
         buscar
       </button>
       <button
-        className={`tab-btn ${active === 'history' ? 'active' : ''}`}
-        onClick={() => onChange('history')}
-      >
-        histórico
-      </button>
-      <button
         className={`tab-btn ${active === 'outros' ? 'active' : ''}`}
         onClick={() => onChange('outros')}
       >
         outras profissões
+      </button>
+      <button
+        className={`tab-btn ${active === 'history' ? 'active' : ''}`}
+        onClick={() => onChange('history')}
+      >
+        histórico
       </button>
     </nav>
   );

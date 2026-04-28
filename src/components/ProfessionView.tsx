@@ -101,44 +101,24 @@ export function ProfessionView({
   // ── Config form (default) ─────────────────────────────────
   return (
     <div className="profession-config">
-      <div className="profession-config-header">
-        <h2 className="profession-config-title">Configure sua busca</h2>
-        <p className="profession-config-sub">
-          Importe seu LinkedIn e defina o que você está procurando para a IA encontrar vagas alinhadas ao seu perfil.
-        </p>
-      </div>
-
-      <div className="profession-config-steps">
-        <div className="profession-config-step">
-          <span className="profession-step-num">1</span>
-          <div className="profession-step-body">
-            <span className="profession-step-label">Perfil LinkedIn</span>
-            <LinkedInImport data={linkedIn} onImport={onImport} onClear={onClear} />
-          </div>
+      <div className="search-wrapper">
+        <div className="linkedin-section">
+          <LinkedInImport data={linkedIn} onImport={onImport} onClear={onClear} />
         </div>
-
-        <div className={`profession-config-step ${!linkedIn ? 'disabled' : ''}`}>
-          <span className="profession-step-num">2</span>
-          <div className="profession-step-body">
-            <span className="profession-step-label">Preferências de busca</span>
-            <PreferencesPanel
-              preferences={preferences}
-              onChange={onPreferencesChange}
-              defaultOpen
-            />
-          </div>
-        </div>
+        <PreferencesPanel
+          preferences={preferences}
+          onChange={onPreferencesChange}
+          defaultOpen
+        />
+        <button
+          className="search-btn"
+          disabled={!linkedIn}
+          onClick={handleSearch}
+        >
+          {linkedIn ? '→ buscar vagas' : 'importe o LinkedIn para continuar'}
+        </button>
+        {error && <div className="error-msg">{error}</div>}
       </div>
-
-      <button
-        className="profession-search-btn"
-        disabled={!linkedIn}
-        onClick={handleSearch}
-      >
-        {linkedIn ? '→ Buscar vagas' : 'Importe o LinkedIn para continuar'}
-      </button>
-
-      {error && <div className="error-msg" style={{ marginTop: 12 }}>{error}</div>}
     </div>
   );
 }
