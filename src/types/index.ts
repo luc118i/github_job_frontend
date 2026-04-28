@@ -105,3 +105,16 @@ export interface CvResponse {
   cvId: string;
   content: string;
 }
+
+export interface ProfessionJobRecord extends JobRecord {
+  match: number;
+}
+
+export interface ProfessionSearchResult {
+  jobs: ProfessionJobRecord[];
+  profileSummary: string;
+}
+
+export interface JobFeedItem extends JobRecord {
+  github_username: string | null;
+}

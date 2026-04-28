@@ -1,40 +1,60 @@
 import { useEffect, useState } from 'react';
-import { SearchRecord, LevelFilter, JobRecord, Profile, LinkedInData } from '../types';
-import { fetchSearchHistory } from '../services/searches';
+import { JobFeedItem, LinkedInData, Profile } from '../types';
+import { fetchJobFeed } from '../services/searches';
 import { fetchGitHubUser, fetchGitHubRepos, extractSkills } from '../services/github';
 import { JobCard } from './JobCard';
-import { FilterBar } from './FilterBar';
 
-function formatDate(iso: string) {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  }).format(new Date(iso));
+type DateGroup = 'hoje' | 'semana' | 'anteriores';
+
+function getGroup(iso: string): DateGroup {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  if (diffDays < 1) return 'hoje';
+  if (diffDays < 7) return 'semana';
+  return 'anteriores';
 }
 
-interface SearchEntryProps {
-  record: SearchRecord;
-  onGenerateCv: (job: JobRecord, profile: Profile) => void;
+const GROUP_LABELS: Record<DateGroup, string> = {
+  hoje: 'Hoje',
+  semana: 'Esta semana',
+  anteriores: 'Anteriores',
+};
+
+const GROUP_ORDER: DateGroup[] = ['hoje', 'semana', 'anteriores'];
+
+interface FeedCardProps {
+  job: JobFeedItem;
+  index: number;
+  linkedInData: LinkedInData | null;
+  onGenerateCv: (job: JobFeedItem, profile: Profile) => void;
 }
 
-function SearchEntry({ record, onGenerateCv }: SearchEntryProps) {
-  const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState<LevelFilter>('all');
+function FeedCard({ job, index, linkedInData, onGenerateCv }: FeedCardProps) {
   const [profileLoading, setProfileLoading] = useState(false);
+  const isLinkedIn = !job.github_username;
 
-  const filtered = filter === 'all'
-    ? record.jobs
-    : record.jobs.filter((j) => j.level === filter);
-
-  const seenCount = record.jobs.filter((j) => j.seen).length;
-
-  async function handleGenerateCv(job: JobRecord) {
-    if (!record.github_username) return;
+  async function handleGenerateCv() {
+    if (isLinkedIn) {
+      const syntheticProfile: Profile = {
+        user: {
+          login: '',
+          name: linkedInData?.positions[0]?.title ?? 'Candidato',
+          bio: null,
+          avatar_url: '',
+          followers: 0,
+          public_repos: 0,
+        },
+        repos: [],
+        skills: job.skills,
+      };
+      onGenerateCv(job, syntheticProfile);
+      return;
+    }
     setProfileLoading(true);
     try {
       const [user, repos] = await Promise.all([
-        fetchGitHubUser(record.github_username),
-        fetchGitHubRepos(record.github_username),
+        fetchGitHubUser(job.github_username!),
+        fetchGitHubRepos(job.github_username!),
       ]);
       onGenerateCv(job, { user, repos, skills: extractSkills(repos) });
     } finally {
@@ -43,66 +63,33 @@ function SearchEntry({ record, onGenerateCv }: SearchEntryProps) {
   }
 
   return (
-    <div className="history-entry">
-      <div className="history-header" onClick={() => setOpen(!open)}>
-        <div className="history-meta">
-          <span className="history-user">
-            {record.github_username ? `@${record.github_username}` : '—'}
-          </span>
-          <span className="history-date">{formatDate(record.created_at)}</span>
-        </div>
-        <div className="history-stats">
-          <span className="stat">{record.jobs.length} vagas</span>
-          {seenCount > 0 && <span className="stat seen-stat">{seenCount} vistos</span>}
-          <span className="expand-icon">{open ? '▲' : '▼'}</span>
-        </div>
+    <div className="feed-card-wrapper">
+      <div className="feed-card-context">
+        {isLinkedIn ? 'via LinkedIn' : `via @${job.github_username}`}
+        {profileLoading && <span className="feed-card-loading"> · buscando perfil...</span>}
       </div>
-
-      {record.skills.length > 0 && (
-        <div className="history-skills">
-          {record.skills.slice(0, 6).map((s) => (
-            <span key={s} className="skill-chip">{s}</span>
-          ))}
-        </div>
-      )}
-
-      {open && (
-        <div className="history-jobs">
-          {profileLoading && (
-            <div className="loading-step" style={{ padding: '8px 0 4px' }}>
-              <div className="dot" /> buscando perfil...
-            </div>
-          )}
-          <FilterBar active={filter} count={filtered.length} onChange={setFilter} />
-          <div className="jobs-grid">
-            {filtered.map((job, i) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                index={i}
-                onGenerateCv={record.github_username ? handleGenerateCv : undefined}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      <JobCard
+        job={job}
+        index={index}
+        onGenerateCv={handleGenerateCv}
+      />
     </div>
   );
 }
 
 interface SearchHistoryProps {
   linkedInData: LinkedInData | null;
-  onGenerateCv: (job: JobRecord, profile: Profile) => void;
+  onGenerateCv: (job: JobFeedItem, profile: Profile) => void;
 }
 
-export function SearchHistory({ linkedInData: _linkedInData, onGenerateCv }: SearchHistoryProps) {
-  const [searches, setSearches] = useState<SearchRecord[]>([]);
+export function SearchHistory({ linkedInData, onGenerateCv }: SearchHistoryProps) {
+  const [jobs, setJobs] = useState<JobFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchSearchHistory()
-      .then(setSearches)
+    fetchJobFeed()
+      .then(setJobs)
       .catch(() => setError('Erro ao carregar histórico.'))
       .finally(() => setLoading(false));
   }, []);
@@ -110,21 +97,42 @@ export function SearchHistory({ linkedInData: _linkedInData, onGenerateCv }: Sea
   if (loading) {
     return (
       <div className="loading-bar" style={{ marginTop: 48 }}>
-        <div className="loading-step"><div className="dot" /> carregando histórico</div>
+        <div className="loading-step"><div className="dot" /> carregando vagas</div>
       </div>
     );
   }
 
   if (error) return <div className="error-msg">{error}</div>;
 
-  if (searches.length === 0) {
-    return <div className="empty" style={{ marginTop: 48 }}>Nenhuma busca realizada ainda.</div>;
+  if (jobs.length === 0) {
+    return <div className="empty" style={{ marginTop: 48 }}>Nenhuma vaga encontrada ainda.</div>;
   }
 
+  const jobIndex = new Map(jobs.map((job, i) => [job.id, i]));
+
+  const grouped = GROUP_ORDER.reduce<Record<DateGroup, JobFeedItem[]>>(
+    (acc, g) => ({ ...acc, [g]: [] }),
+    { hoje: [], semana: [], anteriores: [] }
+  );
+  jobs.forEach((job) => grouped[getGroup(job.created_at)].push(job));
+
   return (
-    <div className="history-list">
-      {searches.map((s) => (
-        <SearchEntry key={s.id} record={s} onGenerateCv={onGenerateCv} />
+    <div className="feed-list">
+      {GROUP_ORDER.filter((g) => grouped[g].length > 0).map((group) => (
+        <section key={group} className="feed-group">
+          <h3 className="feed-group-label">{GROUP_LABELS[group]}</h3>
+          <div className="jobs-grid">
+            {grouped[group].map((job) => (
+              <FeedCard
+                key={job.id}
+                job={job}
+                index={jobIndex.get(job.id) ?? 0}
+                linkedInData={linkedInData}
+                onGenerateCv={onGenerateCv}
+              />
+            ))}
+          </div>
+        </section>
       ))}
     </div>
   );

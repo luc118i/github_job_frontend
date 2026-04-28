@@ -1,4 +1,4 @@
-type View = 'search' | 'history';
+export type View = 'search' | 'history' | 'outros';
 
 interface TabNavProps {
   active: View;
@@ -19,6 +19,12 @@ export function TabNav({ active, onChange }: TabNavProps) {
         onClick={() => onChange('history')}
       >
         histórico
+      </button>
+      <button
+        className={`tab-btn ${active === 'outros' ? 'active' : ''}`}
+        onClick={() => onChange('outros')}
+      >
+        outras profissões
       </button>
     </nav>
   );

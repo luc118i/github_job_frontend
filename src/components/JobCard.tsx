@@ -12,10 +12,11 @@ const LINK_STATUS: Record<LinkStatus, { label: string; className: string } | nul
 interface JobCardProps {
   job: JobRecord;
   index: number;
+  match?: number;
   onGenerateCv?: (job: JobRecord) => void;
 }
 
-export function JobCard({ job, index, onGenerateCv }: JobCardProps) {
+export function JobCard({ job, index, match, onGenerateCv }: JobCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [seen, setSeen] = useState(job.seen);
 
@@ -42,6 +43,9 @@ export function JobCard({ job, index, onGenerateCv }: JobCardProps) {
           <span className="job-company">{job.company}</span>
         </div>
         <div className="job-badges">
+          {match !== undefined && (
+            <span className="badge match">{match}% match</span>
+          )}
           {seen && <span className="badge seen">visto</span>}
           {job.remote && <span className="badge remote">Remote</span>}
           {job.level && <span className="badge level">{job.level}</span>}

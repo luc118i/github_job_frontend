@@ -14,7 +14,7 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow-x: clip; /* clip não cria scroll container, preserva position:sticky */
 }
 
 /* ── Background ── */
@@ -281,6 +281,18 @@ h1 {
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
+
+  /* sticky logo abaixo da tab-nav (~41px) */
+  position: sticky;
+  top: 41px;
+  z-index: 40;
+  background: rgba(10,10,15,0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  margin-left: -48px;
+  margin-right: -48px;
+  padding: 12px 48px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 
 .section-title {
@@ -534,6 +546,18 @@ h1 {
   margin-bottom: 40px;
   border-bottom: 1px solid rgba(255,255,255,0.06);
   padding-bottom: 0;
+
+  /* sticky dentro de main (padding 48px), margem negativa cobre a largura total */
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(10,10,15,0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  margin-left: -48px;
+  margin-right: -48px;
+  padding-left: 48px;
+  padding-right: 48px;
 }
 
 .tab-btn {
@@ -543,7 +567,7 @@ h1 {
   font-family: 'DM Mono', monospace;
   font-size: 12px;
   letter-spacing: 0.08em;
-  padding: 10px 20px;
+  padding: 12px 20px;
   cursor: pointer;
   position: relative;
   transition: color 0.15s;
@@ -570,6 +594,12 @@ h1 {
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.1);
   color: rgba(232,228,220,0.3);
+}
+
+.badge.match {
+  background: rgba(6,182,212,0.12);
+  border: 1px solid rgba(6,182,212,0.3);
+  color: #67e8f9;
 }
 
 .job-seen { opacity: 0.7; }
@@ -609,7 +639,51 @@ h1 {
   color: #fca5a5;
 }
 
-/* ── History ── */
+/* ── History Feed ── */
+
+.feed-list {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.feed-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feed-group-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(232,228,220,0.25);
+  margin: 0 0 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.feed-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feed-card-context {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: rgba(232,228,220,0.25);
+  padding-left: 2px;
+}
+
+.feed-card-loading {
+  color: rgba(196,181,253,0.5);
+}
+
+/* ── History (legacy, kept for safety) ── */
 
 .history-list {
   margin-top: 8px;
@@ -1324,10 +1398,136 @@ h1 {
   text-decoration: underline;
 }
 
+/* ── Profession View ── */
+
+.profession-empty {
+  padding: 64px 0 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.profession-empty-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #e8e4dc;
+}
+
+.profession-empty-sub {
+  font-size: 13px;
+  color: rgba(232,228,220,0.5);
+  line-height: 1.6;
+}
+
+.profession-import-widget {
+  margin-top: 8px;
+  width: 100%;
+}
+
+.profession-context {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 20px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.02);
+  margin-bottom: 32px;
+}
+
+.profession-context-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e8e4dc;
+}
+
+.profession-context-sub {
+  font-size: 13px;
+  color: rgba(232,228,220,0.6);
+}
+
+.profession-context-hint {
+  font-size: 11px;
+  color: rgba(232,228,220,0.25);
+  margin-top: 2px;
+}
+
 /* ── CV Editor mobile tabs (hidden on desktop) ── */
 
 .cv-mobile-tabs {
   display: none;
+}
+
+/* ── CV Job evaluation bar ── */
+
+.cv-job-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 24px;
+  height: 52px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+
+.cv-job-bar-label {
+  font-size: 11px;
+  color: rgba(232,228,220,0.3);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.cv-job-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cv-job-link-btn {
+  padding: 5px 14px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(232,228,220,0.5);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  border-radius: 3px;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.cv-job-link-btn:hover {
+  border-color: rgba(255,255,255,0.25);
+  color: #e8e4dc;
+}
+
+.cv-dismiss-btn {
+  padding: 5px 14px;
+  background: transparent;
+  border: 1px solid rgba(239,68,68,0.25);
+  color: rgba(252,165,165,0.6);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.cv-dismiss-btn:hover:not(:disabled) {
+  background: rgba(239,68,68,0.08);
+  border-color: rgba(239,68,68,0.5);
+  color: #fca5a5;
+}
+
+.cv-dismiss-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* ══════════════════════════════════════
@@ -1388,15 +1588,28 @@ h1 {
     min-height: 44px;
   }
 
-  /* Tab nav */
+  /* Tab nav — ajusta margens negativas para padding mobile */
   .tab-nav {
     margin-bottom: 28px;
+    margin-left: -20px;
+    margin-right: -20px;
+    padding-left: 20px;
+    padding-right: 20px;
   }
 
   .tab-btn {
-    padding: 10px 16px;
+    padding: 10px 14px;
     font-size: 11px;
     min-height: 44px;
+  }
+
+  /* Section header — ajusta margens negativas para padding mobile */
+  .section-header {
+    margin-left: -20px;
+    margin-right: -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    top: 44px; /* mobile tab-nav ligeiramente mais alto */
   }
 
   /* Profile card */
@@ -1582,5 +1795,31 @@ h1 {
 
   .cvp-name {
     font-size: 18px;
+  }
+
+  /* Profession empty state */
+  .profession-empty {
+    padding: 40px 0 24px;
+  }
+
+  /* Job evaluation bar */
+  .cv-job-bar {
+    height: auto;
+    padding: 10px 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .cv-job-bar-actions {
+    width: 100%;
+  }
+
+  .cv-job-link-btn,
+  .cv-dismiss-btn {
+    flex: 1;
+    text-align: center;
+    padding: 10px 12px;
+    font-size: 12px;
   }
 }

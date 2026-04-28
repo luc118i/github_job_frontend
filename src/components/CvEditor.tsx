@@ -172,6 +172,29 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss }: CvEditor
               </div>
             </div>
           </div>
+
+          <div className="cv-job-bar">
+            <span className="cv-job-bar-label">o que achou da vaga?</span>
+            <div className="cv-job-bar-actions">
+              {job.link && (
+                <a
+                  href={job.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cv-job-link-btn"
+                >
+                  Ver vaga →
+                </a>
+              )}
+              <button
+                className="cv-dismiss-btn"
+                disabled={dismissing}
+                onClick={handleDismiss}
+              >
+                Não tenho interesse
+              </button>
+            </div>
+          </div>
         </>
       )}
     </div>

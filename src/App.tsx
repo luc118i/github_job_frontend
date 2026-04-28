@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { JobRecord, LinkedInData, Profile } from './types';
+import { JobRecord, LinkedInData, Profile, ProfessionJobRecord } from './types';
 import { Background } from './components/Background';
 import { Header } from './components/Header';
-import { TabNav } from './components/TabNav';
+import { TabNav, View } from './components/TabNav';
 import { LinkedInImport } from './components/LinkedInImport';
 import { SearchForm } from './components/SearchForm';
 import { LoadingSteps } from './components/LoadingSteps';
@@ -10,9 +10,8 @@ import { ProfileCard } from './components/ProfileCard';
 import { JobList } from './components/JobList';
 import { SearchHistory } from './components/SearchHistory';
 import { CvEditor } from './components/CvEditor';
+import { ProfessionView } from './components/ProfessionView';
 import { useJobSearch } from './hooks/useJobSearch';
-
-type View = 'search' | 'history';
 
 interface CvState {
   job: JobRecord;
@@ -29,6 +28,25 @@ export default function App() {
 
   function openCv(job: JobRecord, cvProfile: Profile) {
     setCvState({ job, profile: cvProfile });
+  }
+
+  function openCvFromProfession(job: ProfessionJobRecord) {
+    // profession jobs have no github profile; open editor with a minimal profile
+    const syntheticProfile: Profile = {
+      user: {
+        login: '',
+        name: linkedInData?.positions[0]
+          ? `${linkedInData.positions[0].title}`
+          : 'Candidato',
+        bio: null,
+        avatar_url: '',
+        followers: 0,
+        public_repos: 0,
+      },
+      repos: [],
+      skills: job.skills,
+    };
+    setCvState({ job, profile: syntheticProfile });
   }
 
   if (cvState) {
@@ -112,6 +130,15 @@ export default function App() {
               onGenerateCv={openCv}
             />
           </>
+        )}
+
+        {view === 'outros' && (
+          <ProfessionView
+            linkedIn={linkedInData}
+            onImport={setLinkedInData}
+            onClear={() => setLinkedInData(null)}
+            onGenerateCv={openCvFromProfession}
+          />
         )}
       </main>
     </div>
