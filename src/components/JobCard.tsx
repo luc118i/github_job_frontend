@@ -43,7 +43,10 @@ export function JobCard({ job, index, match, onGenerateCv }: JobCardProps) {
             {!seen && <span className="unseen-dot" title="não vista" />}
             <span className="job-title">{job.title}</span>
           </div>
-          <span className="job-company">{job.company}</span>
+          <div className="job-company-row">
+            <span className="job-company">{job.company}</span>
+            {job.location && <span className="job-location">{job.location}</span>}
+          </div>
         </div>
         <div className="job-badges">
           {match !== undefined && (

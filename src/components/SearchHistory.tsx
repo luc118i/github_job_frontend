@@ -13,6 +13,7 @@ interface HistoryFilters {
   text: string;
   level: LevelFilter;
   remote: RemoteFilter;
+  location: string;
   tag: string;
   seen: SeenFilter;
 }
@@ -38,12 +39,13 @@ const GROUP_ORDER: DateGroup[] = ['hoje', 'semana', 'anteriores'];
 interface HistoryFilterBarProps {
   filters: HistoryFilters;
   allTags: string[];
+  allLocations: string[];
   total: number;
   filtered: number;
   onChange: (f: HistoryFilters) => void;
 }
 
-function HistoryFilterBar({ filters, allTags, total, filtered, onChange }: HistoryFilterBarProps) {
+function HistoryFilterBar({ filters, allTags, allLocations, total, filtered, onChange }: HistoryFilterBarProps) {
   const levels: LevelFilter[] = ['all', 'Junior', 'Pleno', 'Senior'];
   const remotes: { value: RemoteFilter; label: string }[] = [
     { value: 'all', label: 'qualquer local' },
@@ -114,13 +116,35 @@ function HistoryFilterBar({ filters, allTags, total, filtered, onChange }: Histo
           </div>
         </div>
 
+        {allLocations.length > 0 && (
+          <div className="history-filter-tags">
+            <span className="filter-group-label">local</span>
+            <button
+              className={`filter-tag-chip ${filters.location === '' ? 'active' : ''}`}
+              onClick={() => set('location', '')}
+            >
+              todos
+            </button>
+            {allLocations.map((loc) => (
+              <button
+                key={loc}
+                className={`filter-tag-chip ${filters.location === loc ? 'active' : ''}`}
+                onClick={() => set('location', filters.location === loc ? '' : loc)}
+              >
+                {loc}
+              </button>
+            ))}
+          </div>
+        )}
+
         {allTags.length > 0 && (
           <div className="history-filter-tags">
+            <span className="filter-group-label">skills</span>
             <button
               className={`filter-tag-chip ${filters.tag === '' ? 'active' : ''}`}
               onClick={() => set('tag', '')}
             >
-              todas skills
+              todas
             </button>
             {allTags.map((t) => (
               <button
@@ -206,6 +230,7 @@ const DEFAULT_FILTERS: HistoryFilters = {
   text: '',
   level: 'all',
   remote: 'all',
+  location: '',
   tag: '',
   seen: 'all',
 };
@@ -239,6 +264,16 @@ export function SearchHistory({ linkedInData, onGenerateCv }: SearchHistoryProps
       .map(([tag]) => tag);
   }, [jobs]);
 
+  const allLocations = useMemo(() => {
+    const freq = new Map<string, number>();
+    jobs.forEach((j) => {
+      if (j.location) freq.set(j.location, (freq.get(j.location) ?? 0) + 1);
+    });
+    return [...freq.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([loc]) => loc);
+  }, [jobs]);
+
   const filtered = useMemo(() => {
     return jobs.filter((j) => {
       if (filters.text) {
@@ -248,6 +283,7 @@ export function SearchHistory({ linkedInData, onGenerateCv }: SearchHistoryProps
       if (filters.level !== 'all' && j.level !== filters.level) return false;
       if (filters.remote === 'remote' && !j.remote) return false;
       if (filters.remote === 'presencial' && j.remote) return false;
+      if (filters.location && j.location !== filters.location) return false;
       if (filters.tag && !j.skills.includes(filters.tag)) return false;
       if (filters.seen === 'unseen' && j.seen) return false;
       if (filters.seen === 'seen' && !j.seen) return false;
@@ -282,6 +318,7 @@ export function SearchHistory({ linkedInData, onGenerateCv }: SearchHistoryProps
       <HistoryFilterBar
         filters={filters}
         allTags={allTags}
+        allLocations={allLocations}
         total={jobs.length}
         filtered={filtered.length}
         onChange={setFilters}
