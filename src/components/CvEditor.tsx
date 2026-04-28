@@ -80,7 +80,7 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss }: CvEditor
   return (
     <div className="cv-page">
       <div className="cv-topbar">
-        <button className="cv-back-btn" onClick={onBack}>← Voltar</button>
+        <button className="cv-back-btn" onClick={onBack}>Voltar</button>
         <span className="cv-topbar-title">
           {job.title}
           <span className="cv-topbar-company">@ {job.company}</span>
@@ -115,7 +115,7 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss }: CvEditor
 
       {error && (
         <div className="cv-page-loading">
-          <div className="error-msg">⚠ {error}</div>
+          <div className="error-msg">{error}</div>
         </div>
       )}
 
@@ -184,7 +184,7 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss }: CvEditor
                   rel="noopener noreferrer"
                   className="cv-job-link-btn"
                 >
-                  Ver vaga →
+                  Ver vaga
                 </a>
               )}
               <button

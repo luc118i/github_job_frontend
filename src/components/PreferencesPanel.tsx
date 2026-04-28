@@ -55,7 +55,7 @@ export function PreferencesPanel({ preferences, onChange, defaultOpen = false }:
         <span className="prefs-toggle-label">
           {hasPrefs && !open ? summary : 'Preferências de busca'}
         </span>
-        <span className="prefs-toggle-icon">{open ? '▲' : '▼'}</span>
+        <span className="prefs-toggle-icon">{open ? '−' : '+'}</span>
       </button>
 
       {open && (

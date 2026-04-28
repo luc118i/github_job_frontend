@@ -92,7 +92,7 @@ export function ProfessionView({
         </div>
 
         <button className="profession-reset-btn" onClick={reset}>
-          ← Ajustar configurações e buscar novamente
+          Ajustar configurações e buscar novamente
         </button>
       </div>
     );
@@ -115,7 +115,7 @@ export function ProfessionView({
           disabled={!linkedIn}
           onClick={handleSearch}
         >
-          {linkedIn ? '→ buscar vagas' : 'importe o LinkedIn para continuar'}
+          {linkedIn ? 'buscar vagas' : 'importe o LinkedIn para continuar'}
         </button>
         {error && <div className="error-msg">{error}</div>}
       </div>

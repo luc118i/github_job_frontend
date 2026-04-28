@@ -25,9 +25,9 @@ export function SearchForm({ username, loading, error, onChange, onSearch }: Sea
         onClick={onSearch}
         disabled={loading || !username.trim()}
       >
-        {loading ? 'buscando...' : '→ buscar vagas'}
+        {loading ? 'buscando...' : 'buscar vagas'}
       </button>
-      {error && <div className="error-msg">⚠ {error}</div>}
+      {error && <div className="error-msg">{error}</div>}
     </>
   );
 }

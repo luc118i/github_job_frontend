@@ -1,20 +1,17 @@
 export function Footer() {
   return (
     <footer className="app-footer">
-      <span>
-        feito com <span className="footer-heart">♥</span> por{' '}
-        <a
-          className="footer-link"
-          href="https://github.com/luccasinaacio"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          lucca sinaacio
-        </a>
-      </span>
+      <a
+        className="footer-link"
+        href="https://github.com/luc118i"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Lucas Inacio
+      </a>
       <span className="footer-sep">·</span>
       <span>
-        powered by{' '}
+        powered by{" "}
         <a
           className="footer-link"
           href="https://www.anthropic.com"
@@ -22,15 +19,15 @@ export function Footer() {
           rel="noopener noreferrer"
         >
           claude ai
-        </a>
-        {' '}&{' '}
+        </a>{" "}
+        &times;{" "}
         <a
           className="footer-link"
-          href="https://github.com"
+          href="https://docs.github.com/en/rest"
           target="_blank"
           rel="noopener noreferrer"
         >
-          github
+          github api
         </a>
       </span>
       <span className="footer-sep">·</span>

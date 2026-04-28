@@ -55,7 +55,7 @@ export function JobCard({ job, index, match, onGenerateCv }: JobCardProps) {
           {seen && <span className="badge seen">visto</span>}
           {job.remote && <span className="badge remote">Remote</span>}
           {job.level && <span className="badge level">{job.level}</span>}
-          <span className="expand-icon">{expanded ? '▲' : '▼'}</span>
+          <span className="expand-icon">{expanded ? '−' : '+'}</span>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export function JobCard({ job, index, match, onGenerateCv }: JobCardProps) {
       {expanded && (
         <div className="job-details">
           <p>{job.description}</p>
-          {job.salary && <p className="salary">💰 {job.salary}</p>}
+          {job.salary && <p className="salary">{job.salary}</p>}
           <div className="job-actions">
             {job.link && (
               <div className="link-row">
@@ -79,7 +79,7 @@ export function JobCard({ job, index, match, onGenerateCv }: JobCardProps) {
                   onClick={(e) => e.stopPropagation()}
                   className="apply-btn"
                 >
-                  Ver vaga →
+                  Ver vaga
                 </a>
                 {linkMeta && (
                   <span className={`link-status ${linkMeta.className}`}>

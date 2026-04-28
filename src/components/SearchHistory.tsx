@@ -227,7 +227,7 @@ function FeedCard({ job, index, linkedInData, onGenerateCv, onDelete }: FeedCard
           disabled={deleting}
           title="Excluir vaga"
         >
-          ✕
+          ×
         </button>
       </div>
       <JobCard

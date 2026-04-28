@@ -34,12 +34,12 @@ export function LinkedInImport({ data, onImport, onClear }: LinkedInImportProps)
     const edu = data.education.length;
     return (
       <div className="li-import-done">
-        <span className="li-import-check">✓</span>
+        <span className="li-import-check" />
         <span className="li-import-summary">
           {data.name ? `${data.name} — ` : 'LinkedIn importado — '}
           {pos} experiência{pos !== 1 ? 's' : ''}, {edu} formação{edu !== 1 ? 'ões' : ''}
         </span>
-        <button className="li-import-clear" onClick={onClear} title="Remover">✕</button>
+        <button className="li-import-clear" onClick={onClear} title="Remover">×</button>
       </div>
     );
   }
@@ -51,7 +51,7 @@ export function LinkedInImport({ data, onImport, onClear }: LinkedInImportProps)
         onClick={() => inputRef.current?.click()}
         disabled={loading}
       >
-        {loading ? 'Processando...' : '↑ Importar LinkedIn (.pdf ou .zip)'}
+        {loading ? 'Processando...' : 'Importar LinkedIn (.pdf ou .zip)'}
       </button>
       <input
         ref={inputRef}
@@ -64,7 +64,7 @@ export function LinkedInImport({ data, onImport, onClear }: LinkedInImportProps)
         <span className="li-import-error">{error}</span>
       ) : (
         <span className="li-import-hint">
-          PDF: perfil → Mais → Salvar como PDF &nbsp;·&nbsp; ZIP: Config → Privacidade → Obter cópia dos dados
+          PDF: perfil &gt; Mais &gt; Salvar como PDF &nbsp;·&nbsp; ZIP: Config &gt; Privacidade &gt; Obter cópia dos dados
         </span>
       )}
     </div>
