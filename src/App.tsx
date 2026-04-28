@@ -96,6 +96,7 @@ export default function App() {
                 <PreferencesPanel
                   preferences={preferences}
                   onChange={setPreferences}
+                  defaultOpen
                 />
                 <SearchForm
                   username={username}
