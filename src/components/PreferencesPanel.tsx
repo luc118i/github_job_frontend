@@ -4,6 +4,7 @@ import { UserPreferences } from '../types';
 interface PreferencesPanelProps {
   preferences: UserPreferences;
   onChange: (p: UserPreferences) => void;
+  defaultOpen?: boolean;
 }
 
 type Modality = UserPreferences['modality'];
@@ -34,8 +35,8 @@ function summaryText(p: UserPreferences): string {
   return parts.join(' · ');
 }
 
-export function PreferencesPanel({ preferences, onChange }: PreferencesPanelProps) {
-  const [open, setOpen] = useState(false);
+export function PreferencesPanel({ preferences, onChange, defaultOpen = false }: PreferencesPanelProps) {
+  const [open, setOpen] = useState(defaultOpen);
 
   function set<K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) {
     onChange({ ...preferences, [key]: value });

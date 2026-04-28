@@ -143,6 +143,7 @@ export default function App() {
             preferences={preferences}
             onImport={setLinkedInData}
             onClear={() => setLinkedInData(null)}
+            onPreferencesChange={setPreferences}
             onGenerateCv={openCvFromProfession}
           />
         )}

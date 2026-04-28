@@ -1716,6 +1716,121 @@ h1 {
 
 /* ── Profession View ── */
 
+.profession-config {
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 560px;
+}
+
+.profession-config-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profession-config-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #e8e4dc;
+}
+
+.profession-config-sub {
+  font-size: 13px;
+  color: rgba(232,228,220,0.45);
+  line-height: 1.6;
+}
+
+.profession-config-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profession-config-step {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  transition: opacity 0.2s;
+}
+
+.profession-config-step.disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.profession-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(124,58,237,0.2);
+  border: 1px solid rgba(124,58,237,0.4);
+  color: #c4b5fd;
+  font-size: 11px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.profession-step-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.profession-step-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(232,228,220,0.3);
+}
+
+.profession-search-btn {
+  background: #7c3aed;
+  border: none;
+  color: white;
+  padding: 14px 28px;
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  align-self: flex-start;
+}
+
+.profession-search-btn:hover:not(:disabled) { background: #6d28d9; }
+.profession-search-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.profession-reset-btn {
+  margin-top: 32px;
+  background: transparent;
+  border: none;
+  color: rgba(232,228,220,0.3);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+  letter-spacing: 0.03em;
+}
+
+.profession-reset-btn:hover {
+  color: rgba(232,228,220,0.6);
+}
+
 .profession-empty {
   padding: 64px 0 32px;
   display: flex;
