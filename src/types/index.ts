@@ -71,6 +71,9 @@ export interface LinkedInEducation {
 }
 
 export interface LinkedInData {
+  name: string | null;
+  email: string | null;
+  phone: string | null;
   positions: LinkedInPosition[];
   education: LinkedInEducation[];
 }
@@ -91,6 +94,7 @@ export interface CvRequest {
   candidate: {
     name: string;
     email: string | null;
+    phone: string | null;
     githubLogin: string;
     githubBio: string | null;
     githubFollowers: number;

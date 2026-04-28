@@ -715,10 +715,34 @@ h1 {
   font-size: 11px;
   color: rgba(232,228,220,0.25);
   padding-left: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .feed-card-loading {
   color: rgba(196,181,253,0.5);
+}
+
+.feed-card-delete {
+  background: transparent;
+  border: none;
+  color: rgba(232,228,220,0.15);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.feed-card-delete:hover:not(:disabled) {
+  color: rgba(252,165,165,0.7);
+}
+
+.feed-card-delete:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 /* ── History Filter Bar ── */

@@ -35,9 +35,7 @@ export default function App() {
     const syntheticProfile: Profile = {
       user: {
         login: '',
-        name: linkedInData?.positions[0]
-          ? `${linkedInData.positions[0].title}`
-          : 'Candidato',
+        name: linkedInData?.name ?? 'Candidato',
         bio: null,
         avatar_url: '',
         followers: 0,

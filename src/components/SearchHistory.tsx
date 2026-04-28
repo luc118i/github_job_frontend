@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { JobFeedItem, LinkedInData, Profile } from '../types';
 import { fetchJobFeed } from '../services/searches';
 import { fetchGitHubUser, fetchGitHubRepos, extractSkills } from '../services/github';
+import { dismissJob } from '../services/jobs';
 import { JobCard } from './JobCard';
 
 type DateGroup = 'hoje' | 'semana' | 'anteriores';
@@ -169,10 +170,12 @@ interface FeedCardProps {
   index: number;
   linkedInData: LinkedInData | null;
   onGenerateCv: (job: JobFeedItem, profile: Profile) => void;
+  onDelete: (jobId: string) => void;
 }
 
-function FeedCard({ job, index, linkedInData, onGenerateCv }: FeedCardProps) {
+function FeedCard({ job, index, linkedInData, onGenerateCv, onDelete }: FeedCardProps) {
   const [profileLoading, setProfileLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const isLinkedIn = !job.github_username;
 
   async function handleGenerateCv() {
@@ -180,7 +183,7 @@ function FeedCard({ job, index, linkedInData, onGenerateCv }: FeedCardProps) {
       const syntheticProfile: Profile = {
         user: {
           login: '',
-          name: linkedInData?.positions[0]?.title ?? 'Candidato',
+          name: linkedInData?.name ?? 'Candidato',
           bio: null,
           avatar_url: '',
           followers: 0,
@@ -204,11 +207,28 @@ function FeedCard({ job, index, linkedInData, onGenerateCv }: FeedCardProps) {
     }
   }
 
+  async function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    setDeleting(true);
+    dismissJob(job.id).catch(console.error);
+    onDelete(job.id);
+  }
+
   return (
     <div className="feed-card-wrapper">
       <div className="feed-card-context">
-        {isLinkedIn ? 'via LinkedIn' : `via @${job.github_username}`}
-        {profileLoading && <span className="feed-card-loading"> · buscando perfil...</span>}
+        <span>
+          {isLinkedIn ? 'via LinkedIn' : `via @${job.github_username}`}
+          {profileLoading && <span className="feed-card-loading"> · buscando perfil...</span>}
+        </span>
+        <button
+          className="feed-card-delete"
+          onClick={handleDelete}
+          disabled={deleting}
+          title="Excluir vaga"
+        >
+          ✕
+        </button>
       </div>
       <JobCard
         job={job}
@@ -247,6 +267,10 @@ export function SearchHistory({ linkedInData, onGenerateCv }: SearchHistoryProps
       .catch(() => setError('Erro ao carregar histórico.'))
       .finally(() => setLoading(false));
   }, []);
+
+  function handleDelete(jobId: string) {
+    setJobs((prev) => prev.filter((j) => j.id !== jobId));
+  }
 
   // Pre-populate text filter with LinkedIn job title
   useEffect(() => {
@@ -339,6 +363,7 @@ export function SearchHistory({ linkedInData, onGenerateCv }: SearchHistoryProps
                     index={jobIndex.get(job.id) ?? 0}
                     linkedInData={linkedInData}
                     onGenerateCv={onGenerateCv}
+                    onDelete={handleDelete}
                   />
                 ))}
               </div>

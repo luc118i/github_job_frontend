@@ -36,7 +36,8 @@ export function LinkedInImport({ data, onImport, onClear }: LinkedInImportProps)
       <div className="li-import-done">
         <span className="li-import-check">✓</span>
         <span className="li-import-summary">
-          LinkedIn importado — {pos} experiência{pos !== 1 ? 's' : ''}, {edu} formação{edu !== 1 ? 'ões' : ''}
+          {data.name ? `${data.name} — ` : 'LinkedIn importado — '}
+          {pos} experiência{pos !== 1 ? 's' : ''}, {edu} formação{edu !== 1 ? 'ões' : ''}
         </span>
         <button className="li-import-clear" onClick={onClear} title="Remover">✕</button>
       </div>

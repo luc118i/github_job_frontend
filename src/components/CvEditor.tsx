@@ -47,8 +47,9 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss }: CvEditor
         description: job.description,
       },
       candidate: {
-        name: profile.user.name ?? profile.user.login,
-        email: null,
+        name: linkedIn?.name ?? profile.user.name ?? profile.user.login,
+        email: linkedIn?.email ?? null,
+        phone: linkedIn?.phone ?? null,
         githubLogin: profile.user.login,
         githubBio: profile.user.bio,
         githubFollowers: profile.user.followers,
