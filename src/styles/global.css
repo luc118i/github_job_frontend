@@ -2872,3 +2872,30 @@ h1 {
   flex-wrap: wrap;
   margin-top: 8px;
 }
+
+/* ── CV retry countdown ── */
+
+.cv-retry-countdown {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  height: 4px;
+  background: rgba(232,228,220,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.cv-retry-progress {
+  height: 100%;
+  background: rgba(232,228,220,0.35);
+  border-radius: 2px;
+  transition: width 1s linear;
+}
+
+.cv-retry-timer {
+  position: absolute;
+  right: 0;
+  top: 8px;
+  font-size: 11px;
+  color: rgba(232,228,220,0.4);
+}

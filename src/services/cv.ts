@@ -8,6 +8,14 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+export class CvApiError extends Error {
+  retryAfter: number | null;
+  constructor(message: string, retryAfter: number | null = null) {
+    super(message);
+    this.retryAfter = retryAfter;
+  }
+}
+
 export async function generateCv(request: CvRequest): Promise<CvResponse> {
   const res = await fetch(`${API_URL}/cv`, {
     method: 'POST',
@@ -16,8 +24,8 @@ export async function generateCv(request: CvRequest): Promise<CvResponse> {
   });
 
   if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error ?? 'Erro ao gerar currículo');
+    const data = (await res.json().catch(() => ({}))) as { error?: string; retryAfter?: number };
+    throw new CvApiError(data.error ?? 'Erro ao gerar currículo', data.retryAfter ?? null);
   }
 
   return res.json() as Promise<CvResponse>;

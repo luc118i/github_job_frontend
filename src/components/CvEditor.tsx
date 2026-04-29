@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { JobRecord, Profile, LinkedInData, CvRequest } from '../types';
-import { generateCv, updateCv } from '../services/cv';
+import { generateCv, updateCv, CvApiError } from '../services/cv';
 import { downloadCvPdf } from '../services/pdfExport';
 import { dismissJob } from '../services/jobs';
 import { markCvGenerated } from '../utils/dailyLimit';
@@ -30,6 +30,8 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss, onGoToHist
   const [saveMsg, setSaveMsg] = useState('');
   const [dismissing, setDismissing] = useState(false);
   const [error, setError] = useState('');
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const totalCountdownRef = useRef<number>(0);
   const [mobileTab, setMobileTab] = useState<MobileTab>('preview');
 
   async function handleDismiss() {
@@ -74,6 +76,7 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss, onGoToHist
   function requestCv() {
     setLoading(true);
     setError('');
+    setCountdown(null);
     setMarkdown(null);
     generateCv(buildRequest())
       .then((res) => {
@@ -81,9 +84,21 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss, onGoToHist
         setCvId(res.cvId);
         markCvGenerated(job.id);
       })
-      .catch((e: Error) => setError(e.message))
+      .catch((e: Error) => {
+        setError(e.message);
+        if (e instanceof CvApiError && e.retryAfter) {
+          totalCountdownRef.current = e.retryAfter;
+          setCountdown(e.retryAfter);
+        }
+      })
       .finally(() => setLoading(false));
   }
+
+  useEffect(() => {
+    if (countdown === null || countdown <= 0) return;
+    const t = setTimeout(() => setCountdown((c) => (c ?? 1) - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
 
   useEffect(() => {
     if (isViewMode) {
@@ -163,8 +178,25 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss, onGoToHist
         <div className="cv-page-loading">
           <div className="cv-error-block">
             <span className="cv-error-msg">{error}</span>
+            {countdown !== null && countdown > 0 && (
+              <div className="cv-retry-countdown">
+                <div
+                  className="cv-retry-progress"
+                  style={{ width: `${(countdown / totalCountdownRef.current) * 100}%` }}
+                />
+                <span className="cv-retry-timer">{countdown}s</span>
+              </div>
+            )}
             <div className="cv-error-actions">
-              <button className="cv-back-btn" onClick={requestCv}>tentar novamente</button>
+              <button
+                className="cv-back-btn"
+                onClick={requestCv}
+                disabled={countdown !== null && countdown > 0}
+              >
+                {countdown !== null && countdown > 0
+                  ? `aguarde ${countdown}s...`
+                  : 'tentar novamente'}
+              </button>
               <button className="cv-back-btn" onClick={onBack}>voltar</button>
             </div>
           </div>
