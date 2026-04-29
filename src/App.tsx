@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { JobRecord, LinkedInData, Profile, ProfessionJobRecord } from './types';
 import { Background } from './components/Background';
 import { Header } from './components/Header';
@@ -12,9 +12,11 @@ import { SearchHistory } from './components/SearchHistory';
 import { CvEditor } from './components/CvEditor';
 import { ProfessionView } from './components/ProfessionView';
 import { PreferencesPanel } from './components/PreferencesPanel';
+import { AuthModal } from './components/AuthModal';
 import { Footer } from './components/Footer';
 import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
+import { AuthUser, fetchMe, clearToken, updateLinkedIn } from './services/auth';
 
 interface CvState {
   job: JobRecord;
@@ -26,16 +28,55 @@ export default function App() {
   const [view, setView] = useState<View>('outros');
   const [cvState, setCvState] = useState<CvState | null>(null);
   const [linkedInData, setLinkedInData] = useState<LinkedInData | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [pendingLinkedIn, setPendingLinkedIn] = useState<LinkedInData | null>(null);
 
   const { profile, jobs, loading, step, error, filter, setFilter, search, removeJob } = useJobSearch();
   const { preferences, setPreferences } = usePreferences();
+
+  // Restaura sessão ao carregar
+  useEffect(() => {
+    fetchMe().then(result => {
+      if (!result) return;
+      setCurrentUser(result.user);
+      if (result.linkedInData) setLinkedInData(result.linkedInData);
+    });
+  }, []);
+
+  function handleLinkedInImport(data: LinkedInData) {
+    setLinkedInData(data);
+    if (!currentUser) {
+      setPendingLinkedIn(data);
+      setAuthOpen(true);
+    } else {
+      // usuário logado: atualiza dados no servidor em background
+      updateLinkedIn(data);
+    }
+  }
+
+  function handleLinkedInClear() {
+    setLinkedInData(null);
+  }
+
+  function handleAuthSuccess(user: AuthUser, liData?: LinkedInData) {
+    setCurrentUser(user);
+    setAuthOpen(false);
+    setPendingLinkedIn(null);
+    if (liData) setLinkedInData(liData);
+  }
+
+  function handleLogout() {
+    clearToken();
+    setCurrentUser(null);
+    setLinkedInData(null);
+  }
 
   function openCv(job: JobRecord, cvProfile: Profile) {
     setCvState({ job, profile: cvProfile });
   }
 
   function openCvFromProfession(job: ProfessionJobRecord) {
-    // profession jobs have no github profile; open editor with a minimal profile
     const syntheticProfile: Profile = {
       user: {
         login: '',
@@ -69,10 +110,28 @@ export default function App() {
   return (
     <div className="app">
       <Background />
-      <Header />
+      <Header currentUser={currentUser} onLogout={handleLogout} onLoginClick={() => setAuthOpen(true)} />
+
+      <AuthModal
+        open={authOpen}
+        linkedInData={pendingLinkedIn}
+        onSuccess={handleAuthSuccess}
+        onClose={() => { setAuthOpen(false); setPendingLinkedIn(null); }}
+      />
 
       <main>
         <TabNav active={view} onChange={setView} />
+
+        {view === 'outros' && (
+          <ProfessionView
+            linkedIn={linkedInData}
+            preferences={preferences}
+            onImport={handleLinkedInImport}
+            onClear={handleLinkedInClear}
+            onPreferencesChange={setPreferences}
+            onGenerateCv={openCvFromProfession}
+          />
+        )}
 
         {view === 'search' && (
           <>
@@ -90,8 +149,8 @@ export default function App() {
                 <div className="linkedin-section">
                   <LinkedInImport
                     data={linkedInData}
-                    onImport={setLinkedInData}
-                    onClear={() => setLinkedInData(null)}
+                    onImport={handleLinkedInImport}
+                    onClear={handleLinkedInClear}
                   />
                 </div>
                 <PreferencesPanel
@@ -128,8 +187,8 @@ export default function App() {
             <div className="history-linkedin-bar">
               <LinkedInImport
                 data={linkedInData}
-                onImport={setLinkedInData}
-                onClear={() => setLinkedInData(null)}
+                onImport={handleLinkedInImport}
+                onClear={handleLinkedInClear}
               />
             </div>
             <SearchHistory
@@ -137,17 +196,6 @@ export default function App() {
               onGenerateCv={openCv}
             />
           </>
-        )}
-
-        {view === 'outros' && (
-          <ProfessionView
-            linkedIn={linkedInData}
-            preferences={preferences}
-            onImport={setLinkedInData}
-            onClear={() => setLinkedInData(null)}
-            onPreferencesChange={setPreferences}
-            onGenerateCv={openCvFromProfession}
-          />
         )}
       </main>
       <Footer />
