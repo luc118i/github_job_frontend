@@ -23,7 +23,7 @@ interface CvState {
 
 export default function App() {
   const [username, setUsername] = useState('');
-  const [view, setView] = useState<View>('search');
+  const [view, setView] = useState<View>('outros');
   const [cvState, setCvState] = useState<CvState | null>(null);
   const [linkedInData, setLinkedInData] = useState<LinkedInData | null>(null);
 

@@ -9,16 +9,16 @@ export function TabNav({ active, onChange }: TabNavProps) {
   return (
     <nav className="tab-nav">
       <button
-        className={`tab-btn ${active === 'search' ? 'active' : ''}`}
-        onClick={() => onChange('search')}
+        className={`tab-btn ${active === 'outros' ? 'active' : ''}`}
+        onClick={() => onChange('outros')}
       >
         buscar
       </button>
       <button
-        className={`tab-btn ${active === 'outros' ? 'active' : ''}`}
-        onClick={() => onChange('outros')}
+        className={`tab-btn ${active === 'search' ? 'active' : ''}`}
+        onClick={() => onChange('search')}
       >
-        outras profissões
+        vagas TI
       </button>
       <button
         className={`tab-btn ${active === 'history' ? 'active' : ''}`}

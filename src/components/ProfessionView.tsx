@@ -101,6 +101,17 @@ export function ProfessionView({
   // ── Config form (default) ─────────────────────────────────
   return (
     <div className="profession-config">
+      <div className="hero">
+        <h1>
+          Vagas feitas<br />
+          para a sua <span className="accent">carreira</span>
+        </h1>
+        <p className="subtitle">
+          Conecte seu LinkedIn. A IA analisa seu histórico profissional
+          para encontrar vagas em qualquer área que combinam com você.
+        </p>
+      </div>
+
       <div className="search-wrapper">
         <div className="linkedin-section">
           <LinkedInImport data={linkedIn} onImport={onImport} onClear={onClear} />
