@@ -2780,3 +2780,69 @@ h1 {
   display: flex;
   gap: 8px;
 }
+
+/* ── Daily limit & history navigation ── */
+
+.search-blocked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: rgba(232,228,220,0.03);
+  border: 1px solid rgba(232,228,220,0.08);
+  border-radius: 6px;
+  text-align: center;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.search-blocked-msg {
+  font-size: 13px;
+  color: rgba(232,228,220,0.55);
+  line-height: 1.6;
+}
+
+.history-link-btn {
+  background: transparent;
+  border: 1px solid rgba(232,228,220,0.2);
+  color: rgba(232,228,220,0.7);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.history-link-btn:hover {
+  border-color: rgba(232,228,220,0.5);
+  color: #e8e4dc;
+}
+
+.cv-generated-btn {
+  opacity: 0.55;
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+}
+
+.cv-generated-btn:hover {
+  opacity: 0.85;
+}
+
+.results-history-bar {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 8px;
+}
+
+.profession-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}

@@ -4,6 +4,7 @@ import { JobRecord, Profile, LinkedInData, CvRequest } from '../types';
 import { generateCv } from '../services/cv';
 import { downloadCvPdf } from '../services/pdfExport';
 import { dismissJob } from '../services/jobs';
+import { markCvGenerated } from '../utils/dailyLimit';
 
 interface CvEditorProps {
   job: JobRecord;
@@ -11,11 +12,12 @@ interface CvEditorProps {
   linkedIn: LinkedInData | null;
   onBack: () => void;
   onDismiss: (jobId: string) => void;
+  onGoToHistory: () => void;
 }
 
 type MobileTab = 'editor' | 'preview';
 
-export function CvEditor({ job, profile, linkedIn, onBack, onDismiss }: CvEditorProps) {
+export function CvEditor({ job, profile, linkedIn, onBack, onDismiss, onGoToHistory }: CvEditorProps) {
   const [markdown, setMarkdown] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -67,7 +69,7 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss }: CvEditor
     setError('');
     setMarkdown(null);
     generateCv(buildRequest())
-      .then((res) => setMarkdown(res.content))
+      .then((res) => { setMarkdown(res.content); markCvGenerated(job.id); })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }
@@ -202,12 +204,15 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss }: CvEditor
                   Ver vaga
                 </a>
               )}
+              <button className="history-link-btn" onClick={onGoToHistory}>
+                Ver historico
+              </button>
               <button
                 className="cv-dismiss-btn"
                 disabled={dismissing}
                 onClick={handleDismiss}
               >
-                Não tenho interesse
+                Nao tenho interesse
               </button>
             </div>
           </div>

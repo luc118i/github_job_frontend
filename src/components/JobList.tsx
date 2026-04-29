@@ -7,9 +7,10 @@ interface JobListProps {
   filter: LevelFilter;
   onFilterChange: (level: LevelFilter) => void;
   onGenerateCv?: (job: JobRecord) => void;
+  onGoToHistory?: () => void;
 }
 
-export function JobList({ jobs, filter, onFilterChange, onGenerateCv }: JobListProps) {
+export function JobList({ jobs, filter, onFilterChange, onGenerateCv, onGoToHistory }: JobListProps) {
   const filtered = filter === 'all' ? jobs : jobs.filter((j) => j.level === filter);
 
   return (
@@ -20,7 +21,7 @@ export function JobList({ jobs, filter, onFilterChange, onGenerateCv }: JobListP
           <div className="empty">Nenhuma vaga para este filtro.</div>
         ) : (
           filtered.map((job, i) => (
-            <JobCard key={job.id} job={job} index={i} onGenerateCv={onGenerateCv} />
+            <JobCard key={job.id} job={job} index={i} onGenerateCv={onGenerateCv} onGoToHistory={onGoToHistory} />
           ))
         )}
       </div>

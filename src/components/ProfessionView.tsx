@@ -12,6 +12,7 @@ interface ProfessionViewProps {
   onClear: () => void;
   onPreferencesChange: (p: UserPreferences) => void;
   onGenerateCv: (job: ProfessionJobRecord) => void;
+  onGoToHistory: () => void;
 }
 
 export function ProfessionView({
@@ -21,8 +22,9 @@ export function ProfessionView({
   onClear,
   onPreferencesChange,
   onGenerateCv,
+  onGoToHistory,
 }: ProfessionViewProps) {
-  const { jobs, loading, error, profileSummary, tagFilter, setTagFilter, search, reset, hasSearched } =
+  const { jobs, loading, error, profileSummary, tagFilter, blockedToday, setTagFilter, search, reset, hasSearched } =
     useProfessionSearch();
 
   const allTags = [...new Set(jobs.flatMap((j) => j.skills))];
@@ -91,9 +93,14 @@ export function ProfessionView({
           </div>
         </div>
 
-        <button className="profession-reset-btn" onClick={reset}>
-          Ajustar configurações e buscar novamente
-        </button>
+        <div className="profession-actions-bar">
+          {!blockedToday && (
+            <button className="profession-reset-btn" onClick={reset}>
+              Ajustar configurações e buscar novamente
+            </button>
+          )}
+          <button className="history-link-btn" onClick={onGoToHistory}>Ver historico de vagas</button>
+        </div>
       </div>
     );
   }
@@ -121,14 +128,23 @@ export function ProfessionView({
           onChange={onPreferencesChange}
           defaultOpen
         />
-        <button
-          className="search-btn"
-          disabled={!linkedIn}
-          onClick={handleSearch}
-        >
-          {linkedIn ? 'buscar vagas' : 'importe o LinkedIn para continuar'}
-        </button>
-        {error && <div className="error-msg">{error}</div>}
+        {blockedToday ? (
+          <div className="search-blocked">
+            <p className="search-blocked-msg">Você ja realizou uma busca hoje. Volte amanha para uma nova busca.</p>
+            <button className="history-link-btn" onClick={onGoToHistory}>Ver historico de vagas</button>
+          </div>
+        ) : (
+          <>
+            <button
+              className="search-btn"
+              disabled={!linkedIn}
+              onClick={handleSearch}
+            >
+              {linkedIn ? 'buscar vagas' : 'importe o LinkedIn para continuar'}
+            </button>
+            {error && <div className="error-msg">{error}</div>}
+          </>
+        )}
       </div>
     </div>
   );

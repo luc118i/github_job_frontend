@@ -33,7 +33,7 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingLinkedIn, setPendingLinkedIn] = useState<LinkedInData | null>(null);
 
-  const { profile, jobs, loading, step, error, filter, setFilter, search, removeJob } = useJobSearch();
+  const { profile, jobs, loading, step, error, filter, blockedToday: githubBlocked, setFilter, search, removeJob } = useJobSearch();
   const { preferences, setPreferences } = usePreferences();
 
   useEffect(() => {
@@ -105,6 +105,7 @@ export default function App() {
         profile={cvState.profile}
         linkedIn={linkedInData}
         onBack={() => setCvState(null)}
+        onGoToHistory={() => { setCvState(null); setView('history'); }}
         onDismiss={(jobId) => {
           removeJob(jobId);
           setCvState(null);
@@ -141,6 +142,7 @@ export default function App() {
             onClear={handleLinkedInClear}
             onPreferencesChange={setPreferences}
             onGenerateCv={openCvFromProfession}
+            onGoToHistory={() => setView('history')}
           />
         )}
 
@@ -173,8 +175,10 @@ export default function App() {
                   username={username}
                   loading={loading}
                   error={error}
+                  blocked={githubBlocked}
                   onChange={setUsername}
                   onSearch={() => search(username, preferences)}
+                  onGoToHistory={() => setView('history')}
                 />
               </div>
 
@@ -183,12 +187,20 @@ export default function App() {
 
             {profile && <ProfileCard profile={profile} />}
             {jobs.length > 0 && (
-              <JobList
-                jobs={jobs}
-                filter={filter}
-                onFilterChange={setFilter}
-                onGenerateCv={(job) => profile && openCv(job, profile)}
-              />
+              <>
+                <JobList
+                  jobs={jobs}
+                  filter={filter}
+                  onFilterChange={setFilter}
+                  onGenerateCv={(job) => profile && openCv(job, profile)}
+                  onGoToHistory={() => setView('history')}
+                />
+                <div className="results-history-bar">
+                  <button className="history-link-btn" onClick={() => setView('history')}>
+                    Ver historico de todas as buscas
+                  </button>
+                </div>
+              </>
             )}
           </>
         )}

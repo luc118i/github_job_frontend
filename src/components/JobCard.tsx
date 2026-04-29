@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { JobRecord, LinkStatus } from '../types';
 import { markJobSeen } from '../services/jobs';
+import { isCvGenerated } from '../utils/dailyLimit';
 
 const LINK_STATUS: Record<LinkStatus, { label: string; className: string } | null> = {
   trusted:    { label: 'verificado',     className: 'link-trusted' },
@@ -14,9 +15,11 @@ interface JobCardProps {
   index: number;
   match?: number;
   onGenerateCv?: (job: JobRecord) => void;
+  onGoToHistory?: () => void;
 }
 
-export function JobCard({ job, index, match, onGenerateCv }: JobCardProps) {
+export function JobCard({ job, index, match, onGenerateCv, onGoToHistory }: JobCardProps) {
+  const cvDone = isCvGenerated(job.id);
   const [expanded, setExpanded] = useState(false);
   const [seen, setSeen] = useState(job.seen);
 
@@ -89,15 +92,21 @@ export function JobCard({ job, index, match, onGenerateCv }: JobCardProps) {
               </div>
             )}
             {onGenerateCv && (
-              <button
-                className="cv-generate-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onGenerateCv(job);
-                }}
-              >
-                Gerar CV
-              </button>
+              cvDone ? (
+                <button
+                  className="cv-generate-btn cv-generated-btn"
+                  onClick={(e) => { e.stopPropagation(); onGoToHistory?.(); }}
+                >
+                  CV gerado — ver historico
+                </button>
+              ) : (
+                <button
+                  className="cv-generate-btn"
+                  onClick={(e) => { e.stopPropagation(); onGenerateCv(job); }}
+                >
+                  Gerar CV
+                </button>
+              )
             )}
           </div>
         </div>

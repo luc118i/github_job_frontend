@@ -2,11 +2,22 @@ interface SearchFormProps {
   username: string;
   loading: boolean;
   error: string;
+  blocked: boolean;
   onChange: (value: string) => void;
   onSearch: () => void;
+  onGoToHistory: () => void;
 }
 
-export function SearchForm({ username, loading, error, onChange, onSearch }: SearchFormProps) {
+export function SearchForm({ username, loading, error, blocked, onChange, onSearch, onGoToHistory }: SearchFormProps) {
+  if (blocked) {
+    return (
+      <div className="search-blocked">
+        <p className="search-blocked-msg">Você ja realizou uma busca hoje. Volte amanha para uma nova busca.</p>
+        <button className="history-link-btn" onClick={onGoToHistory}>Ver historico de vagas</button>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="search-bar">
