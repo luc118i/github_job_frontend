@@ -15,10 +15,10 @@ interface JobCardProps {
   index: number;
   match?: number;
   onGenerateCv?: (job: JobRecord) => void;
-  onGoToHistory?: () => void;
+  onViewCv?: (job: JobRecord) => void;
 }
 
-export function JobCard({ job, index, match, onGenerateCv, onGoToHistory }: JobCardProps) {
+export function JobCard({ job, index, match, onGenerateCv, onViewCv }: JobCardProps) {
   const cvDone = isCvGenerated(job.id);
   const [expanded, setExpanded] = useState(false);
   const [seen, setSeen] = useState(job.seen);
@@ -95,9 +95,9 @@ export function JobCard({ job, index, match, onGenerateCv, onGoToHistory }: JobC
               cvDone ? (
                 <button
                   className="cv-generate-btn cv-generated-btn"
-                  onClick={(e) => { e.stopPropagation(); onGoToHistory?.(); }}
+                  onClick={(e) => { e.stopPropagation(); onViewCv?.(job); }}
                 >
-                  CV gerado — ver historico
+                  Ver CV
                 </button>
               ) : (
                 <button

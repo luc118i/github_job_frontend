@@ -1662,6 +1662,32 @@ h1 {
 
 .cv-topbar-actions {
   flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cv-save-btn {
+  background: transparent;
+  border: 1px solid rgba(232,228,220,0.2);
+  color: rgba(232,228,220,0.65);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  min-width: 68px;
+}
+
+.cv-save-btn:hover:not(:disabled) {
+  border-color: rgba(232,228,220,0.45);
+  color: #e8e4dc;
+}
+
+.cv-save-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .cv-download-btn {

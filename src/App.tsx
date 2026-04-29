@@ -18,10 +18,13 @@ import { Footer } from './components/Footer';
 import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
 import { AuthUser, fetchMe, clearToken, updateLinkedIn } from './services/auth';
+import { fetchCvByJobId } from './services/cv';
 
 interface CvState {
   job: JobRecord;
   profile: Profile;
+  existingCvId?: string;
+  existingContent?: string;
 }
 
 export default function App() {
@@ -82,6 +85,20 @@ export default function App() {
     setCvState({ job, profile: cvProfile });
   }
 
+  async function openExistingCv(job: JobRecord) {
+    try {
+      const cv = await fetchCvByJobId(job.id);
+      const fallback: Profile = profile ?? {
+        user: { login: currentUser?.github_username ?? '', name: currentUser?.name ?? '', bio: null, avatar_url: '', followers: 0, public_repos: 0 },
+        repos: [],
+        skills: job.skills,
+      };
+      setCvState({ job, profile: fallback, existingCvId: cv.id, existingContent: cv.content });
+    } catch (e) {
+      console.error('Erro ao carregar CV:', e);
+    }
+  }
+
   function openCvFromProfession(job: ProfessionJobRecord) {
     const syntheticProfile: Profile = {
       user: {
@@ -106,10 +123,9 @@ export default function App() {
         linkedIn={linkedInData}
         onBack={() => setCvState(null)}
         onGoToHistory={() => { setCvState(null); setView('history'); }}
-        onDismiss={(jobId) => {
-          removeJob(jobId);
-          setCvState(null);
-        }}
+        onDismiss={(jobId) => { removeJob(jobId); setCvState(null); }}
+        initialCvId={cvState.existingCvId}
+        initialContent={cvState.existingContent}
       />
     );
   }
@@ -142,6 +158,7 @@ export default function App() {
             onClear={handleLinkedInClear}
             onPreferencesChange={setPreferences}
             onGenerateCv={openCvFromProfession}
+            onViewCv={(job) => openExistingCv(job)}
             onGoToHistory={() => setView('history')}
           />
         )}
@@ -193,7 +210,7 @@ export default function App() {
                   filter={filter}
                   onFilterChange={setFilter}
                   onGenerateCv={(job) => profile && openCv(job, profile)}
-                  onGoToHistory={() => setView('history')}
+                  onViewCv={(job) => openExistingCv(job)}
                 />
                 <div className="results-history-bar">
                   <button className="history-link-btn" onClick={() => setView('history')}>
@@ -218,6 +235,7 @@ export default function App() {
               linkedInData={linkedInData}
               githubUsername={currentUser?.github_username ?? null}
               onGenerateCv={openCv}
+              onViewCv={(job) => openExistingCv(job)}
             />
           </>
         )}

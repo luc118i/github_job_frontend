@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { JobRecord, Profile, LinkedInData, CvRequest } from '../types';
-import { generateCv } from '../services/cv';
+import { generateCv, updateCv } from '../services/cv';
 import { downloadCvPdf } from '../services/pdfExport';
 import { dismissJob } from '../services/jobs';
 import { markCvGenerated } from '../utils/dailyLimit';
@@ -13,14 +13,21 @@ interface CvEditorProps {
   onBack: () => void;
   onDismiss: (jobId: string) => void;
   onGoToHistory: () => void;
+  initialCvId?: string;
+  initialContent?: string;
 }
 
 type MobileTab = 'editor' | 'preview';
 
-export function CvEditor({ job, profile, linkedIn, onBack, onDismiss, onGoToHistory }: CvEditorProps) {
+export function CvEditor({ job, profile, linkedIn, onBack, onDismiss, onGoToHistory, initialCvId, initialContent }: CvEditorProps) {
+  const isViewMode = initialContent !== undefined;
+
   const [markdown, setMarkdown] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [cvId, setCvId] = useState<string | null>(initialCvId ?? null);
+  const [loading, setLoading] = useState(!isViewMode);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
   const [dismissing, setDismissing] = useState(false);
   const [error, setError] = useState('');
   const [mobileTab, setMobileTab] = useState<MobileTab>('preview');
@@ -69,14 +76,37 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss, onGoToHist
     setError('');
     setMarkdown(null);
     generateCv(buildRequest())
-      .then((res) => { setMarkdown(res.content); markCvGenerated(job.id); })
+      .then((res) => {
+        setMarkdown(res.content);
+        setCvId(res.cvId);
+        markCvGenerated(job.id);
+      })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }
 
   useEffect(() => {
-    requestCv();
+    if (isViewMode) {
+      setMarkdown(initialContent!);
+    } else {
+      requestCv();
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleSave() {
+    if (!markdown || !cvId) return;
+    setSaving(true);
+    setSaveMsg('');
+    try {
+      await updateCv(cvId, markdown);
+      setSaveMsg('salvo');
+      setTimeout(() => setSaveMsg(''), 2000);
+    } catch {
+      setSaveMsg('erro ao salvar');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleDownload() {
     if (!markdown) return;
@@ -97,13 +127,18 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss, onGoToHist
           <span className="cv-topbar-company">@ {job.company}</span>
         </span>
         <div className="cv-topbar-actions">
+          {markdown && !loading && cvId && (
+            <button className="cv-save-btn" onClick={handleSave} disabled={saving}>
+              {saving ? 'salvando...' : saveMsg || 'salvar'}
+            </button>
+          )}
           {markdown && !loading && (
             <button
               className="cv-download-btn"
               disabled={pdfLoading}
               onClick={handleDownload}
             >
-              {pdfLoading ? 'Gerando...' : 'Baixar PDF'}
+              {pdfLoading ? 'gerando...' : 'baixar PDF'}
             </button>
           )}
         </div>
@@ -114,7 +149,7 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss, onGoToHist
           <div className="loading-bar">
             <div className="loading-step">
               <div className="dot" />
-              gerando currículo com ia...
+              gerando curriculo com ia...
             </div>
             <div className="loading-step">
               <div className="dot" style={{ animationDelay: '0.3s' }} />

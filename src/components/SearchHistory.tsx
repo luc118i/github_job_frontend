@@ -171,10 +171,11 @@ interface FeedCardProps {
   linkedInData: LinkedInData | null;
   githubUsername: string | null;
   onGenerateCv: (job: JobFeedItem, profile: Profile) => void;
+  onViewCv: (job: JobFeedItem) => void;
   onDelete: (jobId: string) => void;
 }
 
-function FeedCard({ job, index, linkedInData, githubUsername, onGenerateCv, onDelete }: FeedCardProps) {
+function FeedCard({ job, index, linkedInData, githubUsername, onGenerateCv, onViewCv, onDelete }: FeedCardProps) {
   const [profileLoading, setProfileLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const isLinkedIn = !job.github_username;
@@ -235,6 +236,7 @@ function FeedCard({ job, index, linkedInData, githubUsername, onGenerateCv, onDe
         job={job}
         index={index}
         onGenerateCv={handleGenerateCv}
+        onViewCv={() => onViewCv(job)}
       />
     </div>
   );
@@ -246,6 +248,7 @@ interface SearchHistoryProps {
   linkedInData: LinkedInData | null;
   githubUsername: string | null;
   onGenerateCv: (job: JobFeedItem, profile: Profile) => void;
+  onViewCv: (job: JobFeedItem) => void;
 }
 
 const DEFAULT_FILTERS: HistoryFilters = {
@@ -257,7 +260,7 @@ const DEFAULT_FILTERS: HistoryFilters = {
   seen: 'all',
 };
 
-export function SearchHistory({ linkedInData, githubUsername, onGenerateCv }: SearchHistoryProps) {
+export function SearchHistory({ linkedInData, githubUsername, onGenerateCv, onViewCv }: SearchHistoryProps) {
   const [jobs, setJobs] = useState<JobFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -366,6 +369,7 @@ export function SearchHistory({ linkedInData, githubUsername, onGenerateCv }: Se
                     linkedInData={linkedInData}
                     githubUsername={githubUsername}
                     onGenerateCv={onGenerateCv}
+                    onViewCv={onViewCv}
                     onDelete={handleDelete}
                   />
                 ))}

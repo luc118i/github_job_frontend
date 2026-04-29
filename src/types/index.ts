@@ -131,3 +131,8 @@ export interface ProfessionSearchResult {
 export interface JobFeedItem extends JobRecord {
   github_username: string | null;
 }
+
+export interface CvRecord {
+  id: string;
+  content: string;
+}

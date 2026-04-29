@@ -12,6 +12,7 @@ interface ProfessionViewProps {
   onClear: () => void;
   onPreferencesChange: (p: UserPreferences) => void;
   onGenerateCv: (job: ProfessionJobRecord) => void;
+  onViewCv: (job: ProfessionJobRecord) => void;
   onGoToHistory: () => void;
 }
 
@@ -22,6 +23,7 @@ export function ProfessionView({
   onClear,
   onPreferencesChange,
   onGenerateCv,
+  onViewCv,
   onGoToHistory,
 }: ProfessionViewProps) {
   const { jobs, loading, error, profileSummary, tagFilter, blockedToday, setTagFilter, search, reset, hasSearched } =
@@ -87,6 +89,7 @@ export function ProfessionView({
                   index={i}
                   match={job.match}
                   onGenerateCv={() => onGenerateCv(job)}
+                  onViewCv={() => onViewCv(job)}
                 />
               ))
             )}
