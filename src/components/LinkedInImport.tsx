@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { LinkedInData } from '../types';
 import { importLinkedIn } from '../services/linkedin';
+import { LinkedInTutorialModal, useTutorialAutoOpen } from './LinkedInTutorialModal';
 
 interface LinkedInImportProps {
   data: LinkedInData | null;
@@ -11,7 +12,13 @@ interface LinkedInImportProps {
 export function LinkedInImport({ data, onImport, onClear }: LinkedInImportProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const shouldAutoOpen = useTutorialAutoOpen();
+
+  useEffect(() => {
+    if (shouldAutoOpen) setTutorialOpen(true);
+  }, [shouldAutoOpen]);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -45,28 +52,35 @@ export function LinkedInImport({ data, onImport, onClear }: LinkedInImportProps)
   }
 
   return (
-    <div className="li-import">
-      <button
-        className={`li-import-btn${loading ? ' loading' : ''}`}
-        onClick={() => inputRef.current?.click()}
-        disabled={loading}
-      >
-        {loading ? 'Processando...' : 'Importar LinkedIn (.pdf ou .zip)'}
-      </button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".pdf,.zip"
-        style={{ display: 'none' }}
-        onChange={handleFile}
-      />
-      {error ? (
-        <span className="li-import-error">{error}</span>
-      ) : (
-        <span className="li-import-hint">
-          PDF: perfil &gt; Mais &gt; Salvar como PDF &nbsp;·&nbsp; ZIP: Config &gt; Privacidade &gt; Obter cópia dos dados
-        </span>
-      )}
-    </div>
+    <>
+      <LinkedInTutorialModal open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
+
+      <div className="li-import">
+        <div className="li-import-row">
+          <button
+            className={`li-import-btn${loading ? ' loading' : ''}`}
+            onClick={() => inputRef.current?.click()}
+            disabled={loading}
+          >
+            {loading ? 'Processando...' : 'Importar LinkedIn (.pdf)'}
+          </button>
+          <button
+            className="li-tutorial-trigger"
+            onClick={() => setTutorialOpen(true)}
+            title="Como baixar o arquivo"
+          >
+            como baixar?
+          </button>
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".pdf,.zip"
+          style={{ display: 'none' }}
+          onChange={handleFile}
+        />
+        {error && <span className="li-import-error">{error}</span>}
+      </div>
+    </>
   );
 }

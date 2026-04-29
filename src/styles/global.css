@@ -2325,3 +2325,162 @@ h1 {
     font-size: 12px;
   }
 }
+
+/* ── LinkedIn Import row ── */
+
+.li-import-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.li-import-row .li-import-btn {
+  flex: 1;
+}
+
+.li-tutorial-trigger {
+  background: transparent;
+  border: none;
+  color: rgba(232,228,220,0.25);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+  transition: color 0.15s;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+}
+
+.li-tutorial-trigger:hover {
+  color: rgba(232,228,220,0.6);
+}
+
+/* ── LinkedIn Tutorial Modal ── */
+
+.li-tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.li-tutorial-modal {
+  background: #111118;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+}
+
+.li-tutorial-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.li-tutorial-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: rgba(232,228,220,0.6);
+}
+
+.li-tutorial-close {
+  background: transparent;
+  border: none;
+  color: rgba(232,228,220,0.35);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.li-tutorial-close:hover {
+  color: rgba(232,228,220,0.8);
+}
+
+.li-tutorial-steps {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.li-tutorial-step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.li-tutorial-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(124,58,237,0.2);
+  border: 1px solid rgba(124,58,237,0.4);
+  color: #c4b5fd;
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.li-tutorial-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.li-tutorial-step-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e8e4dc;
+}
+
+.li-tutorial-step-desc {
+  font-size: 12px;
+  color: rgba(232,228,220,0.5);
+  line-height: 1.55;
+}
+
+.li-tutorial-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.li-tutorial-btn {
+  background: #7c3aed;
+  border: none;
+  color: white;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  padding: 9px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+  letter-spacing: 0.04em;
+}
+
+.li-tutorial-btn:hover {
+  background: #6d28d9;
+}
