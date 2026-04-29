@@ -4,9 +4,10 @@ interface HeaderProps {
   currentUser: AuthUser | null;
   onLogout: () => void;
   onLoginClick: () => void;
+  onProfileClick: () => void;
 }
 
-export function Header({ currentUser, onLogout, onLoginClick }: HeaderProps) {
+export function Header({ currentUser, onLogout, onLoginClick, onProfileClick }: HeaderProps) {
   return (
     <header>
       <div className="header-row">
@@ -18,7 +19,9 @@ export function Header({ currentUser, onLogout, onLoginClick }: HeaderProps) {
         <div className="header-auth">
           {currentUser ? (
             <>
-              <span className="header-user">{currentUser.name ?? currentUser.email}</span>
+              <button className="header-user-btn" onClick={onProfileClick}>
+                {currentUser.name ?? currentUser.email}
+              </button>
               <button className="header-logout" onClick={onLogout}>sair</button>
             </>
           ) : (

@@ -13,6 +13,7 @@ import { CvEditor } from './components/CvEditor';
 import { ProfessionView } from './components/ProfessionView';
 import { PreferencesPanel } from './components/PreferencesPanel';
 import { AuthModal } from './components/AuthModal';
+import { UserProfile } from './components/UserProfile';
 import { Footer } from './components/Footer';
 import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
@@ -35,12 +36,12 @@ export default function App() {
   const { profile, jobs, loading, step, error, filter, setFilter, search, removeJob } = useJobSearch();
   const { preferences, setPreferences } = usePreferences();
 
-  // Restaura sessão ao carregar
   useEffect(() => {
     fetchMe().then(result => {
       if (!result) return;
       setCurrentUser(result.user);
       if (result.linkedInData) setLinkedInData(result.linkedInData);
+      if (result.user.github_username) setUsername(result.user.github_username);
     });
   }, []);
 
@@ -50,7 +51,6 @@ export default function App() {
       setPendingLinkedIn(data);
       setAuthOpen(true);
     } else {
-      // usuário logado: atualiza dados no servidor em background
       updateLinkedIn(data);
     }
   }
@@ -64,12 +64,18 @@ export default function App() {
     setAuthOpen(false);
     setPendingLinkedIn(null);
     if (liData) setLinkedInData(liData);
+    if (user.github_username) setUsername(user.github_username);
   }
 
   function handleLogout() {
     clearToken();
     setCurrentUser(null);
     setLinkedInData(null);
+  }
+
+  function handleProfileUpdate(updatedUser: AuthUser) {
+    setCurrentUser(updatedUser);
+    if (updatedUser.github_username) setUsername(updatedUser.github_username);
   }
 
   function openCv(job: JobRecord, cvProfile: Profile) {
@@ -110,7 +116,12 @@ export default function App() {
   return (
     <div className="app">
       <Background />
-      <Header currentUser={currentUser} onLogout={handleLogout} onLoginClick={() => setAuthOpen(true)} />
+      <Header
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onLoginClick={() => setAuthOpen(true)}
+        onProfileClick={() => setView('profile')}
+      />
 
       <AuthModal
         open={authOpen}
@@ -120,7 +131,7 @@ export default function App() {
       />
 
       <main>
-        <TabNav active={view} onChange={setView} />
+        <TabNav active={view} showProfile={!!currentUser} onChange={setView} />
 
         {view === 'outros' && (
           <ProfessionView
@@ -196,6 +207,14 @@ export default function App() {
               onGenerateCv={openCv}
             />
           </>
+        )}
+
+        {view === 'profile' && currentUser && (
+          <UserProfile
+            user={currentUser}
+            linkedInData={linkedInData}
+            onUpdate={handleProfileUpdate}
+          />
         )}
       </main>
       <Footer />

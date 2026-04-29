@@ -7,6 +7,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string | null;
+  github_username: string | null;
 }
 
 export interface AuthResult {
@@ -64,6 +65,22 @@ export async function fetchMe(): Promise<{ user: AuthUser; linkedInData: LinkedI
     return null;
   }
   return res.json();
+}
+
+export async function updateProfile(data: {
+  name?: string | null;
+  github_username?: string | null;
+}): Promise<AuthUser> {
+  const token = getToken();
+  if (!token) throw new Error('Não autenticado');
+  const res = await fetch(`${API_URL}/auth/profile`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.error ?? 'Erro ao salvar perfil');
+  return result.user;
 }
 
 export async function updateLinkedIn(linkedInData: LinkedInData): Promise<void> {

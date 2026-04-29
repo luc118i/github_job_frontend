@@ -1,11 +1,12 @@
-export type View = 'search' | 'history' | 'outros';
+export type View = 'search' | 'history' | 'outros' | 'profile';
 
 interface TabNavProps {
   active: View;
+  showProfile: boolean;
   onChange: (view: View) => void;
 }
 
-export function TabNav({ active, onChange }: TabNavProps) {
+export function TabNav({ active, showProfile, onChange }: TabNavProps) {
   return (
     <nav className="tab-nav">
       <button
@@ -26,6 +27,14 @@ export function TabNav({ active, onChange }: TabNavProps) {
       >
         histórico
       </button>
+      {showProfile && (
+        <button
+          className={`tab-btn ${active === 'profile' ? 'active' : ''}`}
+          onClick={() => onChange('profile')}
+        >
+          perfil
+        </button>
+      )}
     </nav>
   );
 }
