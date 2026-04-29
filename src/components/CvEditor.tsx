@@ -35,8 +35,8 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss }: CvEditor
     return () => document.removeEventListener('keydown', handler);
   }, [onBack]);
 
-  useEffect(() => {
-    const request: CvRequest = {
+  function buildRequest(): CvRequest {
+    return {
       job: {
         id: job.id,
         title: job.title,
@@ -60,11 +60,20 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss }: CvEditor
         education: linkedIn?.education ?? [],
       },
     };
+  }
 
-    generateCv(request)
+  function requestCv() {
+    setLoading(true);
+    setError('');
+    setMarkdown(null);
+    generateCv(buildRequest())
       .then((res) => setMarkdown(res.content))
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    requestCv();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleDownload() {
@@ -115,7 +124,13 @@ export function CvEditor({ job, profile, linkedIn, onBack, onDismiss }: CvEditor
 
       {error && (
         <div className="cv-page-loading">
-          <div className="error-msg">{error}</div>
+          <div className="cv-error-block">
+            <span className="cv-error-msg">{error}</span>
+            <div className="cv-error-actions">
+              <button className="cv-back-btn" onClick={requestCv}>tentar novamente</button>
+              <button className="cv-back-btn" onClick={onBack}>voltar</button>
+            </div>
+          </div>
         </div>
       )}
 

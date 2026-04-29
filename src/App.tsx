@@ -85,8 +85,8 @@ export default function App() {
   function openCvFromProfession(job: ProfessionJobRecord) {
     const syntheticProfile: Profile = {
       user: {
-        login: '',
-        name: linkedInData?.name ?? 'Candidato',
+        login: currentUser?.github_username ?? '',
+        name: linkedInData?.name ?? currentUser?.name ?? 'Candidato',
         bio: null,
         avatar_url: '',
         followers: 0,
@@ -204,6 +204,7 @@ export default function App() {
             </div>
             <SearchHistory
               linkedInData={linkedInData}
+              githubUsername={currentUser?.github_username ?? null}
               onGenerateCv={openCv}
             />
           </>

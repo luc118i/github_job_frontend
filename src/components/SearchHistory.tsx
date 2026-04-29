@@ -169,11 +169,12 @@ interface FeedCardProps {
   job: JobFeedItem;
   index: number;
   linkedInData: LinkedInData | null;
+  githubUsername: string | null;
   onGenerateCv: (job: JobFeedItem, profile: Profile) => void;
   onDelete: (jobId: string) => void;
 }
 
-function FeedCard({ job, index, linkedInData, onGenerateCv, onDelete }: FeedCardProps) {
+function FeedCard({ job, index, linkedInData, githubUsername, onGenerateCv, onDelete }: FeedCardProps) {
   const [profileLoading, setProfileLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const isLinkedIn = !job.github_username;
@@ -182,7 +183,7 @@ function FeedCard({ job, index, linkedInData, onGenerateCv, onDelete }: FeedCard
     if (isLinkedIn) {
       const syntheticProfile: Profile = {
         user: {
-          login: '',
+          login: githubUsername ?? '',
           name: linkedInData?.name ?? 'Candidato',
           bio: null,
           avatar_url: '',
@@ -243,6 +244,7 @@ function FeedCard({ job, index, linkedInData, onGenerateCv, onDelete }: FeedCard
 
 interface SearchHistoryProps {
   linkedInData: LinkedInData | null;
+  githubUsername: string | null;
   onGenerateCv: (job: JobFeedItem, profile: Profile) => void;
 }
 
@@ -255,7 +257,7 @@ const DEFAULT_FILTERS: HistoryFilters = {
   seen: 'all',
 };
 
-export function SearchHistory({ linkedInData, onGenerateCv }: SearchHistoryProps) {
+export function SearchHistory({ linkedInData, githubUsername, onGenerateCv }: SearchHistoryProps) {
   const [jobs, setJobs] = useState<JobFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -362,6 +364,7 @@ export function SearchHistory({ linkedInData, onGenerateCv }: SearchHistoryProps
                     job={job}
                     index={jobIndex.get(job.id) ?? 0}
                     linkedInData={linkedInData}
+                    githubUsername={githubUsername}
                     onGenerateCv={onGenerateCv}
                     onDelete={handleDelete}
                   />

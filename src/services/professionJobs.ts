@@ -11,6 +11,9 @@ export async function fetchProfessionJobs(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ linkedIn, preferences }),
   });
-  if (!res.ok) throw new Error('Erro ao buscar vagas');
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao buscar vagas');
+  }
   return res.json() as Promise<ProfessionSearchResult>;
 }

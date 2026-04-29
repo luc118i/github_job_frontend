@@ -25,7 +25,10 @@ export async function searchJobs(
     }),
   });
 
-  if (!res.ok) throw new Error('Erro ao buscar vagas');
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao buscar vagas');
+  }
   return res.json() as Promise<{ jobs: JobRecord[]; searchId: string }>;
 }
 
