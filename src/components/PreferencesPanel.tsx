@@ -10,6 +10,12 @@ interface PreferencesPanelProps {
 type Modality = UserPreferences['modality'];
 type Level = UserPreferences['level'];
 
+const PERIOD_OPTIONS: { value: number; label: string }[] = [
+  { value: 30, label: '30 dias' },
+  { value: 60, label: '60 dias' },
+  { value: 90, label: '3 meses' },
+];
+
 const MODALITY_OPTIONS: { value: Modality; label: string }[] = [
   { value: 'any', label: 'Qualquer' },
   { value: 'remote', label: 'Remoto' },
@@ -32,6 +38,7 @@ function summaryText(p: UserPreferences): string {
   else if (p.salaryMin) parts.push(`a partir de R$ ${p.salaryMin}`);
   else if (p.salaryMax) parts.push(`até R$ ${p.salaryMax}`);
   if (p.level !== 'any') parts.push(p.level);
+  if (p.maxAgeDays !== 90) parts.push(p.maxAgeDays === 30 ? '30 dias' : '60 dias');
   return parts.join(' · ');
 }
 
@@ -118,6 +125,22 @@ export function PreferencesPanel({ preferences, onChange, defaultOpen = false }:
                   type="button"
                   className={`prefs-chip ${preferences.level === o.value ? 'active' : ''}`}
                   onClick={() => set('level', o.value)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="prefs-row">
+            <span className="prefs-label">Periodo</span>
+            <div className="prefs-chips">
+              {PERIOD_OPTIONS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  className={`prefs-chip ${preferences.maxAgeDays === o.value ? 'active' : ''}`}
+                  onClick={() => set('maxAgeDays', o.value)}
                 >
                   {o.label}
                 </button>

@@ -9,6 +9,7 @@ const DEFAULT: UserPreferences = {
   salaryMin: '',
   salaryMax: '',
   level: 'any',
+  maxAgeDays: 90,
 };
 
 export function usePreferences() {
