@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserPreferences } from '../types';
 
 async function detectCity(): Promise<string> {
@@ -59,6 +59,16 @@ function summaryText(p: UserPreferences): string {
 export function PreferencesPanel({ preferences, onChange, defaultOpen = false }: PreferencesPanelProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [detectingLocation, setDetectingLocation] = useState(false);
+
+  useEffect(() => {
+    if (preferences.location || preferences.modality === 'remote' || !navigator.geolocation) return;
+    setDetectingLocation(true);
+    detectCity()
+      .then((city) => { if (city) onChange({ ...preferences, location: city }); })
+      .catch(() => {})
+      .finally(() => setDetectingLocation(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function set<K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) {
     onChange({ ...preferences, [key]: value });

@@ -143,10 +143,14 @@ export function ProfessionView({
           <>
             <button
               className="search-btn"
-              disabled={!linkedIn}
+              disabled={!linkedIn || !(preferences.modality === 'remote' || !!preferences.location)}
               onClick={handleSearch}
             >
-              {linkedIn ? 'buscar vagas' : 'importe o LinkedIn para continuar'}
+              {!linkedIn
+                ? 'importe o LinkedIn para continuar'
+                : !(preferences.modality === 'remote' || !!preferences.location)
+                  ? 'informe sua localização para buscar'
+                  : 'buscar vagas'}
             </button>
             {error && <div className="error-msg">{error}</div>}
           </>

@@ -195,6 +195,7 @@ export default function App() {
                   error={error}
                   blocked={githubBlocked}
                   remaining={githubRemaining}
+                  locationReady={preferences.modality === 'remote' || !!preferences.location}
                   onChange={setUsername}
                   onSearch={() => search(username, preferences)}
                   onGoToHistory={() => setView('history')}

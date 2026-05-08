@@ -4,12 +4,13 @@ interface SearchFormProps {
   error: string;
   blocked: boolean;
   remaining: number;
+  locationReady: boolean;
   onChange: (value: string) => void;
   onSearch: () => void;
   onGoToHistory: () => void;
 }
 
-export function SearchForm({ username, loading, error, blocked, remaining, onChange, onSearch, onGoToHistory }: SearchFormProps) {
+export function SearchForm({ username, loading, error, blocked, remaining, locationReady, onChange, onSearch, onGoToHistory }: SearchFormProps) {
   if (blocked) {
     return (
       <div className="search-blocked">
@@ -18,6 +19,8 @@ export function SearchForm({ username, loading, error, blocked, remaining, onCha
       </div>
     );
   }
+
+  const canSearch = !!username.trim() && locationReady;
 
   return (
     <>
@@ -28,16 +31,16 @@ export function SearchForm({ username, loading, error, blocked, remaining, onCha
           placeholder="seu-usuario"
           value={username}
           onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && onSearch()}
+          onKeyDown={(e) => e.key === 'Enter' && canSearch && onSearch()}
           disabled={loading}
         />
       </div>
       <button
         className="search-btn"
         onClick={onSearch}
-        disabled={loading || !username.trim()}
+        disabled={loading || !canSearch}
       >
-        {loading ? 'buscando...' : 'buscar vagas'}
+        {loading ? 'buscando...' : !locationReady ? 'informe sua localização para buscar' : 'buscar vagas'}
       </button>
       {remaining < 5 && !loading && (
         <p className="searches-remaining">{remaining} {remaining === 1 ? 'busca restante' : 'buscas restantes'} hoje</p>
