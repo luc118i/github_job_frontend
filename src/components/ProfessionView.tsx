@@ -4,6 +4,7 @@ import { PreferencesPanel } from './PreferencesPanel';
 import { TagFilterBar } from './TagFilterBar';
 import { JobCard } from './JobCard';
 import { useProfessionSearch } from '../hooks/useProfessionSearch';
+import { blockKeyword, likeKeyword } from '../utils/jobPreferences';
 
 interface ProfessionViewProps {
   linkedIn: LinkedInData | null;
@@ -26,7 +27,7 @@ export function ProfessionView({
   onViewCv,
   onGoToHistory,
 }: ProfessionViewProps) {
-  const { jobs, loading, error, profileSummary, tagFilter, blockedToday, setTagFilter, search, reset, hasSearched } =
+  const { jobs, loading, error, profileSummary, tagFilter, blockedToday, setTagFilter, search, reset, removeJob, hasSearched } =
     useProfessionSearch();
 
   const allTags = [...new Set(jobs.flatMap((j) => j.skills))];
@@ -90,6 +91,8 @@ export function ProfessionView({
                   match={job.match}
                   onGenerateCv={() => onGenerateCv(job)}
                   onViewCv={() => onViewCv(job)}
+                  onLike={(_j, category) => likeKeyword(category)}
+                  onBlock={(_j, category) => { blockKeyword(category); removeJob(job.id); }}
                 />
               ))
             )}

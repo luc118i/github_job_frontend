@@ -14,6 +14,7 @@ interface UseProfessionSearchReturn {
   setTagFilter: (tag: string) => void;
   search: (linkedIn: LinkedInData, preferences?: UserPreferences) => Promise<void>;
   reset: () => void;
+  removeJob: (id: string) => void;
   hasSearched: boolean;
 }
 
@@ -60,5 +61,9 @@ export function useProfessionSearch(): UseProfessionSearchReturn {
     setTagFilter('all');
   }
 
-  return { jobs, loading, error, profileSummary, tagFilter, blockedToday, remaining, setTagFilter, search, reset, hasSearched };
+  function removeJob(id: string) {
+    setJobs((prev) => prev.filter((j) => j.id !== id));
+  }
+
+  return { jobs, loading, error, profileSummary, tagFilter, blockedToday, remaining, setTagFilter, search, reset, removeJob, hasSearched };
 }

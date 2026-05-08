@@ -4,6 +4,7 @@ import { fetchJobFeed } from '../services/searches';
 import { fetchGitHubUser, fetchGitHubRepos, extractSkills } from '../services/github';
 import { dismissJob } from '../services/jobs';
 import { JobCard } from './JobCard';
+import { blockKeyword, likeKeyword } from '../utils/jobPreferences';
 
 type DateGroup = 'hoje' | 'semana' | 'anteriores';
 type LevelFilter = 'all' | 'Junior' | 'Pleno' | 'Senior';
@@ -237,6 +238,8 @@ function FeedCard({ job, index, linkedInData, githubUsername, onGenerateCv, onVi
         index={index}
         onGenerateCv={handleGenerateCv}
         onViewCv={() => onViewCv(job)}
+        onLike={(_j, category) => likeKeyword(category)}
+        onBlock={(_j, category) => { blockKeyword(category); onDelete(job.id); }}
       />
     </div>
   );

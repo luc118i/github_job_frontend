@@ -2286,6 +2286,19 @@ h1 {
     flex-wrap: wrap;
   }
 
+  /* Job feedback buttons */
+  .job-feedback-row {
+    gap: 6px;
+  }
+
+  .feedback-btn {
+    flex: 1;
+    padding: 10px 8px;
+    font-size: 13px;
+    min-height: 44px;
+    text-align: center;
+  }
+
   /* LinkedIn import */
   .li-import-btn {
     padding: 10px 16px;
