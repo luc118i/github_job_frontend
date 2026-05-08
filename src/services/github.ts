@@ -8,7 +8,8 @@ export async function fetchGitHubUser(username: string): Promise<GitHubUser> {
 
 export async function fetchGitHubRepos(username: string): Promise<GitHubRepo[]> {
   const res = await fetch(
-    `https://api.github.com/users/${username}/repos?sort=updated&per_page=20`
+    `https://api.github.com/users/${username}/repos?sort=updated&per_page=20`,
+    { headers: { Accept: 'application/vnd.github+json' } }
   );
   if (!res.ok) return [];
   return res.json() as Promise<GitHubRepo[]>;
@@ -24,4 +25,17 @@ export function extractSkills(repos: GitHubRepo[]): string[] {
   return Object.entries(langCount)
     .sort((a, b) => b[1] - a[1])
     .map(([lang]) => lang);
+}
+
+export interface RepoContext {
+  name: string;
+  description: string | null;
+  topics: string[];
+}
+
+export function extractRepoContext(repos: GitHubRepo[]): RepoContext[] {
+  return repos
+    .filter((r) => !r.fork)
+    .slice(0, 6)
+    .map((r) => ({ name: r.name, description: r.description, topics: r.topics ?? [] }));
 }

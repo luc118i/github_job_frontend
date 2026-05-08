@@ -1,4 +1,5 @@
 import { JobRecord, Profile, UserPreferences } from '../types';
+import { extractRepoContext } from './github';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
@@ -11,6 +12,8 @@ export async function searchJobs(
     .slice(0, 5)
     .map((r) => r.name);
 
+  const repoContext = extractRepoContext(profile.repos);
+
   const res = await fetch(`${API_URL}/jobs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -20,6 +23,7 @@ export async function searchJobs(
       bio: profile.user.bio,
       skills: profile.skills,
       topRepos,
+      repoContext,
       followers: profile.user.followers,
       preferences,
     }),

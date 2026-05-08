@@ -45,6 +45,7 @@ export interface GitHubRepo {
   description: string | null;
   html_url: string;
   stargazers_count: number;
+  topics: string[];
 }
 
 export interface Profile {
