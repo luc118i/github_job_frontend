@@ -1,5 +1,6 @@
 import { JobRecord, Profile, UserPreferences } from '../types';
 import { extractRepoContext } from './github';
+import { getBlockedKeywords, getLikedKeywords } from '../utils/jobPreferences';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
@@ -26,6 +27,8 @@ export async function searchJobs(
       repoContext,
       followers: profile.user.followers,
       preferences,
+      blockedKeywords: getBlockedKeywords(),
+      likedKeywords: getLikedKeywords(),
     }),
   });
 

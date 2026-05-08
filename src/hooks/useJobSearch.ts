@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Profile, JobRecord, Step, LevelFilter, UserPreferences } from '../types';
 import { fetchGitHubUser, fetchGitHubRepos, extractSkills } from '../services/github';
 import { searchJobs } from '../services/jobs';
-import { canSearch, markSearched } from '../utils/dailyLimit';
+import { canSearch, markSearched, remainingSearches } from '../utils/dailyLimit';
 
 interface UseJobSearchReturn {
   profile: Profile | null;
@@ -12,6 +12,7 @@ interface UseJobSearchReturn {
   error: string;
   filter: LevelFilter;
   blockedToday: boolean;
+  remaining: number;
   setFilter: (level: LevelFilter) => void;
   search: (username: string, preferences?: UserPreferences) => Promise<void>;
   removeJob: (id: string) => void;
@@ -25,6 +26,7 @@ export function useJobSearch(): UseJobSearchReturn {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<LevelFilter>('all');
   const [blockedToday, setBlockedToday] = useState(!canSearch('github'));
+  const [remaining, setRemaining] = useState(remainingSearches('github'));
 
   async function search(username: string, preferences?: UserPreferences) {
     if (!username.trim()) return;
@@ -51,7 +53,8 @@ export function useJobSearch(): UseJobSearchReturn {
       const { jobs: foundJobs } = await searchJobs(currentProfile, preferences);
       setJobs(foundJobs.filter((j) => !j.dismissed));
       markSearched('github');
-      setBlockedToday(true);
+      setRemaining(remainingSearches('github'));
+      setBlockedToday(!canSearch('github'));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro ao buscar perfil.');
     } finally {
@@ -63,5 +66,5 @@ export function useJobSearch(): UseJobSearchReturn {
     setJobs((prev) => prev.filter((j) => j.id !== id));
   }
 
-  return { profile, jobs, loading, step, error, filter, blockedToday, setFilter, search, removeJob };
+  return { profile, jobs, loading, step, error, filter, blockedToday, remaining, setFilter, search, removeJob };
 }

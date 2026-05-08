@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { LinkedInData, ProfessionJobRecord, UserPreferences } from '../types';
 import { fetchProfessionJobs } from '../services/professionJobs';
-import { canSearch, markSearched } from '../utils/dailyLimit';
+import { canSearch, markSearched, remainingSearches } from '../utils/dailyLimit';
 
 interface UseProfessionSearchReturn {
   jobs: ProfessionJobRecord[];
@@ -10,6 +10,7 @@ interface UseProfessionSearchReturn {
   profileSummary: string;
   tagFilter: string;
   blockedToday: boolean;
+  remaining: number;
   setTagFilter: (tag: string) => void;
   search: (linkedIn: LinkedInData, preferences?: UserPreferences) => Promise<void>;
   reset: () => void;
@@ -24,6 +25,7 @@ export function useProfessionSearch(): UseProfessionSearchReturn {
   const [tagFilter, setTagFilter] = useState('all');
   const [hasSearched, setHasSearched] = useState(false);
   const [blockedToday, setBlockedToday] = useState(!canSearch('profession'));
+  const [remaining, setRemaining] = useState(remainingSearches('profession'));
 
   async function search(linkedIn: LinkedInData, preferences?: UserPreferences) {
     if (!canSearch('profession')) {
@@ -41,7 +43,8 @@ export function useProfessionSearch(): UseProfessionSearchReturn {
       setProfileSummary(result.profileSummary);
       setHasSearched(true);
       markSearched('profession');
-      setBlockedToday(true);
+      setRemaining(remainingSearches('profession'));
+      setBlockedToday(!canSearch('profession'));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro ao buscar vagas');
     } finally {
@@ -57,5 +60,5 @@ export function useProfessionSearch(): UseProfessionSearchReturn {
     setTagFilter('all');
   }
 
-  return { jobs, loading, error, profileSummary, tagFilter, blockedToday, setTagFilter, search, reset, hasSearched };
+  return { jobs, loading, error, profileSummary, tagFilter, blockedToday, remaining, setTagFilter, search, reset, hasSearched };
 }

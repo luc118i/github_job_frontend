@@ -18,6 +18,7 @@ import { Footer } from './components/Footer';
 import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
 import { AuthUser, fetchMe, clearToken, updateLinkedIn } from './services/auth';
+import { blockKeyword, likeKeyword } from './utils/jobPreferences';
 import { fetchCvByJobId } from './services/cv';
 
 interface CvState {
@@ -36,7 +37,7 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingLinkedIn, setPendingLinkedIn] = useState<LinkedInData | null>(null);
 
-  const { profile, jobs, loading, step, error, filter, blockedToday: githubBlocked, setFilter, search, removeJob } = useJobSearch();
+  const { profile, jobs, loading, step, error, filter, blockedToday: githubBlocked, remaining: githubRemaining, setFilter, search, removeJob } = useJobSearch();
   const { preferences, setPreferences } = usePreferences();
 
   useEffect(() => {
@@ -193,6 +194,7 @@ export default function App() {
                   loading={loading}
                   error={error}
                   blocked={githubBlocked}
+                  remaining={githubRemaining}
                   onChange={setUsername}
                   onSearch={() => search(username, preferences)}
                   onGoToHistory={() => setView('history')}
@@ -211,6 +213,8 @@ export default function App() {
                   onFilterChange={setFilter}
                   onGenerateCv={(job) => profile && openCv(job, profile)}
                   onViewCv={(job) => openExistingCv(job)}
+                  onLike={(_job, category) => likeKeyword(category)}
+                  onBlock={(job, category) => { blockKeyword(category); removeJob(job.id); }}
                 />
                 <div className="results-history-bar">
                   <button className="history-link-btn" onClick={() => setView('history')}>

@@ -1,6 +1,20 @@
 import { useState } from 'react';
 import { UserPreferences } from '../types';
 
+async function detectCity(): Promise<string> {
+  const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
+  );
+  const { latitude, longitude } = pos.coords;
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=pt-BR`
+  );
+  const data = await res.json() as { address?: Record<string, string> };
+  const city = data.address?.city ?? data.address?.town ?? data.address?.municipality ?? '';
+  const state = data.address?.state ?? '';
+  return city ? `${city}, ${state}` : state;
+}
+
 interface PreferencesPanelProps {
   preferences: UserPreferences;
   onChange: (p: UserPreferences) => void;
@@ -44,9 +58,26 @@ function summaryText(p: UserPreferences): string {
 
 export function PreferencesPanel({ preferences, onChange, defaultOpen = false }: PreferencesPanelProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const [detectingLocation, setDetectingLocation] = useState(false);
 
   function set<K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) {
     onChange({ ...preferences, [key]: value });
+  }
+
+  async function handleOpen() {
+    const next = !open;
+    setOpen(next);
+    if (next && !preferences.location && preferences.modality !== 'remote' && navigator.geolocation) {
+      setDetectingLocation(true);
+      try {
+        const city = await detectCity();
+        if (city) onChange({ ...preferences, location: city });
+      } catch {
+        // permissão negada ou timeout — silencioso, usuário preenche manualmente
+      } finally {
+        setDetectingLocation(false);
+      }
+    }
   }
 
   const summary = summaryText(preferences);
@@ -56,7 +87,7 @@ export function PreferencesPanel({ preferences, onChange, defaultOpen = false }:
     <div className="prefs-panel">
       <button
         className={`prefs-toggle ${open ? 'open' : ''} ${hasPrefs ? 'has-prefs' : ''}`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleOpen}
         type="button"
       >
         <span className="prefs-toggle-label">
@@ -88,10 +119,10 @@ export function PreferencesPanel({ preferences, onChange, defaultOpen = false }:
             <input
               className="prefs-input"
               type="text"
-              placeholder="ex: São Paulo, SP"
+              placeholder={detectingLocation ? 'detectando...' : 'ex: São Paulo, SP'}
               value={preferences.location}
               onChange={(e) => set('location', e.target.value)}
-              disabled={preferences.modality === 'remote'}
+              disabled={preferences.modality === 'remote' || detectingLocation}
             />
           </div>
 

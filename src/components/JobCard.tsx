@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { JobRecord, LinkStatus } from '../types';
 import { markJobSeen } from '../services/jobs';
 import { isCvGenerated } from '../utils/dailyLimit';
+import { inferCategory } from '../utils/jobPreferences';
 
 const LINK_STATUS: Record<LinkStatus, { label: string; className: string } | null> = {
   trusted:    { label: 'verificado',     className: 'link-trusted' },
@@ -16,12 +17,15 @@ interface JobCardProps {
   match?: number;
   onGenerateCv?: (job: JobRecord) => void;
   onViewCv?: (job: JobRecord) => void;
+  onLike?: (job: JobRecord, category: string) => void;
+  onBlock?: (job: JobRecord, category: string) => void;
 }
 
-export function JobCard({ job, index, match, onGenerateCv, onViewCv }: JobCardProps) {
+export function JobCard({ job, index, match, onGenerateCv, onViewCv, onLike, onBlock }: JobCardProps) {
   const cvDone = isCvGenerated(job.id);
   const [expanded, setExpanded] = useState(false);
   const [seen, setSeen] = useState(job.seen);
+  const [feedback, setFeedback] = useState<'liked' | 'blocked' | null>(null);
 
   function handleToggle() {
     const next = !expanded;
@@ -32,11 +36,27 @@ export function JobCard({ job, index, match, onGenerateCv, onViewCv }: JobCardPr
     }
   }
 
+  function handleLike(e: React.MouseEvent) {
+    e.stopPropagation();
+    const category = inferCategory(job.title);
+    setFeedback('liked');
+    onLike?.(job, category);
+  }
+
+  function handleBlock(e: React.MouseEvent) {
+    e.stopPropagation();
+    const category = inferCategory(job.title);
+    setFeedback('blocked');
+    onBlock?.(job, category);
+  }
+
   const linkMeta = LINK_STATUS[job.link_status];
+
+  if (feedback === 'blocked') return null;
 
   return (
     <div
-      className={`job-card ${seen ? 'job-seen' : 'job-unseen'}`}
+      className={`job-card ${seen ? 'job-seen' : 'job-unseen'} ${feedback === 'liked' ? 'job-liked' : ''}`}
       style={{ animationDelay: `${index * 80}ms`, cursor: 'pointer' }}
       onClick={handleToggle}
     >
@@ -67,6 +87,29 @@ export function JobCard({ job, index, match, onGenerateCv, onViewCv }: JobCardPr
           <span key={s} className="skill-tag">{s}</span>
         ))}
       </div>
+
+      {(onLike || onBlock) && (
+        <div className="job-feedback-row" onClick={(e) => e.stopPropagation()}>
+          {onBlock && (
+            <button
+              className="feedback-btn feedback-block"
+              onClick={handleBlock}
+              title={`Menos vagas de ${inferCategory(job.title)}`}
+            >
+              ✕ menos assim
+            </button>
+          )}
+          {onLike && (
+            <button
+              className={`feedback-btn feedback-like ${feedback === 'liked' ? 'active' : ''}`}
+              onClick={handleLike}
+              title={`Mais vagas de ${inferCategory(job.title)}`}
+            >
+              ♥ mais assim
+            </button>
+          )}
+        </div>
+      )}
 
       {expanded && (
         <div className="job-details">
