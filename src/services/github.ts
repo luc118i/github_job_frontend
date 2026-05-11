@@ -2,7 +2,9 @@ import { GitHubUser, GitHubRepo } from '../types';
 
 export async function fetchGitHubUser(username: string): Promise<GitHubUser> {
   const res = await fetch(`https://api.github.com/users/${username}`);
-  if (!res.ok) throw new Error('Usuário não encontrado no GitHub');
+  if (res.status === 404) throw new Error(`Usuário "${username}" não encontrado no GitHub. Verifique o nome digitado.`);
+  if (res.status === 403) throw new Error('Limite de requisições do GitHub atingido. Tente novamente em alguns minutos.');
+  if (!res.ok) throw new Error('Erro ao buscar perfil no GitHub. Tente novamente.');
   return res.json() as Promise<GitHubUser>;
 }
 

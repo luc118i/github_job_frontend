@@ -54,7 +54,7 @@ export function LinkAnalysisView({ profile, linkedIn, onGenerateCv }: LinkAnalys
   async function handleAnalyze() {
     const trimmed = url.trim();
     if (!trimmed.startsWith('http')) {
-      setError('Cole uma URL valida da vaga (comecando com https://)');
+      setError('Cole uma URL válida da vaga (começando com https://)');
       return;
     }
     setStep('loading');

@@ -35,7 +35,10 @@ export async function fetchCvByJobId(jobId: string): Promise<CvRecord> {
   const res = await fetch(`${API_URL}/cv/job/${jobId}`, {
     headers: authHeaders(),
   });
-  if (!res.ok) throw new Error('CV não encontrado');
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'CV não encontrado para esta vaga');
+  }
   return res.json() as Promise<CvRecord>;
 }
 
@@ -45,5 +48,8 @@ export async function updateCv(cvId: string, content: string): Promise<void> {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify({ content }),
   });
-  if (!res.ok) throw new Error('Erro ao salvar CV');
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao salvar o CV. Tente novamente.');
+  }
 }
