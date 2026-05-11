@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { JobRecord, LinkedInData, Profile, ProfessionJobRecord } from './types';
 import { Background } from './components/Background';
 import { Header } from './components/Header';
@@ -8,14 +8,16 @@ import { SearchForm } from './components/SearchForm';
 import { LoadingSteps } from './components/LoadingSteps';
 import { ProfileCard } from './components/ProfileCard';
 import { JobList } from './components/JobList';
-import { KanbanBoard } from './components/KanbanBoard';
-import { CvEditor } from './components/CvEditor';
 import { ProfessionView } from './components/ProfessionView';
-import { LinkAnalysisView } from './components/LinkAnalysisView';
 import { PreferencesPanel } from './components/PreferencesPanel';
 import { AuthModal } from './components/AuthModal';
-import { UserProfile } from './components/UserProfile';
 import { Footer } from './components/Footer';
+
+// Heavy components — loaded on demand only
+const CvEditor       = lazy(() => import('./components/CvEditor').then(m => ({ default: m.CvEditor })));
+const KanbanBoard    = lazy(() => import('./components/KanbanBoard').then(m => ({ default: m.KanbanBoard })));
+const LinkAnalysisView = lazy(() => import('./components/LinkAnalysisView').then(m => ({ default: m.LinkAnalysisView })));
+const UserProfile    = lazy(() => import('./components/UserProfile').then(m => ({ default: m.UserProfile })));
 import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
 import { AuthUser, fetchMe, clearToken, updateLinkedIn } from './services/auth';
@@ -119,16 +121,18 @@ export default function App() {
 
   if (cvState) {
     return (
-      <CvEditor
-        job={cvState.job}
-        profile={cvState.profile}
-        linkedIn={linkedInData}
-        onBack={() => setCvState(null)}
-        onGoToHistory={() => { setCvState(null); setView('history'); }}
-        onDismiss={(jobId) => { removeJob(jobId); setCvState(null); }}
-        initialCvId={cvState.existingCvId}
-        initialContent={cvState.existingContent}
-      />
+      <Suspense fallback={<div className="cv-page-loading"><div className="loading-bar"><div className="loading-step"><div className="dot" />carregando editor...</div></div></div>}>
+        <CvEditor
+          job={cvState.job}
+          profile={cvState.profile}
+          linkedIn={linkedInData}
+          onBack={() => setCvState(null)}
+          onGoToHistory={() => { setCvState(null); setView('history'); }}
+          onDismiss={(jobId) => { removeJob(jobId); setCvState(null); }}
+          initialCvId={cvState.existingCvId}
+          initialContent={cvState.existingContent}
+        />
+      </Suspense>
     );
   }
 
@@ -228,30 +232,32 @@ export default function App() {
           </>
         )}
 
-        {view === 'analise' && (
-          <LinkAnalysisView
-            profile={profile}
-            linkedIn={linkedInData}
-            onGenerateCv={(job, cvProfile) => setCvState({ job, profile: cvProfile })}
-          />
-        )}
+        <Suspense fallback={<div className="loading-bar" style={{ marginTop: 48 }}><div className="loading-step"><div className="dot" />carregando...</div></div>}>
+          {view === 'analise' && (
+            <LinkAnalysisView
+              profile={profile}
+              linkedIn={linkedInData}
+              onGenerateCv={(job, cvProfile) => setCvState({ job, profile: cvProfile })}
+            />
+          )}
 
-        {view === 'history' && (
-          <KanbanBoard
-            linkedInData={linkedInData}
-            githubUsername={currentUser?.github_username ?? null}
-            onGenerateCv={openCv}
-            onViewCv={(job) => openExistingCv(job)}
-          />
-        )}
+          {view === 'history' && (
+            <KanbanBoard
+              linkedInData={linkedInData}
+              githubUsername={currentUser?.github_username ?? null}
+              onGenerateCv={openCv}
+              onViewCv={(job) => openExistingCv(job)}
+            />
+          )}
 
-        {view === 'profile' && currentUser && (
-          <UserProfile
-            user={currentUser}
-            linkedInData={linkedInData}
-            onUpdate={handleProfileUpdate}
-          />
-        )}
+          {view === 'profile' && currentUser && (
+            <UserProfile
+              user={currentUser}
+              linkedInData={linkedInData}
+              onUpdate={handleProfileUpdate}
+            />
+          )}
+        </Suspense>
       </main>
       <Footer />
     </div>
