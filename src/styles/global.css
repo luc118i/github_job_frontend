@@ -263,6 +263,50 @@ h1 {
 .search-btn:hover:not(:disabled) { background: #6d28d9; }
 .search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* countdown variant — higher specificity to override :disabled opacity */
+.search-btn.search-btn--countdown,
+.search-btn.search-btn--countdown:disabled {
+  background: rgba(255,255,255,0.025);
+  color: rgba(232,228,220,0.38);
+  opacity: 1;
+  cursor: not-allowed;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.search-limit-msg {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 4px;
+  font-size: 12px;
+  color: rgba(232,228,220,0.28);
+}
+
+.search-limit-history {
+  background: transparent;
+  border: none;
+  color: rgba(232,228,220,0.38);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+  letter-spacing: 0.03em;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(232,228,220,0.15);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.search-limit-history:hover { color: rgba(232,228,220,0.65); }
+
 .error-msg {
   margin-top: 4px;
   padding: 12px 16px;

@@ -1,3 +1,5 @@
+import { useCountdown } from '../hooks/useCountdown';
+
 interface SearchFormProps {
   username: string;
   loading: boolean;
@@ -11,16 +13,15 @@ interface SearchFormProps {
 }
 
 export function SearchForm({ username, loading, error, blocked, remaining, locationReady, onChange, onSearch, onGoToHistory }: SearchFormProps) {
-  if (blocked) {
-    return (
-      <div className="search-blocked">
-        <p className="search-blocked-msg">Você atingiu o limite de buscas hoje. Volte amanha para novas buscas.</p>
-        <button className="history-link-btn" onClick={onGoToHistory}>Ver historico de vagas</button>
-      </div>
-    );
-  }
+  const countdown = useCountdown(blocked);
 
-  const canSearch = !!username.trim() && locationReady;
+  const canSearch = !blocked && !!username.trim() && locationReady;
+
+  let btnLabel: string;
+  if (loading)             btnLabel = 'buscando...';
+  else if (blocked)        btnLabel = `disponível em ${countdown}`;
+  else if (!locationReady) btnLabel = 'informe sua localização para buscar';
+  else                     btnLabel = 'buscar vagas';
 
   return (
     <>
@@ -32,19 +33,33 @@ export function SearchForm({ username, loading, error, blocked, remaining, locat
           value={username}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && canSearch && onSearch()}
-          disabled={loading}
+          disabled={loading || blocked}
         />
       </div>
+
       <button
-        className="search-btn"
+        className={`search-btn${blocked ? ' search-btn--countdown' : ''}`}
         onClick={onSearch}
         disabled={loading || !canSearch}
       >
-        {loading ? 'buscando...' : !locationReady ? 'informe sua localização para buscar' : 'buscar vagas'}
+        {btnLabel}
       </button>
-      {remaining < 5 && !loading && (
-        <p className="searches-remaining">{remaining} {remaining === 1 ? 'busca restante' : 'buscas restantes'} hoje</p>
+
+      {blocked && (
+        <div className="search-limit-msg">
+          <span>Limite diário atingido. Recarrega à meia-noite.</span>
+          <button className="search-limit-history" onClick={onGoToHistory}>
+            Ver histórico →
+          </button>
+        </div>
       )}
+
+      {!blocked && remaining < 5 && !loading && (
+        <p className="searches-remaining">
+          {remaining} {remaining === 1 ? 'busca restante' : 'buscas restantes'} hoje
+        </p>
+      )}
+
       {error && <div className="error-msg">{error}</div>}
     </>
   );

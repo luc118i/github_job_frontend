@@ -4,6 +4,7 @@ import { PreferencesPanel } from './PreferencesPanel';
 import { TagFilterBar } from './TagFilterBar';
 import { JobCard } from './JobCard';
 import { useProfessionSearch } from '../hooks/useProfessionSearch';
+import { useCountdown } from '../hooks/useCountdown';
 import { blockKeyword, likeKeyword } from '../utils/jobPreferences';
 
 interface ProfessionViewProps {
@@ -30,8 +31,12 @@ export function ProfessionView({
   const { jobs, loading, error, profileSummary, tagFilter, blockedToday, setTagFilter, search, reset, removeJob, hasSearched } =
     useProfessionSearch();
 
+  // Must be called before any conditional returns (Rules of Hooks)
+  const countdown = useCountdown(blockedToday);
+
   const allTags = [...new Set(jobs.flatMap((j) => j.skills))];
   const filtered = tagFilter === 'all' ? jobs : jobs.filter((j) => j.skills.includes(tagFilter));
+  const locationReady = preferences.modality === 'remote' || !!preferences.location;
 
   function handleSearch() {
     if (!linkedIn) return;
@@ -134,27 +139,30 @@ export function ProfessionView({
           onChange={onPreferencesChange}
           defaultOpen
         />
-        {blockedToday ? (
-          <div className="search-blocked">
-            <p className="search-blocked-msg">Você ja realizou uma busca hoje. Volte amanha para uma nova busca.</p>
-            <button className="history-link-btn" onClick={onGoToHistory}>Ver historico de vagas</button>
-          </div>
-        ) : (
-          <>
-            <button
-              className="search-btn"
-              disabled={!linkedIn || !(preferences.modality === 'remote' || !!preferences.location)}
-              onClick={handleSearch}
-            >
-              {!linkedIn
-                ? 'importe o LinkedIn para continuar'
-                : !(preferences.modality === 'remote' || !!preferences.location)
-                  ? 'informe sua localização para buscar'
-                  : 'buscar vagas'}
+        <button
+          className={`search-btn${blockedToday ? ' search-btn--countdown' : ''}`}
+          disabled={blockedToday || !linkedIn || !locationReady}
+          onClick={handleSearch}
+        >
+          {blockedToday
+            ? `disponível em ${countdown}`
+            : !linkedIn
+              ? 'importe o LinkedIn para continuar'
+              : !locationReady
+                ? 'informe sua localização para buscar'
+                : 'buscar vagas'}
+        </button>
+
+        {blockedToday && (
+          <div className="search-limit-msg">
+            <span>Limite diário atingido. Recarrega à meia-noite.</span>
+            <button className="search-limit-history" onClick={onGoToHistory}>
+              Ver histórico →
             </button>
-            {error && <div className="error-msg">{error}</div>}
-          </>
+          </div>
         )}
+
+        {!blockedToday && error && <div className="error-msg">{error}</div>}
       </div>
     </div>
   );
