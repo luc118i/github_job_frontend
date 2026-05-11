@@ -478,6 +478,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
 
   const visible = useMemo(() => {
     let list = jobs;
+
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(j =>
@@ -486,9 +487,23 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
         j.skills.some(s => s.toLowerCase().includes(q))
       );
     }
-    if (favOnly) list = list.filter(j => get(j.id).favorite);
+
+    if (filters.statuses.length > 0) {
+      list = list.filter(j => filters.statuses.includes(get(j.id).status));
+    }
+
+    if (filters.favOnly) list = list.filter(j => get(j.id).favorite);
+
+    if (filters.unseenOnly) list = list.filter(j => !j.seen);
+
+    if (filters.date !== 'all') {
+      const ms = { today: 86400000, week: 7 * 86400000, month: 30 * 86400000 }[filters.date];
+      const now = Date.now();
+      list = list.filter(j => now - new Date(j.created_at).getTime() < ms);
+    }
+
     return list;
-  }, [jobs, search, favOnly, get]);
+  }, [jobs, search, filters, get]);
 
   const byColumn = useMemo(() => {
     const g: Record<KanbanStatus, JobFeedItem[]> = {
@@ -558,22 +573,21 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
           <h2 className="kb-board-title">Candidaturas</h2>
           <span className="kb-total">{jobs.length} vagas</span>
         </div>
-        <div className="kb-header-right">
-          <button
-            className={`kb-fav-toggle${favOnly ? ' active' : ''}`}
-            onClick={() => setFavOnly(v => !v)}
-          >
-            ★ favoritos
-          </button>
-          <input
-            type="text"
-            className="kb-search-input"
-            placeholder="buscar vagas..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
+        <input
+          type="text"
+          className="kb-search-input"
+          placeholder="buscar vagas..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
       </div>
+
+      <KanbanFilterBar
+        filters={filters}
+        total={jobs.length}
+        filtered={visible.length}
+        onChange={setFilters}
+      />
 
       <div className="kb-board">
         {COLUMNS.map(col => (
