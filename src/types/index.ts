@@ -138,3 +138,22 @@ export interface CvRecord {
   id: string;
   content: string;
 }
+
+export interface MatchAnalysis {
+  score: number;
+  level: 'baixo' | 'medio' | 'alto' | 'excelente';
+  strengths: string[];
+  gaps: string[];
+  missingKeywords: string[];
+  recommendations: string[];
+  competitiveness: string;
+  interviewChance: string;
+}
+
+export interface LinkAnalysisResponse {
+  job: JobRecord;
+  match: MatchAnalysis;
+  atsKeywords: string[];
+  requirements: string[];
+  language: string | null;
+}

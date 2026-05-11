@@ -2964,3 +2964,328 @@ h1 {
   font-size: 11px;
   color: rgba(232,228,220,0.4);
 }
+
+/* ── Link Analysis View ── */
+
+.la-view {
+  padding-top: 8px;
+}
+
+.la-header {
+  margin-bottom: 32px;
+}
+
+.la-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+
+.la-subtitle {
+  font-size: 13px;
+  color: rgba(232,228,220,0.5);
+  line-height: 1.6;
+  max-width: 520px;
+}
+
+.la-profile-warn {
+  margin-bottom: 20px;
+  padding: 10px 16px;
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 4px;
+  font-size: 12px;
+  color: rgba(253,211,77,0.85);
+  letter-spacing: 0.02em;
+}
+
+.la-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.la-url-bar {
+  flex: 1;
+}
+
+.la-analyze-btn {
+  width: auto;
+  padding: 14px 28px;
+  flex-shrink: 0;
+}
+
+.la-result {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeUp 0.4s ease forwards;
+}
+
+.la-job-card {
+  padding: 28px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.la-job-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.la-job-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #e8e4dc;
+  margin-bottom: 4px;
+}
+
+.la-job-company {
+  font-size: 13px;
+  color: rgba(232,228,220,0.5);
+  margin-bottom: 10px;
+}
+
+.la-job-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.la-badge {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
+  border-radius: 2px;
+  background: rgba(124,58,237,0.12);
+  border: 1px solid rgba(124,58,237,0.25);
+  color: #c4b5fd;
+}
+
+.la-badge--lang {
+  background: rgba(6,182,212,0.1);
+  border-color: rgba(6,182,212,0.25);
+  color: #67e8f9;
+}
+
+.la-badge--salary {
+  background: rgba(134,239,172,0.08);
+  border-color: rgba(134,239,172,0.2);
+  color: #86efac;
+}
+
+.la-job-desc {
+  font-size: 13px;
+  color: rgba(232,228,220,0.65);
+  line-height: 1.65;
+}
+
+.la-skills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.la-view-job-link {
+  font-size: 11px;
+  color: rgba(196,181,253,0.6);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  align-self: flex-start;
+  transition: color 0.15s;
+}
+
+.la-view-job-link:hover { color: #c4b5fd; }
+
+/* Score ring */
+.la-score-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 3px solid var(--score-color, #7c3aed);
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.2);
+  gap: 2px;
+}
+
+.la-score-number {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--score-color, #7c3aed);
+  line-height: 1;
+}
+
+.la-score-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--score-color, #7c3aed);
+  opacity: 0.8;
+}
+
+/* Sections */
+.la-section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .la-section-grid { grid-template-columns: 1fr; }
+  .la-input-row { flex-direction: column; }
+  .la-analyze-btn { width: 100%; }
+}
+
+.la-section {
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.015);
+}
+
+.la-section-title {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(232,228,220,0.3);
+  margin-bottom: 12px;
+}
+
+.la-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.la-list-item {
+  font-size: 12px;
+  color: rgba(232,228,220,0.7);
+  line-height: 1.5;
+  padding-left: 14px;
+  position: relative;
+}
+
+.la-list-item::before {
+  content: '–';
+  position: absolute;
+  left: 0;
+  color: rgba(232,228,220,0.2);
+}
+
+.la-list-item--positive::before { content: '+'; color: #86efac; }
+.la-list-item--negative::before { content: '!'; color: #fca5a5; }
+.la-list-item--rec::before      { content: '>'; color: #c4b5fd; }
+
+/* Pills */
+.la-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.la-pill {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 2px;
+  letter-spacing: 0.03em;
+}
+
+.la-pill--strength {
+  background: rgba(134,239,172,0.08);
+  border: 1px solid rgba(134,239,172,0.2);
+  color: #86efac;
+}
+
+.la-pill--gap {
+  background: rgba(252,165,165,0.08);
+  border: 1px solid rgba(252,165,165,0.2);
+  color: #fca5a5;
+}
+
+.la-pill--keyword {
+  background: rgba(253,211,77,0.08);
+  border: 1px solid rgba(253,211,77,0.2);
+  color: #fcd34d;
+}
+
+.la-pill--tag {
+  background: rgba(124,58,237,0.1);
+  border: 1px solid rgba(124,58,237,0.2);
+  color: #c4b5fd;
+}
+
+/* Insights */
+.la-insights {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.la-insight-item {
+  flex: 1;
+  min-width: 160px;
+  padding: 16px 20px;
+  border: 1px solid rgba(6,182,212,0.15);
+  border-radius: 4px;
+  background: rgba(6,182,212,0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.la-insight-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(232,228,220,0.3);
+}
+
+.la-insight-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #67e8f9;
+}
+
+/* Actions */
+.la-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.la-reanalyze-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(232,228,220,0.4);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: all 0.15s;
+}
+
+.la-reanalyze-btn:hover {
+  border-color: rgba(255,255,255,0.2);
+  color: rgba(232,228,220,0.7);
+}

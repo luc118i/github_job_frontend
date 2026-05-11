@@ -11,6 +11,7 @@ import { JobList } from './components/JobList';
 import { SearchHistory } from './components/SearchHistory';
 import { CvEditor } from './components/CvEditor';
 import { ProfessionView } from './components/ProfessionView';
+import { LinkAnalysisView } from './components/LinkAnalysisView';
 import { PreferencesPanel } from './components/PreferencesPanel';
 import { AuthModal } from './components/AuthModal';
 import { UserProfile } from './components/UserProfile';
@@ -225,6 +226,14 @@ export default function App() {
               </>
             )}
           </>
+        )}
+
+        {view === 'analise' && (
+          <LinkAnalysisView
+            profile={profile}
+            linkedIn={linkedInData}
+            onGenerateCv={(job, cvProfile) => setCvState({ job, profile: cvProfile })}
+          />
         )}
 
         {view === 'history' && (

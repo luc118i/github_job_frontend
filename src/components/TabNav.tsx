@@ -1,4 +1,4 @@
-export type View = 'search' | 'history' | 'outros' | 'profile';
+export type View = 'search' | 'history' | 'outros' | 'analise' | 'profile';
 
 interface TabNavProps {
   active: View;
@@ -22,10 +22,16 @@ export function TabNav({ active, showProfile, onChange }: TabNavProps) {
         vagas TI
       </button>
       <button
+        className={`tab-btn ${active === 'analise' ? 'active' : ''}`}
+        onClick={() => onChange('analise')}
+      >
+        analisar vaga
+      </button>
+      <button
         className={`tab-btn ${active === 'history' ? 'active' : ''}`}
         onClick={() => onChange('history')}
       >
-        histórico
+        historico
       </button>
       {showProfile && (
         <button
