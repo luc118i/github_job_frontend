@@ -8,7 +8,7 @@ import { SearchForm } from './components/SearchForm';
 import { LoadingSteps } from './components/LoadingSteps';
 import { ProfileCard } from './components/ProfileCard';
 import { JobList } from './components/JobList';
-import { SearchHistory } from './components/SearchHistory';
+import { KanbanBoard } from './components/KanbanBoard';
 import { CvEditor } from './components/CvEditor';
 import { ProfessionView } from './components/ProfessionView';
 import { LinkAnalysisView } from './components/LinkAnalysisView';
@@ -149,7 +149,7 @@ export default function App() {
         onClose={() => { setAuthOpen(false); setPendingLinkedIn(null); }}
       />
 
-      <main>
+      <main className={view === 'history' ? 'kanban-view' : undefined}>
         <TabNav active={view} showProfile={!!currentUser} onChange={setView} />
 
         {view === 'outros' && (
@@ -237,21 +237,12 @@ export default function App() {
         )}
 
         {view === 'history' && (
-          <>
-            <div className="history-linkedin-bar">
-              <LinkedInImport
-                data={linkedInData}
-                onImport={handleLinkedInImport}
-                onClear={handleLinkedInClear}
-              />
-            </div>
-            <SearchHistory
-              linkedInData={linkedInData}
-              githubUsername={currentUser?.github_username ?? null}
-              onGenerateCv={openCv}
-              onViewCv={(job) => openExistingCv(job)}
-            />
-          </>
+          <KanbanBoard
+            linkedInData={linkedInData}
+            githubUsername={currentUser?.github_username ?? null}
+            onGenerateCv={openCv}
+            onViewCv={(job) => openExistingCv(job)}
+          />
         )}
 
         {view === 'profile' && currentUser && (

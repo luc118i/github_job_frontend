@@ -31,7 +31,7 @@ export function TabNav({ active, showProfile, onChange }: TabNavProps) {
         className={`tab-btn ${active === 'history' ? 'active' : ''}`}
         onClick={() => onChange('history')}
       >
-        historico
+        organizar
       </button>
       {showProfile && (
         <button

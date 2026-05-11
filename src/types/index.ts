@@ -148,6 +148,15 @@ export interface CvRecord {
   content: string;
 }
 
+export type KanbanStatus = 'salvas' | 'aplicadas' | 'em_analise' | 'entrevista' | 'finalizadas';
+
+export interface KanbanJobData {
+  status: KanbanStatus;
+  notes: string;
+  favorite: boolean;
+  movedAt: string;
+}
+
 export interface MatchAnalysis {
   score: number;
   level: 'baixo' | 'medio' | 'alto' | 'excelente';
