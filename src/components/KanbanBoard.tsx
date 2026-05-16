@@ -23,11 +23,14 @@ const COLUMNS: Column[] = [
 
 // ── Filter types ─────────────────────────────────────────────
 
+type OriginFilter = 'all' | 'github' | 'linkedin';
+
 interface BoardFilters {
   statuses: KanbanStatus[];
   favOnly: boolean;
   unseenOnly: boolean;
   date: 'all' | 'today' | 'week' | 'month';
+  origin: OriginFilter; // filtra por origem da vaga
 }
 
 const DEFAULT_FILTERS: BoardFilters = {
@@ -35,6 +38,7 @@ const DEFAULT_FILTERS: BoardFilters = {
   favOnly: false,
   unseenOnly: false,
   date: 'all',
+  origin: 'all',
 };
 
 const STATUS_FILTER_CHIPS: { id: KanbanStatus; label: string; accent: string }[] = [
@@ -51,7 +55,7 @@ const DATE_FILTER_CHIPS: { id: DateRange; label: string }[] = [
 ];
 
 function hasActiveFilters(f: BoardFilters): boolean {
-  return f.statuses.length > 0 || f.favOnly || f.unseenOnly || f.date !== 'all';
+  return f.statuses.length > 0 || f.favOnly || f.unseenOnly || f.date !== 'all' || f.origin !== 'all';
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -74,6 +78,92 @@ function getReminder(status: KanbanStatus, movedAt: string): string | null {
   return null;
 }
 
+// Retorna o status visual do prazo: vencido, próximo (≤2 dias) ou ok
+function getDeadlineStatus(deadline: string): 'overdue' | 'soon' | 'ok' {
+  const diff = new Date(deadline).getTime() - Date.now();
+  const days = diff / 86400000;
+  if (days < 0) return 'overdue';
+  if (days <= 2) return 'soon';
+  return 'ok';
+}
+
+// Formata o prazo para exibição no card
+function formatDeadline(deadline: string): string {
+  const diff = new Date(deadline).getTime() - Date.now();
+  const days = Math.round(diff / 86400000);
+  if (days < 0) return `venceu há ${Math.abs(days)}d`;
+  if (days === 0) return 'vence hoje';
+  if (days === 1) return 'vence amanhã';
+  return `vence em ${days}d`;
+}
+
+// ── StatusSummary ────────────────────────────────────────────
+// Exibe contagem por status — visão rápida do funil pessoal
+
+interface StatusSummaryProps {
+  byColumn: Record<KanbanStatus, JobFeedItem[]>;
+}
+
+function StatusSummary({ byColumn }: StatusSummaryProps) {
+  return (
+    <div className="kb-status-summary">
+      {COLUMNS.map(col => (
+        <div
+          key={col.id}
+          className="kb-summary-chip"
+          style={{ '--col-accent': col.accent } as React.CSSProperties}
+        >
+          <span className="kb-summary-count">{byColumn[col.id].length}</span>
+          <span className="kb-summary-label">{col.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── FunnelStats ──────────────────────────────────────────────
+// Mostra taxas de conversão entre as etapas do processo seletivo
+// Usa total de vagas (sem filtro) para refletir o funil real
+
+interface FunnelStatsProps {
+  jobs: JobFeedItem[];
+  get: (id: string) => KanbanJobData;
+}
+
+function FunnelStats({ jobs, get }: FunnelStatsProps) {
+  const counts = useMemo(() => {
+    const c = { salvas: 0, aplicadas: 0, em_analise: 0, entrevista: 0, finalizadas: 0 };
+    jobs.forEach(j => { c[get(j.id).status]++; });
+    return c;
+  }, [jobs, get]);
+
+  const total = jobs.length;
+  if (total === 0) return null;
+
+  // Calcula percentual — retorna 0 quando denominador é zero
+  const pct = (num: number, den: number) =>
+    den > 0 ? Math.round((num / den) * 100) : 0;
+
+  return (
+    <div className="kb-funnel">
+      <span className="kb-funnel-title">Funil</span>
+      <div className="kb-funnel-steps">
+        <span className="kb-funnel-step">
+          <strong>{pct(counts.aplicadas, total)}%</strong> aplicaram
+        </span>
+        <span className="kb-funnel-arrow">→</span>
+        <span className="kb-funnel-step">
+          <strong>{pct(counts.entrevista, counts.aplicadas)}%</strong> entrevistaram
+        </span>
+        <span className="kb-funnel-arrow">→</span>
+        <span className="kb-funnel-step">
+          <strong>{pct(counts.finalizadas, counts.entrevista)}%</strong> finalizaram
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── KanbanCard ───────────────────────────────────────────────
 
 interface KanbanCardProps {
@@ -90,6 +180,7 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
   const topSkills = job.skills.slice(0, 3);
   const reminder = getReminder(kd.status, kd.movedAt);
   const levelClass = job.level.toLowerCase();
+  const deadlineStatus = kd.deadline ? getDeadlineStatus(kd.deadline) : null;
 
   return (
     <div
@@ -126,10 +217,18 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
       <div className="kb-card-footer">
         <div className="kb-card-meta">
           {job.salary && <span className="kb-salary">{job.salary}</span>}
+          {/* indica origem da vaga para diferenciar buscas */}
           <span className="kb-source">{job.github_username ? 'GitHub' : 'LinkedIn'}</span>
         </div>
         <span className="kb-date">{relDate(job.created_at)}</span>
       </div>
+
+      {/* badge de prazo — cor muda conforme urgência */}
+      {kd.deadline && deadlineStatus && (
+        <div className={`kb-deadline-badge kb-deadline--${deadlineStatus}`}>
+          {formatDeadline(kd.deadline)}
+        </div>
+      )}
 
       {reminder && <div className="kb-reminder">{reminder}</div>}
     </div>
@@ -213,6 +312,10 @@ function KanbanFilterBar({ filters, total, filtered, onChange }: KanbanFilterBar
     onChange({ ...filters, date: filters.date === id ? 'all' : id });
   }
 
+  function toggleOrigin(id: OriginFilter) {
+    onChange({ ...filters, origin: filters.origin === id ? 'all' : id });
+  }
+
   const active = hasActiveFilters(filters);
   const showCount = active && filtered < total;
 
@@ -257,6 +360,22 @@ function KanbanFilterBar({ filters, total, filtered, onChange }: KanbanFilterBar
             {chip.label}
           </button>
         ))}
+
+        <span className="kb-filter-sep" />
+
+        {/* filtros de origem — útil para separar buscas do Lucas (GitHub) e do irmão (LinkedIn) */}
+        <button
+          className={`kb-chip kb-chip--origin${filters.origin === 'github' ? ' active' : ''}`}
+          onClick={() => toggleOrigin('github')}
+        >
+          GitHub
+        </button>
+        <button
+          className={`kb-chip kb-chip--origin${filters.origin === 'linkedin' ? ' active' : ''}`}
+          onClick={() => toggleOrigin('linkedin')}
+        >
+          LinkedIn
+        </button>
       </div>
 
       <div className="kb-filter-right">
@@ -283,6 +402,7 @@ interface PanelProps {
   onClose: () => void;
   onStatusChange: (s: KanbanStatus) => void;
   onNotesChange: (n: string) => void;
+  onDeadlineChange: (d: string) => void;
   onGenerateCv: (job: JobFeedItem, profile: Profile) => void;
   onViewCv: (job: JobFeedItem) => void;
   onDelete: (id: string) => void;
@@ -290,7 +410,7 @@ interface PanelProps {
 
 function JobDetailPanel({
   job, kd, linkedInData, githubUsername,
-  onClose, onStatusChange, onNotesChange,
+  onClose, onStatusChange, onNotesChange, onDeadlineChange,
   onGenerateCv, onViewCv, onDelete,
 }: PanelProps) {
   const [cvLoading, setCvLoading] = useState(false);
@@ -301,6 +421,7 @@ function JobDetailPanel({
   const currentCol = COLUMNS.find(c => c.id === kd.status);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Fecha o painel com Escape
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -391,6 +512,22 @@ function JobDetailPanel({
             </div>
           )}
 
+          {/* prazo de candidatura — alerta quando a vaga tem data limite */}
+          <div className="kb-panel-section">
+            <span className="kb-panel-label">Prazo de candidatura</span>
+            <input
+              type="date"
+              className="kb-deadline-input"
+              value={kd.deadline ?? ''}
+              onChange={e => onDeadlineChange(e.target.value)}
+            />
+            {kd.deadline && (
+              <span className={`kb-deadline-hint kb-deadline--${getDeadlineStatus(kd.deadline)}`}>
+                {formatDeadline(kd.deadline)}
+              </span>
+            )}
+          </div>
+
           <div className="kb-panel-section">
             <span className="kb-panel-label">Notas pessoais</span>
             <textarea
@@ -455,9 +592,10 @@ interface KanbanBoardProps {
   githubUsername: string | null;
   onGenerateCv: (job: JobFeedItem, profile: Profile) => void;
   onViewCv: (job: JobFeedItem) => void;
+  onStaleCount?: (count: number) => void; // emite quantidade de vagas paradas para o badge da aba
 }
 
-export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onViewCv }: KanbanBoardProps) {
+export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onViewCv, onStaleCount }: KanbanBoardProps) {
   const [jobs, setJobs] = useState<JobFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
@@ -467,7 +605,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
   const [dragOverCol, setDragOverCol] = useState<KanbanStatus | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
-  const { get, setStatus, setNotes, toggleFavorite } = useKanban();
+  const { get, setStatus, setNotes, toggleFavorite, setDeadline } = useKanban();
 
   useEffect(() => {
     fetchJobFeed()
@@ -475,6 +613,19 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
       .catch(() => setFetchError('Erro ao carregar vagas.'))
       .finally(() => setLoading(false));
   }, []);
+
+  // Calcula e emite a quantidade de vagas "aplicadas" sem movimentação há +7 dias
+  // para o badge de alerta na aba "organizar" do TabNav
+  useEffect(() => {
+    if (!onStaleCount) return;
+    const stale = jobs.filter(j => {
+      const kd = get(j.id);
+      if (kd.status !== 'aplicadas') return false;
+      const days = Math.floor((Date.now() - new Date(kd.movedAt).getTime()) / 86400000);
+      return days >= 7;
+    }).length;
+    onStaleCount(stale);
+  }, [jobs, get, onStaleCount]);
 
   const visible = useMemo(() => {
     let list = jobs;
@@ -493,7 +644,6 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
     }
 
     if (filters.favOnly) list = list.filter(j => get(j.id).favorite);
-
     if (filters.unseenOnly) list = list.filter(j => !j.seen);
 
     if (filters.date !== 'all') {
@@ -501,6 +651,10 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
       const now = Date.now();
       list = list.filter(j => now - new Date(j.created_at).getTime() < ms);
     }
+
+    // filtra por origem: github_username preenchido = veio de busca GitHub; null = LinkedIn
+    if (filters.origin === 'github') list = list.filter(j => !!j.github_username);
+    if (filters.origin === 'linkedin') list = list.filter(j => !j.github_username);
 
     return list;
   }, [jobs, search, filters, get]);
@@ -582,12 +736,18 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
         />
       </div>
 
+      {/* resumo por status — snapshot rápido do funil atual */}
+      <StatusSummary byColumn={byColumn} />
+
       <KanbanFilterBar
         filters={filters}
         total={jobs.length}
         filtered={visible.length}
         onChange={setFilters}
       />
+
+      {/* estatísticas de funil — calculadas sobre todas as vagas (sem filtro) */}
+      <FunnelStats jobs={jobs} get={get} />
 
       <div className="kb-board">
         {COLUMNS.map(col => (
@@ -618,6 +778,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
           onClose={() => setSelectedJob(null)}
           onStatusChange={s => setStatus(selectedJob.id, s)}
           onNotesChange={n => setNotes(selectedJob.id, n)}
+          onDeadlineChange={d => setDeadline(selectedJob.id, d)}
           onGenerateCv={onGenerateCv}
           onViewCv={onViewCv}
           onDelete={handleDelete}

@@ -155,6 +155,7 @@ export interface KanbanJobData {
   notes: string;
   favorite: boolean;
   movedAt: string;
+  deadline?: string; // ISO date YYYY-MM-DD — prazo limite de candidatura
 }
 
 export interface MatchAnalysis {

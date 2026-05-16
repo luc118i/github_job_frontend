@@ -39,6 +39,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingLinkedIn, setPendingLinkedIn] = useState<LinkedInData | null>(null);
+  const [staleCount, setStaleCount] = useState(0);
 
   const { profile, jobs, loading, step, error, filter, blockedToday: githubBlocked, remaining: githubRemaining, setFilter, search, removeJob } = useJobSearch();
   const { preferences, setPreferences } = usePreferences();
@@ -51,6 +52,14 @@ export default function App() {
       if (result.user.github_username) setUsername(result.user.github_username);
     });
   }, []);
+
+  // Redireciona para 'outros' se o usuário tentar acessar 'history' sem estar logado
+  useEffect(() => {
+    if (view === 'history' && !currentUser) {
+      setView('outros');
+      setAuthOpen(true);
+    }
+  }, [view, currentUser]);
 
   function handleLinkedInImport(data: LinkedInData) {
     setLinkedInData(data);
@@ -154,7 +163,13 @@ export default function App() {
       />
 
       <main className={view === 'history' ? 'kanban-view' : undefined}>
-        <TabNav active={view} showProfile={!!currentUser} onChange={setView} />
+        <TabNav
+          active={view}
+          showProfile={!!currentUser}
+          isLoggedIn={!!currentUser}
+          staleCount={staleCount}
+          onChange={setView}
+        />
 
         {view === 'outros' && (
           <ProfessionView
@@ -247,6 +262,7 @@ export default function App() {
               githubUsername={currentUser?.github_username ?? null}
               onGenerateCv={openCv}
               onViewCv={(job) => openExistingCv(job)}
+              onStaleCount={setStaleCount}
             />
           )}
 
