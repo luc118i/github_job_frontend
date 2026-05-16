@@ -3,6 +3,7 @@ import { Profile, JobRecord, Step, LevelFilter, UserPreferences } from '../types
 import { fetchGitHubUser, fetchGitHubRepos, extractSkills } from '../services/github';
 import { searchJobs } from '../services/jobs';
 import { canSearch, markSearched, remainingSearches } from '../utils/dailyLimit';
+import { getBlockedKeywords, inferCategory } from '../utils/jobPreferences';
 
 interface UseJobSearchReturn {
   profile: Profile | null;
@@ -51,7 +52,12 @@ export function useJobSearch(): UseJobSearchReturn {
       setStep('jobs');
 
       const { jobs: foundJobs } = await searchJobs(currentProfile, preferences);
-      setJobs(foundJobs.filter((j) => !j.dismissed));
+      const blocked = getBlockedKeywords();
+      setJobs(
+        foundJobs.filter(
+          (j) => !j.dismissed && (blocked.length === 0 || !blocked.includes(inferCategory(j.title)))
+        )
+      );
       markSearched('github');
       setRemaining(remainingSearches('github'));
       setBlockedToday(!canSearch('github'));
