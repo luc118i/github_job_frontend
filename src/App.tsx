@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { JobRecord, LinkedInData, Profile, ProfessionJobRecord } from './types';
 import { Background } from './components/Background';
 import { Header } from './components/Header';
-import { TabNav, View } from './components/TabNav';
+import { View } from './components/TabNav';
 import { LinkedInImport } from './components/LinkedInImport';
 import { SearchForm } from './components/SearchForm';
 import { LoadingSteps } from './components/LoadingSteps';
@@ -150,6 +150,8 @@ export default function App() {
       <Background />
       <Header
         currentUser={currentUser}
+        view={view}
+        onViewChange={setView}
         onLogout={handleLogout}
         onLoginClick={() => setAuthOpen(true)}
         onProfileClick={() => setView('profile')}
@@ -163,13 +165,6 @@ export default function App() {
       />
 
       <main className={view === 'history' ? 'kanban-view' : undefined}>
-        <TabNav
-          active={view}
-          showProfile={!!currentUser}
-          isLoggedIn={!!currentUser}
-          staleCount={staleCount}
-          onChange={setView}
-        />
 
         {view === 'outros' && (
           <ProfessionView

@@ -241,6 +241,7 @@ interface KanbanColumnProps {
   column: Column;
   jobs: JobFeedItem[];
   isOver: boolean;
+  isActiveMobile: boolean;
   get: (id: string) => KanbanJobData;
   draggingId: string | null;
   onDragOver: (e: React.DragEvent) => void;
@@ -253,13 +254,13 @@ interface KanbanColumnProps {
 }
 
 function KanbanColumn({
-  column, jobs, isOver, get, draggingId,
+  column, jobs, isOver, isActiveMobile, get, draggingId,
   onDragOver, onDragLeave, onDrop,
   onCardDragStart, onCardDragEnd, onCardClick, onToggleFavorite,
 }: KanbanColumnProps) {
   return (
     <div
-      className={`kb-column${isOver ? ' kb-column--over' : ''}`}
+      className={`kb-column${isOver ? ' kb-column--over' : ''}${isActiveMobile ? ' kb-column--mobile-active' : ''}`}
       style={{ '--col-accent': column.accent } as React.CSSProperties}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
@@ -604,6 +605,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
   const [selectedJob, setSelectedJob] = useState<JobFeedItem | null>(null);
   const [dragOverCol, setDragOverCol] = useState<KanbanStatus | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [activeMobileCol, setActiveMobileCol] = useState<KanbanStatus>('salvas');
 
   const { get, setStatus, setNotes, toggleFavorite, setDeadline } = useKanban();
 
@@ -749,6 +751,20 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
       {/* estatísticas de funil — calculadas sobre todas as vagas (sem filtro) */}
       <FunnelStats jobs={jobs} get={get} />
 
+      <div className="kb-col-pills">
+        {COLUMNS.map(col => (
+          <button
+            key={col.id}
+            className={`kb-col-pill${activeMobileCol === col.id ? ' active' : ''}`}
+            style={{ '--col-accent': col.accent } as React.CSSProperties}
+            onClick={() => setActiveMobileCol(col.id)}
+          >
+            {col.label}
+            <span className="kb-col-pill-count">{byColumn[col.id].length}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="kb-board">
         {COLUMNS.map(col => (
           <KanbanColumn
@@ -756,6 +772,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
             column={col}
             jobs={byColumn[col.id]}
             isOver={dragOverCol === col.id}
+            isActiveMobile={activeMobileCol === col.id}
             get={get}
             draggingId={draggingId}
             onDragOver={e => handleDragOver(e, col.id)}
