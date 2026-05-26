@@ -5,7 +5,7 @@ import { TagFilterBar } from './TagFilterBar';
 import { JobCard } from './JobCard';
 import { useProfessionSearch } from '../hooks/useProfessionSearch';
 import { useCountdown } from '../hooks/useCountdown';
-import { blockKeyword, likeKeyword } from '../utils/jobPreferences';
+import { blockKeyword, likeKeyword, blockSource, likeSource } from '../utils/jobPreferences';
 
 interface ProfessionViewProps {
   linkedIn: LinkedInData | null;
@@ -147,6 +147,8 @@ export function ProfessionView({
                     onViewCv={() => onViewCv(job)}
                     onLike={(_j, category) => likeKeyword(category)}
                     onBlock={(_j, category) => { blockKeyword(category); removeJob(job.id); }}
+                    onLikeSource={(_j, src) => likeSource(src)}
+                    onBlockSource={(_j, src) => blockSource(src)}
                   />
                 ))
               )}

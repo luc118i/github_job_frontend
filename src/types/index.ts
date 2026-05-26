@@ -19,6 +19,7 @@ export interface JobRecord extends Job {
   seen: boolean;
   dismissed: boolean;
   created_at: string;
+  published_at?: string | null;
 }
 
 export interface SearchRecord {
@@ -145,6 +146,32 @@ export interface JobFeedItem extends JobRecord {
 
 export interface CvRecord {
   id: string;
+  content: string;
+}
+
+// ── Career Profile ─────────────────────────────────────────────────
+
+export type WorkStyle = 'analytical' | 'creative' | 'operational' | 'relational';
+export type TechLiteracy = 'basic' | 'intermediate' | 'advanced';
+export type LeadershipLevel = 'low' | 'medium' | 'high';
+
+export interface CareerProfile {
+  techLiteracy: TechLiteracy;
+  leadershipLevel: LeadershipLevel;
+  workStyle: WorkStyle[];
+  desiredAreas: string[];
+  blockedAreas: string[];
+  hiddenSkills: string[];
+  careerGoals: string;
+  transitionReady: boolean;
+  transitionTarget: string | null;
+  personalitySummary: string;
+  potentialSummary: string;
+  completedAt: string;
+}
+
+export interface CareerChatMessage {
+  role: 'user' | 'assistant';
   content: string;
 }
 

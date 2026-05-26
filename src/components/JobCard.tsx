@@ -2,14 +2,119 @@ import { useState } from 'react';
 import { JobRecord, LinkStatus } from '../types';
 import { markJobSeen } from '../services/jobs';
 import { isCvGenerated } from '../utils/dailyLimit';
-import { inferCategory } from '../utils/jobPreferences';
+import { inferCategory, inferSource } from '../utils/jobPreferences';
+import { getTechIconUrl, getSourceFaviconUrl } from '../utils/techIcons';
 
-const LINK_STATUS: Record<LinkStatus, { label: string; className: string } | null> = {
-  trusted:    { label: 'verificado',     className: 'link-trusted' },
-  unverified: { label: 'não verificado', className: 'link-unverified' },
-  dead:       { label: 'link inativo',   className: 'link-dead' },
+// ── Date helper (only used when published_at exists) ──────────
+
+function pubAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return 'HOJE';
+  if (days === 1) return '1 DIA';
+  if (days < 7)  return `${days} DIAS`;
+  const w = Math.floor(days / 7);
+  if (w < 5)     return `${w} SEMANA${w > 1 ? 'S' : ''}`;
+  const m = Math.floor(days / 30);
+  return `${m} ${m === 1 ? 'MÊS' : 'MESES'}`;
+}
+
+// ── Tech brand colours ────────────────────────────────────────
+
+const TECH_COLORS: Record<string, string> = {
+  react:         '#61dafb',
+  'next.js':     '#e2e8f0',
+  nextjs:        '#e2e8f0',
+  typescript:    '#3b82f6',
+  javascript:    '#fbbf24',
+  python:        '#60a5fa',
+  vue:           '#4ade80',
+  'vue.js':      '#4ade80',
+  angular:       '#f87171',
+  'node.js':     '#4ade80',
+  node:          '#4ade80',
+  rust:          '#fb923c',
+  go:            '#34d399',
+  golang:        '#34d399',
+  java:          '#fbbf24',
+  php:           '#a78bfa',
+  ruby:          '#f87171',
+  swift:         '#fb923c',
+  kotlin:        '#c084fc',
+  flutter:       '#38bdf8',
+  docker:        '#38bdf8',
+  kubernetes:    '#60a5fa',
+  aws:           '#fb923c',
+  tailwind:      '#38bdf8',
+  tailwindcss:   '#38bdf8',
+  css:           '#60a5fa',
+  html:          '#fb923c',
+  graphql:       '#e879f9',
+  postgresql:    '#60a5fa',
+  mysql:         '#38bdf8',
+  mongodb:       '#4ade80',
+  redis:         '#f87171',
+  'c++':         '#60a5fa',
+  'c#':          '#a78bfa',
+};
+
+function techColor(s: string): string {
+  return TECH_COLORS[s.toLowerCase()] ?? '#7aa3d8';
+}
+
+// ── Link status ───────────────────────────────────────────────
+
+const LINK_META: Record<LinkStatus, { label: string; color: string } | null> = {
+  trusted:    { label: 'verificado',     color: '#4ade80' },
+  unverified: { label: 'não verificado', color: '#fbbf24' },
+  dead:       { label: 'link inativo',   color: '#f87171' },
   none:       null,
 };
+
+// ── SVG icons ─────────────────────────────────────────────────
+
+const IconMonitor = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <rect x="2" y="3" width="20" height="14" rx="2"/>
+    <path d="M8 21h8M12 17v4"/>
+  </svg>
+);
+
+const IconGlobe = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </svg>
+);
+
+const IconClock = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12 6 12 12 16 14"/>
+  </svg>
+);
+
+const IconBars = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+    <line x1="18" y1="20" x2="18" y2="10"/>
+    <line x1="12" y1="20" x2="12" y2="4"/>
+    <line x1="6"  y1="20" x2="6"  y2="14"/>
+  </svg>
+);
+
+const IconBookmark = ({ filled }: { filled: boolean }) => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+  </svg>
+);
+
+const IconArrow = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M7 17L17 7M17 7H7M17 7v10"/>
+  </svg>
+);
+
+// ── Props ─────────────────────────────────────────────────────
 
 interface JobCardProps {
   job: JobRecord;
@@ -19,141 +124,306 @@ interface JobCardProps {
   onViewCv?: (job: JobRecord) => void;
   onLike?: (job: JobRecord, category: string) => void;
   onBlock?: (job: JobRecord, category: string) => void;
+  onLikeSource?: (job: JobRecord, source: string) => void;
+  onBlockSource?: (job: JobRecord, source: string) => void;
 }
 
-export function JobCard({ job, index, match, onGenerateCv, onViewCv, onLike, onBlock }: JobCardProps) {
-  const cvDone = isCvGenerated(job.id);
-  const [expanded, setExpanded] = useState(false);
-  const [seen, setSeen] = useState(job.seen);
-  const [feedback, setFeedback] = useState<'liked' | 'blocked' | null>(null);
+// ── Component ─────────────────────────────────────────────────
 
-  function handleToggle() {
+export function JobCard({
+  job, index, match,
+  onGenerateCv, onViewCv,
+  onLike, onBlock,
+  onLikeSource, onBlockSource,
+}: JobCardProps) {
+  const cvDone   = isCvGenerated(job.id);
+  const [expanded, setExpanded]     = useState(false);
+  const [seen, setSeen]             = useState(job.seen);
+  const [kwFeedback, setKwFeedback] = useState<'liked' | 'blocked' | null>(null);
+  const [srcFeedback, setSrcFeedback] = useState<'liked' | 'blocked' | null>(null);
+
+  const source        = inferSource(job.link);
+  const linkMeta      = LINK_META[job.link_status];
+  const sourceFavicon = source ? getSourceFaviconUrl(source) : null;
+
+  const mainSkills  = job.skills.slice(0, 3);
+  const otherSkills = job.skills.slice(3, 8);
+  const initial     = (job.company || '?').charAt(0).toUpperCase();
+
+  function handleExpand(e: React.MouseEvent) {
+    e.stopPropagation();
     const next = !expanded;
     setExpanded(next);
-    if (next && !seen) {
-      setSeen(true);
-      markJobSeen(job.id).catch(console.error);
-    }
+    if (next && !seen) { setSeen(true); markJobSeen(job.id).catch(console.error); }
   }
 
   function handleLike(e: React.MouseEvent) {
     e.stopPropagation();
-    const category = inferCategory(job.title);
-    setFeedback('liked');
-    onLike?.(job, category);
+    setKwFeedback('liked');
+    onLike?.(job, inferCategory(job.title));
   }
 
   function handleBlock(e: React.MouseEvent) {
     e.stopPropagation();
-    const category = inferCategory(job.title);
-    setFeedback('blocked');
-    onBlock?.(job, category);
+    setKwFeedback('blocked');
+    onBlock?.(job, inferCategory(job.title));
   }
 
-  const linkMeta = LINK_STATUS[job.link_status];
+  function handleLikeSource(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!source) return;
+    setSrcFeedback('liked');
+    onLikeSource?.(job, source);
+  }
 
-  if (feedback === 'blocked') return null;
+  function handleBlockSource(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!source) return;
+    setSrcFeedback('blocked');
+    onBlockSource?.(job, source);
+  }
+
+  if (kwFeedback === 'blocked') return null;
 
   return (
-    <div
-      className={`job-card ${seen ? 'job-seen' : 'job-unseen'} ${feedback === 'liked' ? 'job-liked' : ''}`}
-      style={{ animationDelay: `${index * 80}ms`, cursor: 'pointer' }}
-      onClick={handleToggle}
+    <article
+      className={`jcp-card${seen ? ' jcp-seen' : ' jcp-unseen'}${kwFeedback === 'liked' ? ' jcp-liked' : ''}`}
+      style={{ animationDelay: `${index * 55}ms` }}
     >
-      <div className="job-header">
-        <div className="job-meta">
-          <div className="job-title-row">
-            {!seen && <span className="unseen-dot" title="não vista" />}
-            <span className="job-title">{job.title}</span>
+      <div className="jcp-grid-bg" aria-hidden />
+      <div className="jcp-glow-orb"  aria-hidden />
+
+      {/* ══ BODY ══════════════════════════════════════════════ */}
+      <div className="jcp-body">
+
+        {/* ── Left ── */}
+        <div className="jcp-left">
+
+          {/* Badges */}
+          <div className="jcp-badges-row">
+            {!seen && <span className="jcp-badge-new">NOVA</span>}
+            {match !== undefined && <span className="jcp-badge-match">{match}% match</span>}
+            {seen && <span className="jcp-badge-seen">visto</span>}
           </div>
-          <div className="job-company-row">
-            <span className="job-company">{job.company}</span>
-            {job.location && <span className="job-location">{job.location}</span>}
-          </div>
-        </div>
-        <div className="job-badges">
-          {match !== undefined && (
-            <span className="badge match">{match}% match</span>
-          )}
-          {seen && <span className="badge seen">visto</span>}
-          {job.remote && <span className="badge remote">Remote</span>}
-          {job.level && <span className="badge level">{job.level}</span>}
-          <span className="expand-icon">{expanded ? '−' : '+'}</span>
-        </div>
-      </div>
 
-      <div className="job-skills">
-        {job.skills.map((s) => (
-          <span key={s} className="skill-tag">{s}</span>
-        ))}
-      </div>
+          {/* Title */}
+          <h2 className="jcp-title">{job.title}</h2>
 
-      {(onLike || onBlock) && (
-        <div className="job-feedback-row" onClick={(e) => e.stopPropagation()}>
-          {onBlock && (
-            <button
-              className="feedback-btn feedback-block"
-              onClick={handleBlock}
-              title={`Menos vagas de ${inferCategory(job.title)}`}
-            >
-              ✕ menos assim
-            </button>
+          {/* Tech inline row  ⚛ React • N Next.js • TS TypeScript */}
+          {mainSkills.length > 0 && (
+            <div className="jcp-tech-row">
+              {mainSkills.map((s, i) => {
+                const icon = getTechIconUrl(s);
+                return (
+                  <span key={s} className="jcp-tech-item">
+                    {i > 0 && <span className="jcp-tech-sep" aria-hidden>•</span>}
+                    {icon ? (
+                      <img
+                        src={icon}
+                        alt=""
+                        className="jcp-tech-img"
+                        aria-hidden
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <span
+                        className="jcp-tech-abbr"
+                        style={{ '--tc': techColor(s) } as React.CSSProperties}
+                      >
+                        {s.slice(0, 2).toUpperCase()}
+                      </span>
+                    )}
+                    <span
+                      className="jcp-tech-name"
+                      style={{ '--tc': techColor(s) } as React.CSSProperties}
+                    >
+                      {s}
+                    </span>
+                  </span>
+                );
+              })}
+            </div>
           )}
-          {onLike && (
-            <button
-              className={`feedback-btn feedback-like ${feedback === 'liked' ? 'active' : ''}`}
-              onClick={handleLike}
-              title={`Mais vagas de ${inferCategory(job.title)}`}
-            >
-              ♥ mais assim
-            </button>
-          )}
-        </div>
-      )}
 
-      {expanded && (
-        <div className="job-details">
-          <p>{job.description}</p>
-          {job.salary && <p className="salary">{job.salary}</p>}
-          <div className="job-actions">
-            {job.link && (
-              <div className="link-row">
-                <a
-                  href={job.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="apply-btn"
-                >
-                  Ver vaga
-                </a>
-                {linkMeta && (
-                  <span className={`link-status ${linkMeta.className}`}>
-                    {linkMeta.label}
+          {/* Company */}
+          <div className="jcp-company-row">
+            <div className="jcp-company-avatar">
+              {sourceFavicon ? (
+                <img
+                  src={sourceFavicon}
+                  alt={source ?? ''}
+                  className="jcp-company-favicon"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = 'none';
+                    (e.currentTarget.parentElement as HTMLElement).textContent = initial;
+                  }}
+                />
+              ) : initial}
+            </div>
+            <div className="jcp-company-info">
+              <span className="jcp-company-name">{job.company}</span>
+              <div className="jcp-loc-row">
+                {job.remote && (
+                  <span className="jcp-loc-item">
+                    <IconMonitor /> Remoto
+                  </span>
+                )}
+                {job.location && job.location.toLowerCase() !== 'remoto' && (
+                  <span className="jcp-loc-item">
+                    <IconGlobe /> {job.location}
                   </span>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Right ── */}
+        <div className="jcp-right">
+          {job.salary && (
+            <div className="jcp-info-block">
+              <span className="jcp-info-label">SALÁRIO</span>
+              <span className="jcp-salary">{job.salary}</span>
+            </div>
+          )}
+          {job.level && (
+            <div className="jcp-info-block">
+              <span className="jcp-info-label">SENIORIDADE</span>
+              <span className="jcp-level-badge">
+                <IconBars />
+                {job.level}
+              </span>
+            </div>
+          )}
+          {/* Only rendered when we have the real source publication date */}
+          {job.published_at && (
+            <div className="jcp-pub-date">
+              <IconClock />
+              PUBLICADA HÁ {pubAgo(job.published_at)}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ══ FOOTER ════════════════════════════════════════════ */}
+      <div className="jcp-footer">
+        <div className="jcp-skills-area">
+          {mainSkills.length > 0 && (
+            <div className="jcp-skills-group">
+              <span className="jcp-skills-label">STACK PRINCIPAL</span>
+              {mainSkills.map((s) => (
+                <span
+                  key={s}
+                  className="jcp-skill-tag jcp-skill-main"
+                  style={{ '--tc': techColor(s) } as React.CSSProperties}
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+          )}
+          {otherSkills.length > 0 && (
+            <div className="jcp-skills-group">
+              <span className="jcp-skills-label">OUTROS</span>
+              {otherSkills.map((s) => (
+                <span key={s} className="jcp-skill-tag">{s}</span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="jcp-actions">
+          <button
+            className={`jcp-icon-btn${expanded ? ' active' : ''}`}
+            onClick={handleExpand}
+            title={expanded ? 'Fechar detalhes' : 'Detalhes / CV'}
+          >
+            <IconBookmark filled={expanded} />
+          </button>
+          {job.link && (
+            <a
+              href={job.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="jcp-apply-btn"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Ver vaga <IconArrow />
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* ══ EXPANDED ══════════════════════════════════════════ */}
+      {expanded && (
+        <div className="jcp-expanded" onClick={(e) => e.stopPropagation()}>
+          {job.description && <p className="jcp-description">{job.description}</p>}
+          <div className="jcp-expanded-row">
+            {linkMeta && (
+              <span className="jcp-link-status">
+                <span className="jcp-link-dot" style={{ background: linkMeta.color }} />
+                {linkMeta.label}
+              </span>
             )}
-            {onGenerateCv && (
-              cvDone ? (
-                <button
-                  className="cv-generate-btn cv-generated-btn"
-                  onClick={(e) => { e.stopPropagation(); onViewCv?.(job); }}
-                >
-                  Ver CV
-                </button>
-              ) : (
-                <button
-                  className="cv-generate-btn"
-                  onClick={(e) => { e.stopPropagation(); onGenerateCv(job); }}
-                >
-                  Gerar CV
-                </button>
-              )
+            {onGenerateCv && !cvDone && (
+              <button className="jcp-cv-btn" onClick={(e) => { e.stopPropagation(); onGenerateCv(job); }}>
+                Gerar CV
+              </button>
+            )}
+            {cvDone && (
+              <button className="jcp-cv-btn jcp-cv-done" onClick={(e) => { e.stopPropagation(); onViewCv?.(job); }}>
+                Ver CV gerado
+              </button>
             )}
           </div>
         </div>
       )}
-    </div>
+
+      {/* ══ FEEDBACK ══════════════════════════════════════════ */}
+      {(onLike || onBlock || (source && (onLikeSource || onBlockSource))) && (
+        <div className="jcp-feedback-area" onClick={(e) => e.stopPropagation()}>
+          {(onLike || onBlock) && (
+            <div className="jcp-fb-row">
+              {onBlock && (
+                <button className="jcp-fb-btn jcp-fb-block" onClick={handleBlock}>
+                  ✕ menos assim
+                </button>
+              )}
+              {onLike && (
+                <button className={`jcp-fb-btn jcp-fb-like${kwFeedback === 'liked' ? ' active' : ''}`} onClick={handleLike}>
+                  ♥ mais assim
+                </button>
+              )}
+            </div>
+          )}
+          {source && (onLikeSource || onBlockSource) && (
+            <div className="jcp-fb-row">
+              <span className="jcp-fb-source-label">
+                {sourceFavicon && (
+                  <img
+                    src={sourceFavicon}
+                    alt=""
+                    className="jcp-source-favicon"
+                    aria-hidden
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
+                via {source}
+              </span>
+              {onBlockSource && srcFeedback !== 'liked' && (
+                <button className={`jcp-fb-btn jcp-fb-block${srcFeedback === 'blocked' ? ' active' : ''}`} onClick={handleBlockSource}>
+                  ✕ essa fonte
+                </button>
+              )}
+              {onLikeSource && srcFeedback !== 'blocked' && (
+                <button className={`jcp-fb-btn jcp-fb-like${srcFeedback === 'liked' ? ' active' : ''}`} onClick={handleLikeSource}>
+                  ♥ essa fonte
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </article>
   );
 }

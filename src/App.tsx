@@ -21,7 +21,7 @@ const UserProfile    = lazy(() => import('./components/UserProfile').then(m => (
 import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
 import { AuthUser, fetchMe, clearToken, updateLinkedIn } from './services/auth';
-import { blockKeyword, likeKeyword } from './utils/jobPreferences';
+import { blockKeyword, likeKeyword, blockSource, likeSource } from './utils/jobPreferences';
 import { fetchCvByJobId } from './services/cv';
 
 interface CvState {
@@ -231,6 +231,8 @@ export default function App() {
                   onViewCv={(job) => openExistingCv(job)}
                   onLike={(_job, category) => likeKeyword(category)}
                   onBlock={(job, category) => { blockKeyword(category); removeJob(job.id); }}
+                  onLikeSource={(_job, src) => likeSource(src)}
+                  onBlockSource={(_job, src) => blockSource(src)}
                 />
                 <div className="results-history-bar">
                   <button className="history-link-btn" onClick={() => setView('history')}>

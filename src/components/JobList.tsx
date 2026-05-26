@@ -10,9 +10,11 @@ interface JobListProps {
   onViewCv?: (job: JobRecord) => void;
   onLike?: (job: JobRecord, category: string) => void;
   onBlock?: (job: JobRecord, category: string) => void;
+  onLikeSource?: (job: JobRecord, source: string) => void;
+  onBlockSource?: (job: JobRecord, source: string) => void;
 }
 
-export function JobList({ jobs, filter, onFilterChange, onGenerateCv, onViewCv, onLike, onBlock }: JobListProps) {
+export function JobList({ jobs, filter, onFilterChange, onGenerateCv, onViewCv, onLike, onBlock, onLikeSource, onBlockSource }: JobListProps) {
   const filtered = filter === 'all' ? jobs : jobs.filter((j) => j.level === filter);
 
   return (
@@ -31,6 +33,8 @@ export function JobList({ jobs, filter, onFilterChange, onGenerateCv, onViewCv, 
               onViewCv={onViewCv}
               onLike={onLike}
               onBlock={onBlock}
+              onLikeSource={onLikeSource}
+              onBlockSource={onBlockSource}
             />
           ))
         )}

@@ -1,11 +1,12 @@
-import { LinkedInData, ProfessionSearchResult, UserPreferences } from '../types';
-import { getBlockedKeywords, getLikedKeywords } from '../utils/jobPreferences';
+import { CareerProfile, LinkedInData, ProfessionSearchResult, UserPreferences } from '../types';
+import { getBlockedKeywords, getLikedKeywords, getBlockedSources, getLikedSources } from '../utils/jobPreferences';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 export async function fetchProfessionJobs(
   linkedIn: LinkedInData,
-  preferences?: UserPreferences
+  preferences?: UserPreferences,
+  careerProfile?: CareerProfile | null,
 ): Promise<ProfessionSearchResult> {
   const res = await fetch(`${API_URL}/profession-jobs`, {
     method: 'POST',
@@ -15,6 +16,9 @@ export async function fetchProfessionJobs(
       preferences,
       blockedKeywords: getBlockedKeywords(),
       likedKeywords: getLikedKeywords(),
+      blockedSources: getBlockedSources(),
+      likedSources: getLikedSources(),
+      ...(careerProfile ? { careerProfile } : {}),
     }),
   });
   if (!res.ok) {
