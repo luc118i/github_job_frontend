@@ -8,7 +8,7 @@ interface Props {
 
 const OPENING_MESSAGE: CareerChatMessage = {
   role: 'assistant',
-  content: 'Antes de buscar vagas, preciso entender quem você é além do currículo. O que você está buscando mudar na sua carreira agora?',
+  content: 'Que tipo de vaga você está buscando?',
 };
 
 export function CareerChat({ onComplete }: Props) {
