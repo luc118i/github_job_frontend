@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LinkedInData, ProfessionJobRecord, UserPreferences } from '../types';
+import { CareerProfile, LinkedInData, ProfessionJobRecord, UserPreferences } from '../types';
 import { fetchProfessionJobs } from '../services/professionJobs';
 import { canSearch, markSearched, remainingSearches } from '../utils/dailyLimit';
 
@@ -12,7 +12,7 @@ interface UseProfessionSearchReturn {
   blockedToday: boolean;
   remaining: number;
   setTagFilter: (tag: string) => void;
-  search: (linkedIn: LinkedInData, preferences?: UserPreferences) => Promise<void>;
+  search: (linkedIn: LinkedInData, preferences?: UserPreferences, careerProfile?: CareerProfile | null) => Promise<void>;
   reset: () => void;
   removeJob: (id: string) => void;
   hasSearched: boolean;
@@ -28,7 +28,7 @@ export function useProfessionSearch(): UseProfessionSearchReturn {
   const [blockedToday, setBlockedToday] = useState(!canSearch('profession'));
   const [remaining, setRemaining] = useState(remainingSearches('profession'));
 
-  async function search(linkedIn: LinkedInData, preferences?: UserPreferences) {
+  async function search(linkedIn: LinkedInData, preferences?: UserPreferences, careerProfile?: CareerProfile | null) {
     if (!canSearch('profession')) {
       setBlockedToday(true);
       return;
@@ -39,7 +39,7 @@ export function useProfessionSearch(): UseProfessionSearchReturn {
     setTagFilter('all');
 
     try {
-      const result = await fetchProfessionJobs(linkedIn, preferences);
+      const result = await fetchProfessionJobs(linkedIn, preferences, careerProfile);
       setJobs(result.jobs);
       setProfileSummary(result.profileSummary);
       setHasSearched(true);

@@ -20,6 +20,7 @@ const LinkAnalysisView = lazy(() => import('./components/LinkAnalysisView').then
 const UserProfile    = lazy(() => import('./components/UserProfile').then(m => ({ default: m.UserProfile })));
 import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
+import { useCareerProfile } from './hooks/useCareerProfile';
 import { AuthUser, fetchMe, clearToken, updateLinkedIn } from './services/auth';
 import { blockKeyword, likeKeyword, blockSource, likeSource } from './utils/jobPreferences';
 import { fetchCvByJobId } from './services/cv';
@@ -43,6 +44,7 @@ export default function App() {
 
   const { profile, jobs, loading, step, error, filter, blockedToday: githubBlocked, remaining: githubRemaining, setFilter, search, removeJob } = useJobSearch();
   const { preferences, setPreferences } = usePreferences();
+  const { profile: careerProfile, setProfile: setCareerProfile, resetProfile: resetCareerProfile } = useCareerProfile();
 
   useEffect(() => {
     fetchMe().then(result => {
@@ -170,9 +172,12 @@ export default function App() {
           <ProfessionView
             linkedIn={linkedInData}
             preferences={preferences}
+            careerProfile={careerProfile}
             onImport={handleLinkedInImport}
             onClear={handleLinkedInClear}
             onPreferencesChange={setPreferences}
+            onCareerComplete={setCareerProfile}
+            onCareerRedo={resetCareerProfile}
             onGenerateCv={openCvFromProfession}
             onViewCv={(job) => openExistingCv(job)}
             onGoToHistory={() => setView('history')}
