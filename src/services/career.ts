@@ -1,4 +1,5 @@
 import { CareerChatMessage, CareerProfile, LinkedInData } from '../types';
+import { getToken } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
@@ -38,4 +39,25 @@ export async function sendCareerRefinement(
     throw new Error(data.error ?? 'Erro ao refinar perfil');
   }
   return res.json() as Promise<CareerMessageResponse>;
+}
+
+export async function fetchCareerProfile(): Promise<CareerProfile | null> {
+  const token = getToken();
+  if (!token) return null;
+  const res = await fetch(`${API_URL}/career/profile`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return null;
+  const data = await res.json() as { profile: CareerProfile | null };
+  return data.profile;
+}
+
+export async function persistCareerProfile(profile: CareerProfile | null): Promise<void> {
+  const token = getToken();
+  if (!token) return;
+  await fetch(`${API_URL}/career/profile`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ profile }),
+  });
 }

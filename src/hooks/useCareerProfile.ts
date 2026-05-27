@@ -1,9 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { CareerProfile } from '../types';
+import { getToken } from '../services/auth';
+import { fetchCareerProfile, persistCareerProfile } from '../services/career';
 
 const STORAGE_KEY = 'jf_career_profile';
 
-function loadProfile(): CareerProfile | null {
+function loadLocal(): CareerProfile | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
@@ -13,25 +15,38 @@ function loadProfile(): CareerProfile | null {
   }
 }
 
-function saveProfile(profile: CareerProfile): void {
+function saveLocal(profile: CareerProfile): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
 }
 
-function clearProfile(): void {
+function clearLocal(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
 export function useCareerProfile() {
-  const [profile, setProfileState] = useState<CareerProfile | null>(loadProfile);
+  const [profile, setProfileState] = useState<CareerProfile | null>(loadLocal);
+
+  // Ao montar: se autenticado, carrega do banco (sobrepõe localStorage)
+  useEffect(() => {
+    if (!getToken()) return;
+    fetchCareerProfile().then((remote) => {
+      if (remote) {
+        saveLocal(remote);
+        setProfileState(remote);
+      }
+    }).catch(() => {});
+  }, []);
 
   const setProfile = useCallback((p: CareerProfile) => {
-    saveProfile(p);
+    saveLocal(p);
     setProfileState(p);
+    persistCareerProfile(p).catch(() => {});
   }, []);
 
   const resetProfile = useCallback(() => {
-    clearProfile();
+    clearLocal();
     setProfileState(null);
+    persistCareerProfile(null).catch(() => {});
   }, []);
 
   return { profile, setProfile, resetProfile };
