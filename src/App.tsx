@@ -41,7 +41,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingLinkedIn, setPendingLinkedIn] = useState<LinkedInData | null>(null);
-  const [staleCount, setStaleCount] = useState(0);
+  const [, setStaleCount] = useState(0);
 
   const { profile, jobs, loading, step, error, filter, blockedToday: githubBlocked, remaining: githubRemaining, setFilter, search, removeJob } = useJobSearch();
   const { preferences, setPreferences } = usePreferences();
