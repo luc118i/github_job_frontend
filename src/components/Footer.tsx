@@ -1,37 +1,18 @@
 export function Footer() {
   return (
-    <footer className="app-footer">
-      <a
-        className="footer-link"
-        href="https://github.com/luc118i"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Lucas Inacio
-      </a>
-      <span className="footer-sep">·</span>
-      <span>
-        powered by{" "}
-        <a
-          className="footer-link"
-          href="https://www.anthropic.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          claude ai
-        </a>{" "}
-        &times;{" "}
-        <a
-          className="footer-link"
-          href="https://docs.github.com/en/rest"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          github api
-        </a>
+    <footer className="status-bar">
+      <span className="status-bar-left">
+        JOBFINDER OS <span className="status-bar-dot">•</span> v1.0.0
       </span>
-      <span className="footer-sep">·</span>
-      <span className="footer-version">v1.0</span>
+      <span className="status-bar-center">
+        <span className="status-online-dot" />
+        Sistema online
+        <span className="status-sep">|</span>
+        Conectado ao Github Jobs API
+      </span>
+      <span className="status-bar-right">
+        Powered by Claude AI
+      </span>
     </footer>
   );
 }

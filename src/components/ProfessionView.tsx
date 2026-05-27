@@ -45,7 +45,6 @@ export function ProfessionView({
   const filtered = tagFilter === 'all' ? jobs : jobs.filter((j) => j.skills.includes(tagFilter));
   const locationReady = preferences.modality === 'remote' || !!preferences.location;
 
-  // Show chat if no career profile yet and no search in progress
   const showChat = !careerProfile && !hasSearched && !loading;
 
   function handleSearch() {

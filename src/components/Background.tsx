@@ -1,9 +1,9 @@
 export function Background() {
   return (
-    <>
+    <div className="bg-scene" aria-hidden>
+      <div className="bg-glow-left" />
+      <div className="bg-glow-right" />
       <div className="bg-grid" />
-      <div className="bg-blob blob1" />
-      <div className="bg-blob blob2" />
-    </>
+    </div>
   );
 }

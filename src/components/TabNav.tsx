@@ -1,4 +1,4 @@
-export type View = 'search' | 'history' | 'outros' | 'analise' | 'profile';
+export type View = 'buscar' | 'search' | 'history' | 'outros' | 'analise' | 'profile';
 
 interface TabNavProps {
   active: View;

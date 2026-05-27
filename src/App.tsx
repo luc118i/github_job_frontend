@@ -3,6 +3,7 @@ import { JobRecord, LinkedInData, Profile, ProfessionJobRecord } from './types';
 import { Background } from './components/Background';
 import { Header } from './components/Header';
 import { View } from './components/TabNav';
+import { BuscarView } from './components/BuscarView';
 import { LinkedInImport } from './components/LinkedInImport';
 import { SearchForm } from './components/SearchForm';
 import { LoadingSteps } from './components/LoadingSteps';
@@ -34,7 +35,7 @@ interface CvState {
 
 export default function App() {
   const [username, setUsername] = useState('');
-  const [view, setView] = useState<View>('outros');
+  const [view, setView] = useState<View>('buscar');
   const [cvState, setCvState] = useState<CvState | null>(null);
   const [linkedInData, setLinkedInData] = useState<LinkedInData | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -166,7 +167,17 @@ export default function App() {
         onClose={() => { setAuthOpen(false); setPendingLinkedIn(null); }}
       />
 
-      <main className={view === 'history' ? 'kanban-view' : undefined}>
+      <main className={view === 'history' ? 'kanban-view' : view === 'buscar' ? 'landing-view' : undefined}>
+
+        {view === 'buscar' && (
+          <BuscarView
+            careerProfile={careerProfile}
+            preferences={preferences}
+            onNavigate={setView}
+            onGenerateCv={openCvFromProfession}
+            onViewCv={(job) => openExistingCv(job)}
+          />
+        )}
 
         {view === 'outros' && (
           <ProfessionView
