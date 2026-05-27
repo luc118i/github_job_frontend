@@ -1564,11 +1564,34 @@ h1 {
   margin-top: 1px;
 }
 
+.cc-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
 .cc-progress-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.cc-close-btn {
+  background: none;
+  border: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 0;
+  transition: color 0.15s;
+}
+
+.cc-close-btn:hover {
+  color: var(--text-primary);
 }
 
 .cc-progress-bar {

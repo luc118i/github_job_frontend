@@ -4,6 +4,7 @@ import { sendCareerMessage } from '../services/career';
 
 interface Props {
   onComplete: (profile: CareerProfile) => void;
+  onClose?: () => void;
 }
 
 const OPENING_MESSAGE: CareerChatMessage = {
@@ -11,7 +12,7 @@ const OPENING_MESSAGE: CareerChatMessage = {
   content: 'Que tipo de vaga você está buscando?',
 };
 
-export function CareerChat({ onComplete }: Props) {
+export function CareerChat({ onComplete, onClose }: Props) {
   const [messages, setMessages] = useState<CareerChatMessage[]>([OPENING_MESSAGE]);
   const [input, setInput] = useState('');
   const [options, setOptions] = useState<string[]>([]);
@@ -89,11 +90,16 @@ export function CareerChat({ onComplete }: Props) {
             <div className="cc-header-sub">analise de potencial</div>
           </div>
         </div>
-        <div className="cc-progress-wrap">
-          <div className="cc-progress-bar">
-            <div className="cc-progress-fill" style={{ width: `${progress * 100}%` }} />
+        <div className="cc-header-right">
+          <div className="cc-progress-wrap">
+            <div className="cc-progress-bar">
+              <div className="cc-progress-fill" style={{ width: `${progress * 100}%` }} />
+            </div>
+            <span className="cc-progress-label">{Math.round(progress * 100)}%</span>
           </div>
-          <span className="cc-progress-label">{Math.round(progress * 100)}%</span>
+          {onClose && (
+            <button className="cc-close-btn" onClick={onClose}>sair</button>
+          )}
         </div>
       </div>
 

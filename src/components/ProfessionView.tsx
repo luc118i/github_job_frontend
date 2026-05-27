@@ -20,6 +20,7 @@ interface ProfessionViewProps {
   onPreferencesChange: (p: UserPreferences) => void;
   onCareerComplete: (profile: CareerProfile) => void;
   onCareerRedo: () => void;
+  onCareerClose: () => void;
   onGenerateCv: (job: ProfessionJobRecord) => void;
   onViewCv: (job: ProfessionJobRecord) => void;
   onGoToHistory: () => void;
@@ -34,6 +35,7 @@ export function ProfessionView({
   onPreferencesChange,
   onCareerComplete,
   onCareerRedo,
+  onCareerClose,
   onGenerateCv,
   onViewCv,
   onGoToHistory,
@@ -102,7 +104,7 @@ export function ProfessionView({
       {/* ── Career Chat (onboarding — only when no profile) ── */}
       {showChat && (
         <div className="career-chat-wrapper">
-          <CareerChat onComplete={handleCareerComplete} />
+          <CareerChat onComplete={handleCareerComplete} onClose={onCareerClose} />
         </div>
       )}
 

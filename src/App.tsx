@@ -189,6 +189,7 @@ export default function App() {
             onPreferencesChange={setPreferences}
             onCareerComplete={setCareerProfile}
             onCareerRedo={resetCareerProfile}
+            onCareerClose={() => setView('buscar')}
             onGenerateCv={openCvFromProfession}
             onViewCv={(job) => openExistingCv(job)}
             onGoToHistory={() => setView('history')}
