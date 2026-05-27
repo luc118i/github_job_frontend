@@ -153,7 +153,7 @@ export default function App() {
       <Background />
       <Header
         currentUser={currentUser}
-        view={view}
+        view={view === 'outros' && !careerProfile ? 'career' : view}
         onViewChange={setView}
         onLogout={handleLogout}
         onLoginClick={() => setAuthOpen(true)}
