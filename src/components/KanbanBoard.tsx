@@ -4,6 +4,7 @@ import { fetchJobFeed } from '../services/searches';
 import { dismissJob } from '../services/jobs';
 import { useKanban } from '../hooks/useKanban';
 import { fetchGitHubUser, fetchGitHubRepos, extractSkills } from '../services/github';
+import { getToken } from '../services/auth';
 
 // ── Column definitions ───────────────────────────────────────
 
@@ -164,6 +165,26 @@ function FunnelStats({ jobs, get }: FunnelStatsProps) {
   );
 }
 
+// ── KanbanCard helpers ────────────────────────────────────────
+
+function companyInitials(name: string): string {
+  const words = name.replace(/[^\wÀ-ÿ&]/g, ' ').trim().split(/\s+/).filter(w => w.length > 1 && !/^(S\/A|LTDA|SA|ME|EPP|EIRELI)$/i.test(w));
+  if (!words.length) return name.slice(0, 2).toUpperCase();
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+const AVATAR_COLORS = [
+  '#3b5fc0', '#1e7a5e', '#6b3fa0', '#b5460f',
+  '#0e6b8a', '#7a3f1e', '#1e5c3f', '#6b1e4a',
+];
+
+function avatarColor(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff;
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+
 // ── KanbanCard ───────────────────────────────────────────────
 
 interface KanbanCardProps {
@@ -181,6 +202,9 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
   const reminder = getReminder(kd.status, kd.movedAt);
   const levelClass = job.level.toLowerCase();
   const deadlineStatus = kd.deadline ? getDeadlineStatus(kd.deadline) : null;
+  const initials = companyInitials(job.company);
+  const bgColor  = avatarColor(job.company);
+  const source   = job.github_username ? 'GitHub' : 'LinkedIn';
 
   return (
     <div
@@ -190,6 +214,7 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
       onDragEnd={onDragEnd}
       onClick={onClick}
     >
+      {/* Top row: level + star */}
       <div className="kb-card-header">
         <span className={`kb-level kb-level--${levelClass}`}>{job.level}</span>
         <div className="kb-card-actions">
@@ -204,26 +229,36 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
         </div>
       </div>
 
-      <h4 className="kb-card-title">{job.title}</h4>
-      <p className="kb-card-company">{job.company}</p>
-      {job.location && <p className="kb-card-location">{job.location}</p>}
-
-      {topSkills.length > 0 && (
-        <div className="kb-card-skills">
-          {topSkills.map(s => <span key={s} className="kb-skill">{s}</span>)}
+      {/* Main content: avatar + info */}
+      <div className="kb-card-body">
+        <div
+          className="kb-company-avatar"
+          style={{ background: bgColor }}
+          aria-hidden
+        >
+          {initials}
         </div>
-      )}
 
+        <div className="kb-card-info">
+          <h4 className="kb-card-title">{job.title}</h4>
+          <p className="kb-card-company">{job.company}</p>
+          {job.location && <p className="kb-card-location">{job.location}</p>}
+
+          {topSkills.length > 0 && (
+            <div className="kb-card-skills">
+              {topSkills.map(s => <span key={s} className="kb-skill">{s}</span>)}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer: source + date */}
       <div className="kb-card-footer">
-        <div className="kb-card-meta">
-          {job.salary && <span className="kb-salary">{job.salary}</span>}
-          {/* indica origem da vaga para diferenciar buscas */}
-          <span className="kb-source">{job.github_username ? 'GitHub' : 'LinkedIn'}</span>
-        </div>
+        <span className="kb-source">{source}</span>
+        {job.salary && <span className="kb-salary">{job.salary}</span>}
         <span className="kb-date">{relDate(job.created_at)}</span>
       </div>
 
-      {/* badge de prazo — cor muda conforme urgência */}
       {kd.deadline && deadlineStatus && (
         <div className={`kb-deadline-badge kb-deadline--${deadlineStatus}`}>
           {formatDeadline(kd.deadline)}
@@ -703,6 +738,15 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
     setJobs(prev => prev.filter(j => j.id !== id));
   }
 
+  if (!getToken()) {
+    return (
+      <div className="kb-empty-state">
+        <h3>Acesso restrito</h3>
+        <p>Faça login para visualizar e organizar suas candidaturas.</p>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="loading-bar" style={{ marginTop: 48 }}>
@@ -716,7 +760,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
   if (jobs.length === 0) {
     return (
       <div className="kb-empty-state">
-        <h3>Nenhuma vaga encontrada</h3>
+        <h3>Nenhuma vaga salva</h3>
         <p>Busque vagas na aba "buscar" ou "vagas TI" para começar a organizar suas candidaturas.</p>
       </div>
     );
