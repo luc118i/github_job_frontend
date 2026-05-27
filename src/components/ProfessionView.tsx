@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { LinkedInData, ProfessionJobRecord, UserPreferences, CareerProfile } from '../types';
 import { LinkedInImport } from './LinkedInImport';
 import { PreferencesPanel } from './PreferencesPanel';
@@ -5,6 +6,7 @@ import { TagFilterBar } from './TagFilterBar';
 import { JobCard } from './JobCard';
 import { CareerChat } from './CareerChat';
 import { CareerInsights } from './CareerInsights';
+import { CareerRefineChat } from './CareerRefineChat';
 import { useProfessionSearch } from '../hooks/useProfessionSearch';
 import { useCountdown } from '../hooks/useCountdown';
 import { blockKeyword, likeKeyword, blockSource, likeSource } from '../utils/jobPreferences';
@@ -40,6 +42,7 @@ export function ProfessionView({
     useProfessionSearch();
 
   const countdown = useCountdown(blockedToday);
+  const [showRefine, setShowRefine] = useState(false);
 
   const allTags = [...new Set(jobs.flatMap((j) => j.skills))];
   const filtered = tagFilter === 'all' ? jobs : jobs.filter((j) => j.skills.includes(tagFilter));
@@ -103,10 +106,29 @@ export function ProfessionView({
         </div>
       )}
 
-      {/* ── Career Insights (after chat completes) ── */}
-      {careerProfile && !hasSearched && !loading && (
+      {/* ── Career Refine Chat ── */}
+      {careerProfile && showRefine && !hasSearched && !loading && (
         <div className="career-insights-wrapper">
-          <CareerInsights profile={careerProfile} onRedo={onCareerRedo} />
+          <CareerRefineChat
+            profile={careerProfile}
+            linkedIn={linkedIn}
+            onConfirm={(updated) => {
+              onCareerComplete(updated);
+              setShowRefine(false);
+            }}
+            onClose={() => setShowRefine(false)}
+          />
+        </div>
+      )}
+
+      {/* ── Career Insights (after chat completes) ── */}
+      {careerProfile && !showRefine && !hasSearched && !loading && (
+        <div className="career-insights-wrapper">
+          <CareerInsights
+            profile={careerProfile}
+            onRedo={onCareerRedo}
+            onRefine={() => setShowRefine(true)}
+          />
 
           {/* After profile is set, show the import + search controls */}
           <div className="career-post-insights">

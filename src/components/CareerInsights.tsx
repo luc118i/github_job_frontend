@@ -3,6 +3,7 @@ import { CareerProfile, WorkStyle } from '../types';
 interface Props {
   profile: CareerProfile;
   onRedo: () => void;
+  onRefine?: () => void;
 }
 
 const WORK_STYLE_LABEL: Record<WorkStyle, string> = {
@@ -35,7 +36,7 @@ function DimensionBar({ label, value }: { label: string; value: number }) {
   );
 }
 
-export function CareerInsights({ profile, onRedo }: Props) {
+export function CareerInsights({ profile, onRedo, onRefine }: Props) {
   const leadershipValue = { low: 0.25, medium: 0.6, high: 0.95 }[profile.leadershipLevel] ?? 0.5;
   const techValue = { basic: 0.2, intermediate: 0.55, advanced: 0.95 }[profile.techLiteracy] ?? 0.5;
 
@@ -50,9 +51,16 @@ export function CareerInsights({ profile, onRedo }: Props) {
             <span className="ci-transition-badge">em transicao para {profile.transitionTarget}</span>
           )}
         </div>
-        <button className="ci-redo-btn" onClick={onRedo}>
-          refazer analise
-        </button>
+        <div className="ci-header-actions">
+          {onRefine && (
+            <button className="ci-refine-btn" onClick={onRefine}>
+              ajustar perfil
+            </button>
+          )}
+          <button className="ci-redo-btn" onClick={onRedo}>
+            refazer analise
+          </button>
+        </div>
       </div>
 
       {/* Summaries */}

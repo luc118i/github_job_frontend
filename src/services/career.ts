@@ -1,4 +1,4 @@
-import { CareerChatMessage, CareerProfile } from '../types';
+import { CareerChatMessage, CareerProfile, LinkedInData } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
@@ -19,6 +19,23 @@ export async function sendCareerMessage(
   if (!res.ok) {
     const data = await res.json().catch(() => ({})) as { error?: string };
     throw new Error(data.error ?? 'Erro ao enviar mensagem');
+  }
+  return res.json() as Promise<CareerMessageResponse>;
+}
+
+export async function sendCareerRefinement(
+  profile: CareerProfile,
+  messages: CareerChatMessage[],
+  linkedIn?: LinkedInData | null,
+): Promise<CareerMessageResponse> {
+  const res = await fetch(`${API_URL}/career/refine`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profile, messages, linkedIn: linkedIn ?? undefined }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao refinar perfil');
   }
   return res.json() as Promise<CareerMessageResponse>;
 }
