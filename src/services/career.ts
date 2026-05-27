@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 export interface CareerMessageResponse {
   message?: string;
+  options?: string[];
   profile?: CareerProfile;
   done: boolean;
 }

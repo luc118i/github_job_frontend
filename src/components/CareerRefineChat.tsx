@@ -59,6 +59,7 @@ function buildChangeSummary(oldP: CareerProfile, newP: CareerProfile): string[] 
 export function CareerRefineChat({ profile, linkedIn, onConfirm, onClose }: Props) {
   const [messages, setMessages] = useState<CareerChatMessage[]>([]);
   const [input, setInput] = useState('');
+  const [options, setOptions] = useState<string[]>([]);
   // Starts true — immediately fetches AI's opening message
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -77,6 +78,7 @@ export function CareerRefineChat({ profile, linkedIn, onConfirm, onClose }: Prop
         if (response.message) {
           setMessages([{ role: 'assistant', content: response.message }]);
         }
+        setOptions(response.options ?? []);
         if (response.done && response.profile) {
           setPendingProfile({ ...response.profile, completedAt: new Date().toISOString() });
         }
@@ -98,14 +100,16 @@ export function CareerRefineChat({ profile, linkedIn, onConfirm, onClose }: Prop
     if (!loading && !pendingProfile) inputRef.current?.focus();
   }, [loading, pendingProfile]);
 
-  async function handleSend() {
-    const text = input.trim();
+  async function handleSend(override?: string) {
+    const text = (override ?? input).trim();
     if (!text || loading) return;
+
+    if (!override) setInput('');
+    setOptions([]);
 
     const userMsg: CareerChatMessage = { role: 'user', content: text };
     const updated = [...messages, userMsg];
     setMessages(updated);
-    setInput('');
     setLoading(true);
     setError('');
 
@@ -121,6 +125,7 @@ export function CareerRefineChat({ profile, linkedIn, onConfirm, onClose }: Prop
       if (response.message) {
         setMessages((prev) => [...prev, { role: 'assistant', content: response.message! }]);
       }
+      setOptions(response.options ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro ao enviar mensagem');
     } finally {
@@ -141,13 +146,13 @@ export function CareerRefineChat({ profile, linkedIn, onConfirm, onClose }: Prop
 
   function handleContinue() {
     if (!pendingProfile) return;
-    // Accept the partial update and keep chatting with the updated profile
     setWorkingProfile(pendingProfile);
     setMessages((prev) => [
       ...prev,
       { role: 'assistant', content: 'Perfil atualizado. Quer ajustar mais alguma coisa?' },
     ]);
     setPendingProfile(null);
+    setOptions([]);
   }
 
   const changes = pendingProfile ? buildChangeSummary(workingProfile, pendingProfile) : [];
@@ -221,6 +226,15 @@ export function CareerRefineChat({ profile, linkedIn, onConfirm, onClose }: Prop
       {/* Input */}
       {!pendingProfile && (
         <>
+          {options.length > 0 && !loading && (
+            <div className="crc-options">
+              {options.map((opt) => (
+                <button key={opt} className="crc-option-chip" onClick={() => handleSend(opt)}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="crc-input-row">
             <textarea
               ref={inputRef}
@@ -235,7 +249,7 @@ export function CareerRefineChat({ profile, linkedIn, onConfirm, onClose }: Prop
             <button
               className="crc-send-btn"
               disabled={!input.trim() || loading}
-              onClick={handleSend}
+              onClick={() => handleSend()}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M14 8L2 2l2 6-2 6 12-6z" fill="currentColor" />

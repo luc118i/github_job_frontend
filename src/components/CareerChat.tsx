@@ -14,6 +14,7 @@ const OPENING_MESSAGE: CareerChatMessage = {
 export function CareerChat({ onComplete }: Props) {
   const [messages, setMessages] = useState<CareerChatMessage[]>([OPENING_MESSAGE]);
   const [input, setInput] = useState('');
+  const [options, setOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -27,14 +28,16 @@ export function CareerChat({ onComplete }: Props) {
     inputRef.current?.focus();
   }, [loading]);
 
-  async function handleSend() {
-    const text = input.trim();
+  async function handleSend(override?: string) {
+    const text = (override ?? input).trim();
     if (!text || loading) return;
+
+    if (!override) setInput('');
+    setOptions([]);
 
     const userMessage: CareerChatMessage = { role: 'user', content: text };
     const updated = [...messages, userMessage];
     setMessages(updated);
-    setInput('');
     setLoading(true);
     setError('');
 
@@ -46,7 +49,6 @@ export function CareerChat({ onComplete }: Props) {
           ...response.profile,
           completedAt: new Date().toISOString(),
         };
-        // Show a closing message briefly before completing
         setMessages((prev) => [
           ...prev,
           { role: 'assistant', content: 'Perfil concluído. Agora vou buscar vagas alinhadas com quem você realmente é.' },
@@ -56,11 +58,9 @@ export function CareerChat({ onComplete }: Props) {
       }
 
       if (response.message) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: response.message! },
-        ]);
+        setMessages((prev) => [...prev, { role: 'assistant', content: response.message! }]);
       }
+      setOptions(response.options ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro ao enviar mensagem');
     } finally {
@@ -100,10 +100,7 @@ export function CareerChat({ onComplete }: Props) {
       {/* Messages */}
       <div className="cc-messages">
         {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`cc-msg cc-msg--${msg.role}`}
-          >
+          <div key={i} className={`cc-msg cc-msg--${msg.role}`}>
             {msg.role === 'assistant' && <div className="cc-msg-icon">IA</div>}
             <div className="cc-bubble">{msg.content}</div>
           </div>
@@ -126,6 +123,17 @@ export function CareerChat({ onComplete }: Props) {
       {/* Error */}
       {error && <div className="cc-error">{error}</div>}
 
+      {/* Quick-reply options */}
+      {options.length > 0 && !loading && (
+        <div className="cc-options">
+          {options.map((opt) => (
+            <button key={opt} className="cc-option-chip" onClick={() => handleSend(opt)}>
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Input */}
       <div className="cc-input-row">
         <textarea
@@ -141,7 +149,7 @@ export function CareerChat({ onComplete }: Props) {
         <button
           className="cc-send-btn"
           disabled={!input.trim() || loading}
-          onClick={handleSend}
+          onClick={() => handleSend()}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M14 8L2 2l2 6-2 6 12-6z" fill="currentColor" />
