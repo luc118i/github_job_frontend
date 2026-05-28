@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { CareerProfile, WorkStyle } from '../types';
 
 interface Props {
   profile: CareerProfile;
   onRedo: () => void;
   onRefine?: () => void;
+  onEdit?: (updated: CareerProfile) => void;
 }
 
 const WORK_STYLE_LABEL: Record<WorkStyle, string> = {
@@ -36,9 +38,86 @@ function DimensionBar({ label, value }: { label: string; value: number }) {
   );
 }
 
-export function CareerInsights({ profile, onRedo, onRefine }: Props) {
+interface EditableTagListProps {
+  items: string[];
+  tagClass: string;
+  placeholder: string;
+  onAdd: (value: string) => void;
+  onRemove: (value: string) => void;
+  canEdit: boolean;
+}
+
+function EditableTagList({ items, tagClass, placeholder, onAdd, onRemove, canEdit }: EditableTagListProps) {
+  const [input, setInput] = useState('');
+
+  function handleAdd() {
+    const v = input.trim();
+    if (!v || items.includes(v)) return;
+    onAdd(v);
+    setInput('');
+  }
+
+  function handleKey(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') { e.preventDefault(); handleAdd(); }
+  }
+
+  return (
+    <div className="ci-tag-editor">
+      <div className="ci-tags">
+        {items.map((a) => (
+          <span key={a} className={`ci-tag ${tagClass}`}>
+            {a}
+            {canEdit && (
+              <button
+                className="ci-tag-remove"
+                onClick={() => onRemove(a)}
+                title="Remover"
+              >
+                ×
+              </button>
+            )}
+          </span>
+        ))}
+        {items.length === 0 && (
+          <span className="ci-tag-empty">nenhum</span>
+        )}
+      </div>
+      {canEdit && (
+        <div className="ci-tag-input-row">
+          <input
+            className="ci-tag-input"
+            type="text"
+            placeholder={placeholder}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKey}
+            maxLength={48}
+          />
+          <button
+            className="ci-tag-add-btn"
+            onClick={handleAdd}
+            disabled={!input.trim()}
+          >
+            +
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function CareerInsights({ profile, onRedo, onRefine, onEdit }: Props) {
   const leadershipValue = { low: 0.25, medium: 0.6, high: 0.95 }[profile.leadershipLevel] ?? 0.5;
   const techValue = { basic: 0.2, intermediate: 0.55, advanced: 0.95 }[profile.techLiteracy] ?? 0.5;
+  const canEdit = !!onEdit;
+
+  function updateDesired(areas: string[]) {
+    onEdit?.({ ...profile, desiredAreas: areas });
+  }
+
+  function updateBlocked(areas: string[]) {
+    onEdit?.({ ...profile, blockedAreas: areas });
+  }
 
   return (
     <div className="ci-card">
@@ -94,29 +173,31 @@ export function CareerInsights({ profile, onRedo, onRefine }: Props) {
             </div>
           </div>
 
-          {/* Desired areas */}
-          {profile.desiredAreas.length > 0 && (
-            <div className="ci-section">
-              <span className="ci-section-label">quer explorar</span>
-              <div className="ci-tags">
-                {profile.desiredAreas.map((a) => (
-                  <span key={a} className="ci-tag ci-tag--desired">{a}</span>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Desired areas — editable */}
+          <div className="ci-section">
+            <span className="ci-section-label">quer explorar</span>
+            <EditableTagList
+              items={profile.desiredAreas}
+              tagClass="ci-tag--desired"
+              placeholder="ex: produto, UX, dados..."
+              canEdit={canEdit}
+              onAdd={(v) => updateDesired([...profile.desiredAreas, v])}
+              onRemove={(v) => updateDesired(profile.desiredAreas.filter(a => a !== v))}
+            />
+          </div>
 
-          {/* Blocked areas */}
-          {profile.blockedAreas.length > 0 && (
-            <div className="ci-section">
-              <span className="ci-section-label">nao quer mais</span>
-              <div className="ci-tags">
-                {profile.blockedAreas.map((a) => (
-                  <span key={a} className="ci-tag ci-tag--blocked">{a}</span>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Blocked areas — editable */}
+          <div className="ci-section">
+            <span className="ci-section-label">nao quer mais</span>
+            <EditableTagList
+              items={profile.blockedAreas}
+              tagClass="ci-tag--blocked"
+              placeholder="ex: logistica, suporte..."
+              canEdit={canEdit}
+              onAdd={(v) => updateBlocked([...profile.blockedAreas, v])}
+              onRemove={(v) => updateBlocked(profile.blockedAreas.filter(a => a !== v))}
+            />
+          </div>
         </div>
 
         {/* Right column */}

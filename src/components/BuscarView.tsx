@@ -1,4 +1,4 @@
-import { CareerProfile, ProfessionJobRecord, UserPreferences } from '../types';
+import { CareerProfile, LinkedInData, ProfessionJobRecord, UserPreferences } from '../types';
 import { View } from './TabNav';
 import { LandingSearch } from './LandingSearch';
 import { JobCard } from './JobCard';
@@ -9,6 +9,7 @@ import { blockKeyword, likeKeyword, blockSource, likeSource } from '../utils/job
 interface BuscarViewProps {
   careerProfile: CareerProfile | null;
   preferences: UserPreferences;
+  linkedIn: LinkedInData | null;
   onNavigate: (v: View) => void;
   onGenerateCv: (job: ProfessionJobRecord) => void;
   onViewCv: (job: ProfessionJobRecord) => void;
@@ -17,6 +18,7 @@ interface BuscarViewProps {
 export function BuscarView({
   careerProfile,
   preferences,
+  linkedIn,
   onNavigate,
   onGenerateCv,
   onViewCv,
@@ -29,6 +31,7 @@ export function BuscarView({
     tagFilter,
     blockedToday,
     setTagFilter,
+    search,
     searchByQuery,
     reset,
     removeJob,
@@ -44,6 +47,12 @@ export function BuscarView({
       onNavigate('outros');
       return;
     }
+    if (linkedIn) {
+      // Full LinkedIn + Career Profile search (no GitHub — GitHub is for the TI tab)
+      search(linkedIn, preferences, careerProfile);
+      return;
+    }
+    // Fallback when user has career profile but no LinkedIn yet: text query from profile
     const q =
       (careerProfile.transitionReady && careerProfile.transitionTarget)
         ? careerProfile.transitionTarget

@@ -92,3 +92,25 @@ export async function updateLinkedIn(linkedInData: LinkedInData): Promise<void> 
     body: JSON.stringify({ linkedInData }),
   });
 }
+
+export interface ServerPreferences {
+  blocked_keywords?: string[];
+  liked_keywords?: string[];
+  blocked_sources?: string[];
+  liked_sources?: string[];
+}
+
+export async function fetchServerPreferences(): Promise<ServerPreferences | null> {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const res = await fetch(`${API_URL}/auth/preferences`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { preferences: ServerPreferences };
+    return data.preferences ?? null;
+  } catch {
+    return null;
+  }
+}

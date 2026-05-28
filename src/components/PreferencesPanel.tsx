@@ -19,6 +19,7 @@ interface PreferencesPanelProps {
   preferences: UserPreferences;
   onChange: (p: UserPreferences) => void;
   defaultOpen?: boolean;
+  cardStyle?: boolean;
 }
 
 type Modality = UserPreferences['modality'];
@@ -56,7 +57,18 @@ function summaryText(p: UserPreferences): string {
   return parts.join(' · ');
 }
 
-export function PreferencesPanel({ preferences, onChange, defaultOpen = false }: PreferencesPanelProps) {
+const IconSliders = () => (
+  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+    <line x1="4" y1="6" x2="18" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="4" y1="11" x2="18" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="4" y1="16" x2="18" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    <circle cx="8" cy="6" r="2" fill="currentColor"/>
+    <circle cx="14" cy="11" r="2" fill="currentColor"/>
+    <circle cx="9" cy="16" r="2" fill="currentColor"/>
+  </svg>
+);
+
+export function PreferencesPanel({ preferences, onChange, defaultOpen = false, cardStyle = false }: PreferencesPanelProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [detectingLocation, setDetectingLocation] = useState(false);
 
@@ -93,18 +105,34 @@ export function PreferencesPanel({ preferences, onChange, defaultOpen = false }:
   const summary = summaryText(preferences);
   const hasPrefs = !!summary;
 
+  const locationLabel = preferences.location || (preferences.modality === 'remote' ? 'Remoto' : 'Localizacao');
+
   return (
-    <div className="prefs-panel">
-      <button
-        className={`prefs-toggle ${open ? 'open' : ''} ${hasPrefs ? 'has-prefs' : ''}`}
-        onClick={handleOpen}
-        type="button"
-      >
-        <span className="prefs-toggle-label">
-          {hasPrefs && !open ? summary : 'Preferências de busca'}
-        </span>
-        <span className="prefs-toggle-icon">{open ? '−' : '+'}</span>
-      </button>
+    <div className={`prefs-panel${cardStyle ? ' prefs-panel--card' : ''}`}>
+      {cardStyle ? (
+        <button
+          className={`prefs-card-toggle${open ? ' open' : ''}${hasPrefs ? ' has-prefs' : ''}`}
+          onClick={handleOpen}
+          type="button"
+        >
+          <div className="prefs-card-icon">
+            <IconSliders />
+          </div>
+          <span className="prefs-card-title">{locationLabel}</span>
+          {summary && <span className="prefs-card-sub">{summary}</span>}
+        </button>
+      ) : (
+        <button
+          className={`prefs-toggle ${open ? 'open' : ''} ${hasPrefs ? 'has-prefs' : ''}`}
+          onClick={handleOpen}
+          type="button"
+        >
+          <span className="prefs-toggle-label">
+            {hasPrefs && !open ? summary : 'Preferências de busca'}
+          </span>
+          <span className="prefs-toggle-icon">{open ? '−' : '+'}</span>
+        </button>
+      )}
 
       {open && (
         <div className="prefs-body">

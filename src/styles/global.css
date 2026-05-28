@@ -1799,9 +1799,9 @@ h1 {
    ══════════════════════════════════════════════════════════════ */
 
 .career-insights-wrapper {
-  max-width: 900px;
-  margin: 32px auto 0;
-  padding: 0 16px;
+  max-width: 860px;
+  margin: 24px auto 0;
+  padding: 0;
 }
 
 .career-results-bar {
@@ -1811,12 +1811,32 @@ h1 {
 }
 
 .ci-card {
-  background: linear-gradient(160deg, #0c1322 0%, #0e1a2e 60%, #0b1222 100%);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px;
-  padding: 20px 24px;
-  box-shadow: 0 4px 28px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03);
+  position: relative;
+  background: rgba(14,26,54,0.82);
+  border: 1px solid rgba(61,114,200,0.22);
+  border-radius: 8px 0 8px 8px;
+  padding: 28px 28px 24px;
+  overflow: hidden;
   animation: ci-in 0.3s ease both;
+}
+
+/* corner accent — mesmo padrão ls-feature-card */
+.ci-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 28px; height: 28px;
+  background: rgba(82,148,240,0.55);
+  border-bottom-left-radius: 3px;
+  z-index: 1;
+}
+.ci-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 28px; height: 28px;
+  background: linear-gradient(225deg, #0a0a0f 48%, transparent 49%);
+  z-index: 2;
 }
 
 @keyframes ci-in {
@@ -1829,7 +1849,9 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 3; /* above ::before/::after corner */
 }
 
 .ci-header-left {
@@ -1887,10 +1909,12 @@ h1 {
 }
 
 .ci-summaries {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  position: relative;
+  z-index: 3;
 }
 
 .ci-summary-main {
@@ -1912,11 +1936,13 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-bottom: 16px;
-  padding: 10px 14px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
   background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 4px;
+  position: relative;
+  z-index: 3;
 }
 
 .ci-goal-text {
@@ -1928,18 +1954,16 @@ h1 {
 
 .ci-columns {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-@media (max-width: 600px) {
-  .ci-columns { grid-template-columns: 1fr; }
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  position: relative;
+  z-index: 3;
 }
 
 .ci-col {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .ci-section {
@@ -1995,6 +2019,68 @@ h1 {
   border: 1px solid rgba(139,92,246,0.15);
 }
 
+/* Editable tag list */
+.ci-tag-editor { display: flex; flex-direction: column; gap: 8px; }
+
+.ci-tag-empty {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.ci-tag-remove {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 0 0 0 5px;
+  font-size: 13px;
+  line-height: 1;
+  transition: opacity var(--t-fast);
+}
+.ci-tag-remove:hover { opacity: 1; }
+
+.ci-tag-input-row {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.ci-tag-input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  color: var(--text-primary);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  outline: none;
+  width: 160px;
+  transition: border-color var(--t-fast);
+}
+.ci-tag-input::placeholder { color: var(--text-muted); }
+.ci-tag-input:focus { border-color: rgba(255,255,255,0.2); }
+
+.ci-tag-add-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.ci-tag-add-btn:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+.ci-tag-add-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
 /* Dimension bars */
 .ci-dimension {
   display: flex;
@@ -2023,13 +2109,12 @@ h1 {
   transition: width 0.6s ease;
 }
 
-/* Post-insights controls */
+/* Post-insights controls — abaixo do card principal, sem gap extra */
 .career-post-insights {
-  margin-top: 20px;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  align-items: flex-start;
+  gap: 0;
 }
 
 .career-ready-row {
@@ -2038,6 +2123,309 @@ h1 {
   gap: 12px;
   flex-wrap: wrap;
   width: 100%;
+}
+
+/* ── Card-style search button — mesmo padrão de .ls-feature-card ─ */
+
+/* wrapper — grid for the two action cards, expanded prefs body below */
+.career-action-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+.career-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  width: 100%;
+  align-items: stretch; /* equal height columns */
+}
+
+/* ── PreferencesPanel — card variant ── */
+.prefs-panel--card {
+  display: flex;
+  flex-direction: column;
+  /* keep position:static so .prefs-body anchors to .career-action-wrap */
+  position: static;
+}
+
+.prefs-card-toggle {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 22px 22px;
+  border: 1px solid rgba(61,114,200,0.22);
+  background: rgba(14,26,54,0.82);
+  border-radius: 8px 0 8px 8px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  min-height: 120px;
+  transition: border-color 0.18s, background 0.18s, transform 0.18s;
+}
+.prefs-card-toggle::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 26px; height: 26px;
+  background: rgba(82,148,240,0.55);
+  border-bottom-left-radius: 3px;
+  z-index: 1;
+  transition: background 0.18s;
+}
+.prefs-card-toggle::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 26px; height: 26px;
+  background: linear-gradient(225deg, #0a0a0f 48%, transparent 49%);
+  z-index: 2;
+}
+.prefs-card-toggle:hover {
+  border-color: rgba(61,114,200,0.45);
+  background: rgba(18,34,70,0.92);
+  transform: translateY(-2px);
+}
+.prefs-card-toggle:hover::before { background: rgba(100,170,255,0.7); }
+.prefs-card-toggle.open {
+  border-color: rgba(61,114,200,0.45);
+  background: rgba(18,34,70,0.92);
+  border-radius: 8px 0 0 0;
+}
+
+.prefs-card-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(61,114,200,0.3);
+  background: rgba(61,114,200,0.07);
+  color: #3d72c8;
+  position: relative;
+  z-index: 3;
+}
+
+.prefs-card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #e8e4dc;
+  letter-spacing: 0.02em;
+  position: relative;
+  z-index: 3;
+}
+
+.prefs-card-sub {
+  font-size: 11px;
+  color: rgba(232,228,220,0.4);
+  line-height: 1.6;
+  position: relative;
+  z-index: 3;
+}
+
+/* expanded body — break out of grid cell, span full wrap width */
+.prefs-panel--card .prefs-body {
+  position: absolute;
+  /* offset from the .career-action-wrap which is position:relative */
+  left: 0;
+  right: 0;
+  top: calc(100% + 0px);
+  z-index: 20;
+  border-radius: 0 0 8px 8px;
+  border-top: none;
+}
+
+/* ── GithubConnect card ── */
+.github-connect {
+  display: flex;
+  flex-direction: column;
+}
+
+/* reuses prefs-card-toggle base; only overrides what differs */
+.github-connect-toggle.has-prefs .prefs-card-icon { color: #e8e4dc; border-color: rgba(232,228,220,0.3); }
+
+.github-connect-body {
+  background: rgba(14,26,54,0.95);
+  border: 1px solid rgba(61,114,200,0.45);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.github-connect-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid rgba(61,114,200,0.3);
+  background: rgba(10,20,44,0.7);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.github-connect-prefix {
+  font-size: 12px;
+  color: rgba(232,228,220,0.35);
+  padding: 0 8px;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+  border-right: 1px solid rgba(61,114,200,0.2);
+}
+
+.github-connect-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e8e4dc;
+  font-size: 13px;
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.01em;
+}
+.github-connect-input::placeholder { color: rgba(232,228,220,0.25); }
+
+.github-connect-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.github-connect-save {
+  flex: 1;
+  background: rgba(61,114,200,0.18);
+  border: 1px solid rgba(61,114,200,0.35);
+  color: #a8c4f0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 7px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.github-connect-save:hover:not(:disabled) { background: rgba(61,114,200,0.32); border-color: rgba(61,114,200,0.6); }
+.github-connect-save:disabled { opacity: 0.35; cursor: default; }
+
+.github-connect-clear {
+  background: transparent;
+  border: 1px solid rgba(232,228,220,0.12);
+  color: rgba(232,228,220,0.35);
+  font-size: 11px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.github-connect-clear:hover { border-color: rgba(200,80,80,0.4); color: rgba(220,100,100,0.8); }
+
+.search-card-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 22px 22px;
+  border: 1px solid rgba(61,114,200,0.22);
+  background: rgba(14,26,54,0.82);
+  border-radius: 8px 0 8px 8px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;      /* fills grid column */
+  min-height: 120px;
+  transition: border-color 0.18s, background 0.18s, transform 0.18s;
+}
+
+/* accent square top-right */
+.search-card-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 26px; height: 26px;
+  background: rgba(82,148,240,0.55);
+  border-bottom-left-radius: 3px;
+  z-index: 1;
+  transition: background 0.18s;
+}
+
+/* diagonal dark overlay — cuts corner */
+.search-card-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 26px; height: 26px;
+  background: linear-gradient(225deg, #0a0a0f 48%, transparent 49%);
+  z-index: 2;
+  transition: background 0.18s;
+}
+
+.search-card-btn:hover:not(:disabled) {
+  border-color: rgba(61,114,200,0.45);
+  background: rgba(18,34,70,0.92);
+  transform: translateY(-2px);
+}
+.search-card-btn:hover:not(:disabled)::before { background: rgba(100,170,255,0.7); }
+.search-card-btn:hover:not(:disabled)::after  { background: linear-gradient(225deg, #0a0a0f 48%, transparent 49%); }
+
+.search-card-btn:active:not(:disabled) { transform: translateY(0); }
+
+.search-card-btn.search-card-btn--disabled,
+.search-card-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.search-card-btn.search-card-btn--blocked {
+  border-color: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+}
+.search-card-btn.search-card-btn--blocked::before { background: rgba(255,255,255,0.06); }
+
+.scb-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(61,114,200,0.3);
+  background: rgba(61,114,200,0.07);
+  color: #3d72c8;
+  position: relative;
+  z-index: 3;
+}
+
+.search-card-btn.search-card-btn--blocked .scb-icon {
+  border-color: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-muted);
+}
+
+.scb-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #e8e4dc;
+  letter-spacing: 0.02em;
+  position: relative;
+  z-index: 3;
+}
+
+.scb-sub {
+  font-size: 11px;
+  color: rgba(232,228,220,0.4);
+  line-height: 1.6;
+  position: relative;
+  z-index: 3;
 }
 
 /* ── CareerInsights header actions (refine + redo buttons row) ── */
@@ -3907,9 +4295,19 @@ h1 {
   display: none;
 }
 
-/* section-header inside profession-view results stacks below search-nav */
+/* section-header and tag-filter-bar stack below search-nav in results */
 .profession-view .section-header {
   top: 100px; /* 52px header + 48px search-nav */
+}
+
+/* TagFilterBar in profession-view must clear the sticky search-nav */
+.profession-view .tfb-root {
+  top: 100px; /* 52px header + 48px search-nav */
+  /* bleed to match main's 48px padding */
+  margin-left: -48px;
+  margin-right: -48px;
+  padding-left: 48px;
+  padding-right: 48px;
 }
 
 /* ── Profession View ── */
@@ -4538,7 +4936,16 @@ h1 {
   }
 
   .profession-view .section-header {
-    top: 88px; /* 44px header + ~44px collapsed search-nav */
+    top: 88px; /* 44px header + ~44px search-nav */
+  }
+
+  /* tfb-root in profession-view clears the search-nav on mobile */
+  .profession-view .tfb-root {
+    top: 88px; /* 44px header + 44px search-nav */
+    margin-left: -20px;
+    margin-right: -20px;
+    padding-left: 20px;
+    padding-right: 20px;
   }
 
   /* Kanban — single column mode */
@@ -4643,6 +5050,106 @@ h1 {
 
   .kb-funnel {
     display: none;
+  }
+
+  /* ── Career section — mobile ── */
+
+  /* search-nav: fix negative margins to match mobile main's 20px padding */
+  .search-nav {
+    margin-left: -20px;
+    margin-right: -20px;
+    padding: 10px 20px;
+    gap: 8px;
+  }
+
+  .search-nav-prefs {
+    min-width: 0;
+    flex: 1;
+  }
+
+  /* career chat wrapper */
+  .career-chat-wrapper {
+    margin-top: 24px;
+    padding: 0 0 60px;
+  }
+
+  /* career insights wrapper */
+  .career-insights-wrapper {
+    margin-top: 16px;
+    padding: 0;
+  }
+
+  .career-results-bar {
+    padding: 0;
+  }
+
+  /* ci-card: tighter padding on mobile */
+  .ci-card {
+    padding: 18px 16px 16px;
+  }
+
+  /* header wraps to two lines when badge + buttons don't fit */
+  .ci-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .ci-header-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ci-header-actions {
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
+  .ci-redo-btn,
+  .ci-refine-btn {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+
+  /* ci-columns gap reduce (minmax handles column count) */
+  .ci-columns {
+    gap: 16px;
+  }
+
+  .ci-goal {
+    padding: 10px 12px;
+    margin-bottom: 16px;
+  }
+
+  /* action cards: minmax handles collapse; remove fixed height */
+  .search-card-btn,
+  .prefs-card-toggle {
+    min-height: unset;
+    padding: 16px 18px;
+  }
+
+  /* prefs body: flow inline on mobile (not absolute-positioned) */
+  .prefs-panel--card .prefs-body {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .career-post-insights {
+    margin-top: 8px;
+  }
+
+  /* tag input: full width on mobile so it doesn't overflow */
+  .ci-tag-input {
+    width: 100%;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .ci-tag-input-row {
+    width: 100%;
   }
 }
 

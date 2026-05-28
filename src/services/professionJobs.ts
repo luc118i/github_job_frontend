@@ -1,12 +1,17 @@
 import { CareerProfile, LinkedInData, ProfessionSearchResult, UserPreferences } from '../types';
 import { getBlockedKeywords, getLikedKeywords, getBlockedSources, getLikedSources } from '../utils/jobPreferences';
+import { getToken } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 async function postProfessionJobs(body: Record<string, unknown>): Promise<ProfessionSearchResult> {
+  const token = getToken();
   const res = await fetch(`${API_URL}/profession-jobs`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -20,6 +25,7 @@ export async function fetchProfessionJobs(
   linkedIn: LinkedInData,
   preferences?: UserPreferences,
   careerProfile?: CareerProfile | null,
+  githubUsername?: string | null,
 ): Promise<ProfessionSearchResult> {
   return postProfessionJobs({
     linkedIn,
@@ -29,6 +35,7 @@ export async function fetchProfessionJobs(
     blockedSources: getBlockedSources(),
     likedSources: getLikedSources(),
     ...(careerProfile ? { careerProfile } : {}),
+    ...(githubUsername ? { githubUsername } : {}),
   });
 }
 

@@ -1,6 +1,7 @@
 import { JobRecord, Profile, UserPreferences } from '../types';
 import { extractRepoContext } from './github';
 import { getBlockedKeywords, getLikedKeywords, getBlockedSources, getLikedSources } from '../utils/jobPreferences';
+import { getToken } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
@@ -14,10 +15,14 @@ export async function searchJobs(
     .map((r) => r.name);
 
   const repoContext = extractRepoContext(profile.repos);
+  const token = getToken();
 
   const res = await fetch(`${API_URL}/jobs`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({
       username: profile.user.login,
       name: profile.user.name ?? profile.user.login,

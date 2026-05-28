@@ -7,6 +7,7 @@ import { JobCard } from './JobCard';
 import { CareerChat } from './CareerChat';
 import { CareerInsights } from './CareerInsights';
 import { CareerRefineChat } from './CareerRefineChat';
+import { GithubConnect } from './GithubConnect';
 import { useProfessionSearch } from '../hooks/useProfessionSearch';
 import { useCountdown } from '../hooks/useCountdown';
 import { blockKeyword, likeKeyword, blockSource, likeSource } from '../utils/jobPreferences';
@@ -15,6 +16,7 @@ interface ProfessionViewProps {
   linkedIn: LinkedInData | null;
   preferences: UserPreferences;
   careerProfile: CareerProfile | null;
+  githubUsername?: string | null;
   onImport: (data: LinkedInData) => void;
   onClear: () => void;
   onPreferencesChange: (p: UserPreferences) => void;
@@ -24,12 +26,14 @@ interface ProfessionViewProps {
   onGenerateCv: (job: ProfessionJobRecord) => void;
   onViewCv: (job: ProfessionJobRecord) => void;
   onGoToHistory: () => void;
+  onGithubChange?: (username: string | null) => void;
 }
 
 export function ProfessionView({
   linkedIn,
   preferences,
   careerProfile,
+  githubUsername,
   onImport,
   onClear,
   onPreferencesChange,
@@ -39,6 +43,7 @@ export function ProfessionView({
   onGenerateCv,
   onViewCv,
   onGoToHistory,
+  onGithubChange,
 }: ProfessionViewProps) {
   const { jobs, loading, error, profileSummary, tagFilter, blockedToday, setTagFilter, search, reset, removeJob, hasSearched } =
     useProfessionSearch();
@@ -54,7 +59,7 @@ export function ProfessionView({
 
   function handleSearch() {
     if (!linkedIn) return;
-    search(linkedIn, preferences, careerProfile);
+    search(linkedIn, preferences, careerProfile, githubUsername);
   }
 
   function handleCareerComplete(profile: CareerProfile) {
@@ -64,8 +69,8 @@ export function ProfessionView({
   return (
     <div className="profession-view">
 
-      {/* ── Sticky search nav ── */}
-      {!showChat && (
+      {/* ── Sticky search nav — só aparece durante/após busca; antes da busca o card-btn na insights cuida disso ── */}
+      {(hasSearched || loading) && (
         <div className="search-nav">
           {!linkedIn && (
             <div className="search-nav-linkedin">
@@ -130,6 +135,7 @@ export function ProfessionView({
             profile={careerProfile}
             onRedo={onCareerRedo}
             onRefine={() => setShowRefine(true)}
+            onEdit={(updated) => onCareerComplete(updated)}
           />
 
           {/* After profile is set, show the import + search controls */}
@@ -138,15 +144,30 @@ export function ProfessionView({
               <LinkedInImport data={null} onImport={onImport} onClear={onClear} />
             )}
             {linkedIn && (
-              <div className="career-ready-row">
-                <PreferencesPanel preferences={preferences} onChange={onPreferencesChange} />
-                <button
-                  className={`search-btn${blockedToday ? ' search-btn--countdown' : ''}`}
-                  disabled={blockedToday || !locationReady || loading}
-                  onClick={handleSearch}
-                >
-                  {blockedToday ? `disponivel em ${countdown}` : !locationReady ? 'configure localizacao' : 'buscar vagas'}
-                </button>
+              <div className="career-action-wrap">
+                <div className="career-action-grid">
+                  <PreferencesPanel preferences={preferences} onChange={onPreferencesChange} cardStyle />
+                  {onGithubChange && (
+                    <GithubConnect username={githubUsername ?? null} onChange={onGithubChange} />
+                  )}
+                  <button
+                    className={`search-card-btn${blockedToday ? ' search-card-btn--blocked' : ''}${(!locationReady || loading) ? ' search-card-btn--disabled' : ''}`}
+                    disabled={blockedToday || !locationReady || loading}
+                    onClick={handleSearch}
+                  >
+                    <div className="scb-icon">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                    </div>
+                    <span className="scb-title">
+                      {blockedToday ? `disponivel em ${countdown}` : !locationReady ? 'configure localizacao' : 'Buscar Vagas'}
+                    </span>
+                    {!blockedToday && locationReady && (
+                      <span className="scb-sub">Oportunidades alinhadas ao seu perfil</span>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -175,7 +196,11 @@ export function ProfessionView({
           {/* Compact career insights bar on results screen */}
           {careerProfile && (
             <div className="career-results-bar">
-              <CareerInsights profile={careerProfile} onRedo={() => { onCareerRedo(); reset(); }} />
+              <CareerInsights
+                profile={careerProfile}
+                onRedo={() => { onCareerRedo(); reset(); }}
+                onEdit={(updated) => onCareerComplete(updated)}
+              />
             </div>
           )}
 

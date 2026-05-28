@@ -22,8 +22,8 @@ const UserProfile    = lazy(() => import('./components/UserProfile').then(m => (
 import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
 import { useCareerProfile } from './hooks/useCareerProfile';
-import { AuthUser, fetchMe, clearToken, updateLinkedIn } from './services/auth';
-import { blockKeyword, likeKeyword, blockSource, likeSource } from './utils/jobPreferences';
+import { AuthUser, fetchMe, clearToken, updateLinkedIn, fetchServerPreferences, updateProfile } from './services/auth';
+import { blockKeyword, likeKeyword, blockSource, likeSource, syncPreferencesFromServer } from './utils/jobPreferences';
 import { fetchCvByJobId } from './services/cv';
 
 interface CvState {
@@ -53,6 +53,10 @@ export default function App() {
       setCurrentUser(result.user);
       if (result.linkedInData) setLinkedInData(result.linkedInData);
       if (result.user.github_username) setUsername(result.user.github_username);
+      // Hydrate feedback preferences from server (server wins over stale localStorage)
+      fetchServerPreferences().then(prefs => {
+        if (prefs) syncPreferencesFromServer(prefs);
+      });
     });
   }, []);
 
@@ -83,7 +87,14 @@ export default function App() {
     setAuthOpen(false);
     setPendingLinkedIn(null);
     if (liData) setLinkedInData(liData);
+    // Hydrate feedback preferences after login
+    fetchServerPreferences().then(prefs => {
+      if (prefs) syncPreferencesFromServer(prefs);
+    });
     if (user.github_username) setUsername(user.github_username);
+    // If the user completed the career chat before logging in, the profile only lived in
+    // localStorage. Now that we have a valid token, push it to the database.
+    if (careerProfile) setCareerProfile(careerProfile);
   }
 
   function handleLogout() {
@@ -95,6 +106,18 @@ export default function App() {
   function handleProfileUpdate(updatedUser: AuthUser) {
     setCurrentUser(updatedUser);
     if (updatedUser.github_username) setUsername(updatedUser.github_username);
+  }
+
+  async function handleGithubChange(githubUser: string | null) {
+    setUsername(githubUser ?? '');
+    if (currentUser) {
+      try {
+        const updated = await updateProfile({ github_username: githubUser });
+        setCurrentUser(updated);
+      } catch {
+        // silently fails — username is still used in-session via setUsername
+      }
+    }
   }
 
   function openCv(job: JobRecord, cvProfile: Profile) {
@@ -173,6 +196,7 @@ export default function App() {
           <BuscarView
             careerProfile={careerProfile}
             preferences={preferences}
+            linkedIn={linkedInData}
             onNavigate={setView}
             onGenerateCv={openCvFromProfession}
             onViewCv={(job) => openExistingCv(job)}
@@ -184,6 +208,7 @@ export default function App() {
             linkedIn={linkedInData}
             preferences={preferences}
             careerProfile={careerProfile}
+            githubUsername={currentUser?.github_username ?? (username || null)}
             onImport={handleLinkedInImport}
             onClear={handleLinkedInClear}
             onPreferencesChange={setPreferences}
@@ -193,6 +218,7 @@ export default function App() {
             onGenerateCv={openCvFromProfession}
             onViewCv={(job) => openExistingCv(job)}
             onGoToHistory={() => setView('history')}
+            onGithubChange={handleGithubChange}
           />
         )}
 
