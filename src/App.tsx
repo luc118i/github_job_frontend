@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { JobRecord, LinkedInData, Profile, ProfessionJobRecord } from './types';
 import { Background } from './components/Background';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/Header';
 import { View } from './components/TabNav';
 import { BuscarView } from './components/BuscarView';
+import { CareerDashboard } from './components/CareerDashboard';
 import { LinkedInImport } from './components/LinkedInImport';
 import { SearchForm } from './components/SearchForm';
 import { LoadingSteps } from './components/LoadingSteps';
@@ -18,7 +20,6 @@ import { Footer } from './components/Footer';
 const CvEditor         = lazy(() => import('./components/CvEditor').then(m => ({ default: m.CvEditor })));
 const KanbanBoard      = lazy(() => import('./components/KanbanBoard').then(m => ({ default: m.KanbanBoard })));
 const LinkAnalysisView = lazy(() => import('./components/LinkAnalysisView').then(m => ({ default: m.LinkAnalysisView })));
-const UserProfile      = lazy(() => import('./components/UserProfile').then(m => ({ default: m.UserProfile })));
 const OnboardingView   = lazy(() => import('./components/OnboardingView').then(m => ({ default: m.OnboardingView })));
 import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
@@ -39,6 +40,7 @@ export default function App() {
   const [username, setUsername] = useState('');
   const [view, setView] = useState<View>('buscar');
   const [onboardingDone, setOnboardingDone] = useState(false);
+  const [forceOnboarding, setForceOnboarding] = useState(false);
   const [cvState, setCvState] = useState<CvState | null>(null);
   const [linkedInData, setLinkedInData] = useState<LinkedInData | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -63,11 +65,13 @@ export default function App() {
     });
   }, []);
 
-  // Redireciona para 'outros' se o usuário tentar acessar 'history' sem estar logado
+  // Áreas exclusivas de quem tem conta: carreira, vagas TI e organizar.
+  // Visitante que tente acessá-las (via link/CTA) volta pra 'buscar' e recebe o convite de login.
   useEffect(() => {
-    if (view === 'history' && !currentUser) {
-      setView('outros');
-      setAuthReason('O histórico de candidaturas requer uma conta. Faça login para acessar.');
+    const PROTECTED: View[] = ['career', 'outros', 'history'];
+    if (!currentUser && PROTECTED.includes(view)) {
+      setView('buscar');
+      setAuthReason('Essa área é exclusiva para quem tem conta. Faça login para acessar.');
       setAuthOpen(true);
     }
   }, [view, currentUser]);
@@ -114,6 +118,7 @@ export default function App() {
     clearToken();
     setCurrentUser(null);
     setLinkedInData(null);
+    setView('buscar'); // sai de qualquer área protegida sem disparar o modal de login
   }
 
   function handleProfileUpdate(updatedUser: AuthUser) {
@@ -167,8 +172,8 @@ export default function App() {
     setCvState({ job, profile: syntheticProfile });
   }
 
-  // ── Onboarding: mostra quando não há perfil e usuário ainda não pulou ──
-  const needsOnboarding = !careerProfile && !onboardingDone;
+  // ── Onboarding: mostra na 1ª visita (sem perfil) ou quando forçado (ex.: "Descobrir" sem CV) ──
+  const needsOnboarding = forceOnboarding || (!careerProfile && !onboardingDone);
 
   if (needsOnboarding) {
     return (
@@ -178,8 +183,9 @@ export default function App() {
             setCareerProfile(profile);
             if (liData) { setLinkedInData(liData); if (currentUser) updateLinkedIn(liData); }
             setOnboardingDone(true);
+            setForceOnboarding(false);
           }}
-          onSkip={() => setOnboardingDone(true)}
+          onSkip={() => { setOnboardingDone(true); setForceOnboarding(false); }}
         />
       </Suspense>
     );
@@ -207,11 +213,11 @@ export default function App() {
       <Background />
       <Header
         currentUser={currentUser}
-        view={view === 'outros' && !careerProfile ? 'career' : view}
+        view={view}
         onViewChange={setView}
         onLogout={handleLogout}
         onLoginClick={() => setAuthOpen(true)}
-        onProfileClick={() => setView('profile')}
+        onProfileClick={() => setView('career')}
       />
 
       <AuthModal
@@ -223,6 +229,7 @@ export default function App() {
       />
 
       <main className={view === 'history' ? 'kanban-view' : view === 'buscar' ? 'landing-view' : undefined}>
+       <ErrorBoundary area={view} onReset={() => setView('buscar')}>
 
         {view === 'buscar' && (
           <BuscarView
@@ -237,6 +244,21 @@ export default function App() {
             onCareerComplete={setCareerProfile}
             onCareerRedo={resetCareerProfile}
             onGithubChange={handleGithubChange}
+            onStartOnboarding={() => setForceOnboarding(true)}
+          />
+        )}
+
+        {view === 'career' && (
+          <CareerDashboard
+            user={currentUser}
+            careerProfile={careerProfile}
+            linkedIn={linkedInData}
+            preferences={preferences}
+            onNavigate={setView}
+            onUpdate={handleProfileUpdate}
+            onPreferencesChange={setPreferences}
+            onCareerRedo={resetCareerProfile}
+            onCareerEdit={setCareerProfile}
           />
         )}
 
@@ -341,20 +363,8 @@ export default function App() {
               onViewCv={(job) => openExistingCv(job)}
             />
           )}
-
-          {view === 'profile' && currentUser && (
-            <UserProfile
-              user={currentUser}
-              linkedInData={linkedInData}
-              careerProfile={careerProfile}
-              preferences={preferences}
-              onUpdate={handleProfileUpdate}
-              onPreferencesChange={setPreferences}
-              onCareerComplete={setCareerProfile}
-              onCareerRedo={resetCareerProfile}
-            />
-          )}
         </Suspense>
+       </ErrorBoundary>
       </main>
       <Footer />
     </div>

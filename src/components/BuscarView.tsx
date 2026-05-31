@@ -3,6 +3,8 @@ import { CareerProfile, LinkedInData, ProfessionJobRecord, UserPreferences } fro
 import { View } from './TabNav';
 import { JobCard } from './JobCard';
 import { TagFilterBar } from './TagFilterBar';
+import { ProfileScoreCard } from './ProfileScoreCard';
+import { AiAnalysisPanel } from './AiAnalysisPanel';
 import { useProfessionSearch } from '../hooks/useProfessionSearch';
 import { blockKeyword, likeKeyword, blockSource, likeSource } from '../utils/jobPreferences';
 
@@ -25,6 +27,8 @@ interface BuscarViewProps {
   onCareerComplete: (p: CareerProfile) => void;
   onCareerRedo: () => void;
   onGithubChange?: (username: string | null) => void;
+  /** Dispara o fluxo de upload de CV + análise da IA (onboarding) sem exigir login. */
+  onStartOnboarding: () => void;
 }
 
 /** Gera sugestões de busca a partir do perfil de carreira */
@@ -49,6 +53,7 @@ export function BuscarView({
   onGenerateCv,
   onViewCv,
   onPreferencesChange,
+  onStartOnboarding,
 }: BuscarViewProps) {
   const {
     jobs,
@@ -125,13 +130,9 @@ export function BuscarView({
   }
 
   function handleDiscover() {
-    if (!careerProfile) { onNavigate('outros'); return; }
-    if (linkedIn) {
-      search(linkedIn, preferences, genericProfile);
-      return;
-    }
-    const q = careerProfile.desiredAreas?.[0] || careerProfile.careerGoals || 'vagas recomendadas';
-    searchByQuery(q, preferences, genericProfile);
+    // "Descobrir Vagas" exige o CV: sem currículo, sobe o CV antes de qualquer busca.
+    if (!linkedIn) { onStartOnboarding(); return; }
+    search(linkedIn, preferences, genericProfile);
   }
 
   function handleKey(e: React.KeyboardEvent) {
@@ -141,6 +142,12 @@ export function BuscarView({
   function handleSuggestion(s: string) {
     setQuery(s);
     searchByQuery(s, preferences, genericProfile, linkedIn);
+  }
+
+  // Sem perfil, qualquer CTA de "completar perfil" leva ao fluxo do CV (não ao login).
+  function handleProfileNav(v: View) {
+    if (!careerProfile) { onStartOnboarding(); return; }
+    onNavigate(v);
   }
 
   const allTags = [...new Set(jobs.flatMap(j => j.skills))];
@@ -288,10 +295,20 @@ export function BuscarView({
           </div>
         )}
 
+        {/* Profile score — completude do perfil */}
+        {!hasSearched && !loading && (
+          <ProfileScoreCard
+            careerProfile={careerProfile}
+            linkedIn={linkedIn}
+            preferences={preferences}
+            onNavigate={handleProfileNav}
+          />
+        )}
+
         {/* Link de preferências */}
         {!hasSearched && !loading && (
           <div className="bv-prefs-row">
-            <button className="bv-prefs-link" onClick={() => onNavigate('profile')}>
+            <button className="bv-prefs-link" onClick={() => handleProfileNav('career')}>
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                 <circle cx="6.5" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.2"/>
                 <path d="M1.5 11.5c0-2.209 2.238-4 5-4s5 1.791 5 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
@@ -343,13 +360,14 @@ export function BuscarView({
         </div>
       )}
 
-      {/* ── Loading ── */}
+      {/* ── Loading: painel de IA em tempo real ── */}
       {loading && (
         <div className="bv-loading">
-          <div className="loading-bar">
-            <div className="loading-step"><div className="dot" />buscando vagas...</div>
-            <div className="loading-step"><div className="dot" style={{ animationDelay: '0.3s' }} />verificando fontes e links...</div>
-          </div>
+          <AiAnalysisPanel
+            term={query.trim() || undefined}
+            hasCv={!!linkedIn}
+            hasProfile={!!careerProfile}
+          />
         </div>
       )}
 

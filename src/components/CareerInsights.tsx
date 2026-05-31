@@ -111,6 +111,12 @@ export function CareerInsights({ profile, onRedo, onRefine, onEdit }: Props) {
   const techValue = { basic: 0.2, intermediate: 0.55, advanced: 0.95 }[profile.techLiteracy] ?? 0.5;
   const canEdit = !!onEdit;
 
+  // Normaliza arrays — profile vindo do servidor pode ter campos undefined.
+  const workStyle = profile.workStyle ?? [];
+  const desiredAreas = profile.desiredAreas ?? [];
+  const blockedAreas = profile.blockedAreas ?? [];
+  const hiddenSkills = profile.hiddenSkills ?? [];
+
   function updateDesired(areas: string[]) {
     onEdit?.({ ...profile, desiredAreas: areas });
   }
@@ -165,7 +171,7 @@ export function CareerInsights({ profile, onRedo, onRefine, onEdit }: Props) {
           <div className="ci-section">
             <span className="ci-section-label">estilo de trabalho</span>
             <div className="ci-tags">
-              {profile.workStyle.map((s) => (
+              {workStyle.map((s) => (
                 <span key={s} className="ci-tag ci-tag--style">
                   {WORK_STYLE_LABEL[s] ?? s}
                 </span>
@@ -177,12 +183,12 @@ export function CareerInsights({ profile, onRedo, onRefine, onEdit }: Props) {
           <div className="ci-section">
             <span className="ci-section-label">quer explorar</span>
             <EditableTagList
-              items={profile.desiredAreas}
+              items={desiredAreas}
               tagClass="ci-tag--desired"
               placeholder="ex: produto, UX, dados..."
               canEdit={canEdit}
-              onAdd={(v) => updateDesired([...profile.desiredAreas, v])}
-              onRemove={(v) => updateDesired(profile.desiredAreas.filter(a => a !== v))}
+              onAdd={(v) => updateDesired([...desiredAreas, v])}
+              onRemove={(v) => updateDesired(desiredAreas.filter(a => a !== v))}
             />
           </div>
 
@@ -190,12 +196,12 @@ export function CareerInsights({ profile, onRedo, onRefine, onEdit }: Props) {
           <div className="ci-section">
             <span className="ci-section-label">nao quer mais</span>
             <EditableTagList
-              items={profile.blockedAreas}
+              items={blockedAreas}
               tagClass="ci-tag--blocked"
               placeholder="ex: logistica, suporte..."
               canEdit={canEdit}
-              onAdd={(v) => updateBlocked([...profile.blockedAreas, v])}
-              onRemove={(v) => updateBlocked(profile.blockedAreas.filter(a => a !== v))}
+              onAdd={(v) => updateBlocked([...blockedAreas, v])}
+              onRemove={(v) => updateBlocked(blockedAreas.filter(a => a !== v))}
             />
           </div>
         </div>
@@ -210,11 +216,11 @@ export function CareerInsights({ profile, onRedo, onRefine, onEdit }: Props) {
           </div>
 
           {/* Hidden skills */}
-          {profile.hiddenSkills.length > 0 && (
+          {hiddenSkills.length > 0 && (
             <div className="ci-section">
               <span className="ci-section-label">habilidades ocultas</span>
               <div className="ci-tags">
-                {profile.hiddenSkills.map((s) => (
+                {hiddenSkills.map((s) => (
                   <span key={s} className="ci-tag ci-tag--hidden">{s}</span>
                 ))}
               </div>

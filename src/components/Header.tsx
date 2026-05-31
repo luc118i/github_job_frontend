@@ -48,11 +48,19 @@ const IconChevron = () => (
   </svg>
 );
 
-const TABS: { view: View; label: string; Icon: () => JSX.Element }[] = [
+const IconCompass = () => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+    <circle cx="6.5" cy="6.5" r="6" stroke="currentColor" strokeOpacity="0.7"/>
+    <path d="M9 4L7.2 7.2 4 9l1.8-3.2L9 4z" stroke="currentColor" strokeOpacity="0.7" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const TABS: { view: View; label: string; Icon: () => JSX.Element; authOnly?: boolean }[] = [
+  { view: 'career',  label: 'carreira',     Icon: IconCompass, authOnly: true },
   { view: 'buscar',  label: 'buscar',       Icon: IconGrid    },
-  { view: 'outros',  label: 'vagas TI',     Icon: IconMonitor },
+  { view: 'outros',  label: 'vagas TI',     Icon: IconMonitor, authOnly: true },
   { view: 'analise', label: 'analisar vaga', Icon: IconSearch  },
-  { view: 'history', label: 'organizar',    Icon: IconOrg     },
+  { view: 'history', label: 'organizar',    Icon: IconOrg,     authOnly: true },
 ];
 
 export function Header({ currentUser, view, onViewChange, onLogout, onLoginClick, onProfileClick }: HeaderProps) {
@@ -67,6 +75,9 @@ export function Header({ currentUser, view, onViewChange, onLogout, onLoginClick
     ?? currentUser?.email?.split('@')[0]?.toUpperCase()
     ?? '';
 
+  // Abas exclusivas de quem tem conta (carreira, vagas TI, organizar) ficam ocultas para visitantes.
+  const visibleTabs = currentUser ? TABS : TABS.filter(t => !t.authOnly);
+
   return (
     <>
       <header className="hdr">
@@ -79,7 +90,7 @@ export function Header({ currentUser, view, onViewChange, onLogout, onLoginClick
 
           {/* Desktop tabs */}
           <nav className="hdr-tabs">
-            {TABS.map(({ view: v, label, Icon }) => (
+            {visibleTabs.map(({ view: v, label, Icon }) => (
               <button
                 key={v}
                 className={`hdr-tab${view === v ? ' hdr-tab--active' : ''}`}
@@ -124,7 +135,7 @@ export function Header({ currentUser, view, onViewChange, onLogout, onLoginClick
         <>
           <div className="hdr-backdrop" onClick={() => setMenuOpen(false)} />
           <nav className="hdr-drawer">
-            {TABS.map(({ view: v, label, Icon }) => (
+            {visibleTabs.map(({ view: v, label, Icon }) => (
               <button
                 key={v}
                 className={`hdr-drawer-item${view === v ? ' active' : ''}`}
