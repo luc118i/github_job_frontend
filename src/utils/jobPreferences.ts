@@ -14,7 +14,11 @@ function load(key: string): string[] {
 }
 
 function save(key: string, items: string[]): void {
-  localStorage.setItem(key, JSON.stringify([...new Set(items)]));
+  try {
+    localStorage.setItem(key, JSON.stringify([...new Set(items)]));
+  } catch {
+    // modo privado ou storage cheio — ignora
+  }
 }
 
 // ── Server sync (debounced, fire-and-forget) ──────────────────────

@@ -12,11 +12,12 @@ export interface CareerMessageResponse {
 
 export async function sendCareerMessage(
   messages: CareerChatMessage[],
+  linkedIn?: LinkedInData | null,
 ): Promise<CareerMessageResponse> {
   const res = await fetch(`${API_URL}/career/message`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ messages, linkedIn: linkedIn ?? undefined }),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({})) as { error?: string };

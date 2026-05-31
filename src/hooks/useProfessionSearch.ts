@@ -12,7 +12,7 @@ interface UseProfessionSearchReturn {
   remaining: number;
   setTagFilter: (tag: string) => void;
   search: (linkedIn: LinkedInData, preferences?: UserPreferences, careerProfile?: CareerProfile | null, githubUsername?: string | null) => Promise<void>;
-  searchByQuery: (query: string, preferences?: UserPreferences, careerProfile?: CareerProfile | null) => Promise<void>;
+  searchByQuery: (query: string, preferences?: UserPreferences, careerProfile?: CareerProfile | null, linkedIn?: LinkedInData | null) => Promise<void>;
   reset: () => void;
   removeJob: (id: string) => void;
   hasSearched: boolean;
@@ -44,13 +44,13 @@ export function useProfessionSearch(): UseProfessionSearchReturn {
     }
   }
 
-  async function searchByQuery(query: string, preferences?: UserPreferences, careerProfile?: CareerProfile | null) {
+  async function searchByQuery(query: string, preferences?: UserPreferences, careerProfile?: CareerProfile | null, linkedIn?: LinkedInData | null) {
     setLoading(true);
     setError('');
     setJobs([]);
     setTagFilter('all');
     try {
-      const result = await fetchJobsByQuery(query, preferences, careerProfile);
+      const result = await fetchJobsByQuery(query, preferences, careerProfile, linkedIn);
       setJobs(result.jobs);
       setProfileSummary(result.profileSummary);
       setHasSearched(true);

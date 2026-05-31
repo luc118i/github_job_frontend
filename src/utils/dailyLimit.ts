@@ -14,14 +14,30 @@ export function markSearched(_type: 'github' | 'profession'): void {
   // no-op
 }
 
+// localStorage pode lançar em modo privado ou quando cheio — sempre usar try-catch
+function safeGetList(key: string): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? '[]') as string[];
+  } catch {
+    return [];
+  }
+}
+
+function safeSetList(key: string, list: string[]): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(list));
+  } catch {
+    // ignora — modo privado ou storage cheio
+  }
+}
+
 export function isCvGenerated(jobId: string): boolean {
-  const list = JSON.parse(localStorage.getItem('jf_cv_jobs') ?? '[]') as string[];
-  return list.includes(jobId);
+  return safeGetList('jf_cv_jobs').includes(jobId);
 }
 
 export function markCvGenerated(jobId: string): void {
-  const list = JSON.parse(localStorage.getItem('jf_cv_jobs') ?? '[]') as string[];
+  const list = safeGetList('jf_cv_jobs');
   if (!list.includes(jobId)) {
-    localStorage.setItem('jf_cv_jobs', JSON.stringify([...list, jobId]));
+    safeSetList('jf_cv_jobs', [...list, jobId]);
   }
 }

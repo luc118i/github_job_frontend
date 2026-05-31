@@ -15,13 +15,15 @@ import { AuthModal } from './components/AuthModal';
 import { Footer } from './components/Footer';
 
 // Heavy components — loaded on demand only
-const CvEditor       = lazy(() => import('./components/CvEditor').then(m => ({ default: m.CvEditor })));
-const KanbanBoard    = lazy(() => import('./components/KanbanBoard').then(m => ({ default: m.KanbanBoard })));
+const CvEditor         = lazy(() => import('./components/CvEditor').then(m => ({ default: m.CvEditor })));
+const KanbanBoard      = lazy(() => import('./components/KanbanBoard').then(m => ({ default: m.KanbanBoard })));
 const LinkAnalysisView = lazy(() => import('./components/LinkAnalysisView').then(m => ({ default: m.LinkAnalysisView })));
-const UserProfile    = lazy(() => import('./components/UserProfile').then(m => ({ default: m.UserProfile })));
+const UserProfile      = lazy(() => import('./components/UserProfile').then(m => ({ default: m.UserProfile })));
+const OnboardingView   = lazy(() => import('./components/OnboardingView').then(m => ({ default: m.OnboardingView })));
 import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
 import { useCareerProfile } from './hooks/useCareerProfile';
+import { fetchCareerProfile } from './services/career';
 import { AuthUser, fetchMe, clearToken, updateLinkedIn, fetchServerPreferences, updateProfile } from './services/auth';
 import { blockKeyword, likeKeyword, blockSource, likeSource, syncPreferencesFromServer } from './utils/jobPreferences';
 import { fetchCvByJobId } from './services/cv';
@@ -36,12 +38,13 @@ interface CvState {
 export default function App() {
   const [username, setUsername] = useState('');
   const [view, setView] = useState<View>('buscar');
+  const [onboardingDone, setOnboardingDone] = useState(false);
   const [cvState, setCvState] = useState<CvState | null>(null);
   const [linkedInData, setLinkedInData] = useState<LinkedInData | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  const [authReason, setAuthReason] = useState<string | undefined>(undefined);
   const [pendingLinkedIn, setPendingLinkedIn] = useState<LinkedInData | null>(null);
-  const [, setStaleCount] = useState(0);
 
   const { profile, jobs, loading, step, error, filter, blockedToday: githubBlocked, remaining: githubRemaining, setFilter, search, removeJob } = useJobSearch();
   const { preferences, setPreferences } = usePreferences();
@@ -64,6 +67,7 @@ export default function App() {
   useEffect(() => {
     if (view === 'history' && !currentUser) {
       setView('outros');
+      setAuthReason('O histórico de candidaturas requer uma conta. Faça login para acessar.');
       setAuthOpen(true);
     }
   }, [view, currentUser]);
@@ -92,9 +96,18 @@ export default function App() {
       if (prefs) syncPreferencesFromServer(prefs);
     });
     if (user.github_username) setUsername(user.github_username);
-    // If the user completed the career chat before logging in, the profile only lived in
-    // localStorage. Now that we have a valid token, push it to the database.
-    if (careerProfile) setCareerProfile(careerProfile);
+    // Sync career profile: servidor tem prioridade sobre localStorage.
+    // Se o usuário já tinha perfil local (preencheu antes de logar), persiste no servidor.
+    // Se não tinha, carrega do servidor (outro dispositivo / sessão anterior).
+    fetchCareerProfile().then(remote => {
+      if (remote) {
+        setCareerProfile(remote); // servidor ganha
+      } else if (careerProfile) {
+        setCareerProfile(careerProfile); // sobe o local pro servidor
+      }
+    }).catch(() => {
+      if (careerProfile) setCareerProfile(careerProfile);
+    });
   }
 
   function handleLogout() {
@@ -154,6 +167,24 @@ export default function App() {
     setCvState({ job, profile: syntheticProfile });
   }
 
+  // ── Onboarding: mostra quando não há perfil e usuário ainda não pulou ──
+  const needsOnboarding = !careerProfile && !onboardingDone;
+
+  if (needsOnboarding) {
+    return (
+      <Suspense fallback={<div className="onb-loading">carregando...</div>}>
+        <OnboardingView
+          onComplete={(profile, liData) => {
+            setCareerProfile(profile);
+            if (liData) { setLinkedInData(liData); if (currentUser) updateLinkedIn(liData); }
+            setOnboardingDone(true);
+          }}
+          onSkip={() => setOnboardingDone(true)}
+        />
+      </Suspense>
+    );
+  }
+
   if (cvState) {
     return (
       <Suspense fallback={<div className="cv-page-loading"><div className="loading-bar"><div className="loading-step"><div className="dot" />carregando editor...</div></div></div>}>
@@ -186,8 +217,9 @@ export default function App() {
       <AuthModal
         open={authOpen}
         linkedInData={pendingLinkedIn}
+        reason={authReason}
         onSuccess={handleAuthSuccess}
-        onClose={() => { setAuthOpen(false); setPendingLinkedIn(null); }}
+        onClose={() => { setAuthOpen(false); setPendingLinkedIn(null); setAuthReason(undefined); }}
       />
 
       <main className={view === 'history' ? 'kanban-view' : view === 'buscar' ? 'landing-view' : undefined}>
@@ -197,9 +229,14 @@ export default function App() {
             careerProfile={careerProfile}
             preferences={preferences}
             linkedIn={linkedInData}
+            githubUsername={currentUser?.github_username ?? (username || null)}
             onNavigate={setView}
             onGenerateCv={openCvFromProfession}
             onViewCv={(job) => openExistingCv(job)}
+            onPreferencesChange={setPreferences}
+            onCareerComplete={setCareerProfile}
+            onCareerRedo={resetCareerProfile}
+            onGithubChange={handleGithubChange}
           />
         )}
 
@@ -302,7 +339,6 @@ export default function App() {
               githubUsername={currentUser?.github_username ?? null}
               onGenerateCv={openCv}
               onViewCv={(job) => openExistingCv(job)}
-              onStaleCount={setStaleCount}
             />
           )}
 
@@ -310,7 +346,12 @@ export default function App() {
             <UserProfile
               user={currentUser}
               linkedInData={linkedInData}
+              careerProfile={careerProfile}
+              preferences={preferences}
               onUpdate={handleProfileUpdate}
+              onPreferencesChange={setPreferences}
+              onCareerComplete={setCareerProfile}
+              onCareerRedo={resetCareerProfile}
             />
           )}
         </Suspense>

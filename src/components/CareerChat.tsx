@@ -1,18 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
-import { CareerChatMessage, CareerProfile } from '../types';
+import { CareerChatMessage, CareerProfile, LinkedInData } from '../types';
 import { sendCareerMessage } from '../services/career';
 
 interface Props {
+  linkedIn?: LinkedInData | null;
   onComplete: (profile: CareerProfile) => void;
   onClose?: () => void;
 }
 
+// Primeira mensagem genérica — quando temos LinkedIn, o backend irá personalizar
+// automaticamente. O usuário não vê diferença; o contexto entra no system prompt.
 const OPENING_MESSAGE: CareerChatMessage = {
   role: 'assistant',
-  content: 'Que tipo de vaga você está buscando?',
+  content: 'Olá! Vou te fazer algumas perguntas para entender seu perfil de carreira.',
 };
 
-export function CareerChat({ onComplete, onClose }: Props) {
+export function CareerChat({ linkedIn, onComplete, onClose }: Props) {
   const [messages, setMessages] = useState<CareerChatMessage[]>([OPENING_MESSAGE]);
   const [input, setInput] = useState('');
   const [options, setOptions] = useState<string[]>([]);
@@ -43,7 +46,7 @@ export function CareerChat({ onComplete, onClose }: Props) {
     setError('');
 
     try {
-      const response = await sendCareerMessage(updated);
+      const response = await sendCareerMessage(updated, linkedIn);
 
       if (response.done && response.profile) {
         const profile: CareerProfile = {

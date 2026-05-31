@@ -9,9 +9,10 @@ interface AuthModalProps {
   linkedInData: LinkedInData | null;
   onSuccess: (user: AuthUser, linkedInData?: LinkedInData) => void;
   onClose: () => void;
+  reason?: string;
 }
 
-export function AuthModal({ open, linkedInData, onSuccess, onClose }: AuthModalProps) {
+export function AuthModal({ open, linkedInData, onSuccess, onClose, reason }: AuthModalProps) {
   const [mode, setMode] = useState<Mode>(linkedInData ? 'register' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -66,6 +67,10 @@ export function AuthModal({ open, linkedInData, onSuccess, onClose }: AuthModalP
           </span>
           <button className="auth-close" onClick={onClose}>×</button>
         </div>
+
+        {reason && (
+          <div className="auth-reason">{reason}</div>
+        )}
 
         {mode === 'register' && linkedInData && (
           <div className="auth-profile-preview">

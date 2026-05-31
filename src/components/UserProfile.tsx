@@ -1,14 +1,30 @@
 import { useEffect, useState } from 'react';
 import { AuthUser, updateProfile } from '../services/auth';
-import { LinkedInData } from '../types';
+import { CareerProfile, LinkedInData, UserPreferences } from '../types';
+import { PreferencesPanel } from './PreferencesPanel';
+import { CareerInsights } from './CareerInsights';
 
 interface UserProfileProps {
   user: AuthUser;
   linkedInData: LinkedInData | null;
+  careerProfile: CareerProfile | null;
+  preferences: UserPreferences;
   onUpdate: (user: AuthUser) => void;
+  onPreferencesChange: (p: UserPreferences) => void;
+  onCareerComplete: (p: CareerProfile) => void;
+  onCareerRedo: () => void;
 }
 
-export function UserProfile({ user, linkedInData, onUpdate }: UserProfileProps) {
+export function UserProfile({
+  user,
+  linkedInData,
+  careerProfile,
+  preferences,
+  onUpdate,
+  onPreferencesChange,
+  onCareerComplete,
+  onCareerRedo,
+}: UserProfileProps) {
   const [name, setName] = useState(user.name ?? '');
   const [github, setGithub] = useState(user.github_username ?? '');
   const [saving, setSaving] = useState(false);
@@ -47,6 +63,8 @@ export function UserProfile({ user, linkedInData, onUpdate }: UserProfileProps) 
       </div>
 
       <div className="user-profile-body">
+
+        {/* ── Conta ── */}
         <form className="user-profile-form" onSubmit={handleSave}>
           <div className="user-profile-section-label">conta</div>
 
@@ -97,7 +115,7 @@ export function UserProfile({ user, linkedInData, onUpdate }: UserProfileProps) 
               </a>
             )}
             <span className="user-profile-hint">
-              vinculado à busca na aba "vagas TI" — preenche o campo automaticamente
+              vinculado à busca na aba "vagas TI"
             </span>
           </div>
 
@@ -109,6 +127,7 @@ export function UserProfile({ user, linkedInData, onUpdate }: UserProfileProps) 
           </button>
         </form>
 
+        {/* ── LinkedIn importado ── */}
         {linkedInData && (
           <div className="user-profile-linkedin">
             <div className="user-profile-section-label">linkedin importado</div>
@@ -122,6 +141,35 @@ export function UserProfile({ user, linkedInData, onUpdate }: UserProfileProps) 
             </div>
           </div>
         )}
+
+        {/* ── Preferências de busca ── */}
+        <div className="user-profile-section">
+          <div className="user-profile-section-label">preferencias de busca</div>
+          <p className="user-profile-hint" style={{ marginBottom: 14 }}>
+            Modalidade, localização, faixa salarial e nível. Usadas em todas as buscas.
+          </p>
+          <PreferencesPanel
+            preferences={preferences}
+            onChange={onPreferencesChange}
+            defaultOpen
+          />
+        </div>
+
+        {/* ── Perfil de carreira ── */}
+        {careerProfile && (
+          <div className="user-profile-section">
+            <div className="user-profile-section-label">perfil de carreira</div>
+            <p className="user-profile-hint" style={{ marginBottom: 14 }}>
+              Criado com base nas suas respostas. Usado para personalizar as buscas.
+            </p>
+            <CareerInsights
+              profile={careerProfile}
+              onRedo={onCareerRedo}
+              onEdit={onCareerComplete}
+            />
+          </div>
+        )}
+
       </div>
     </div>
   );

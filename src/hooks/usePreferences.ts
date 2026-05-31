@@ -10,6 +10,8 @@ const DEFAULT: UserPreferences = {
   salaryMax: '',
   level: 'any',
   maxAgeDays: 90,
+  radiusKm: 0,     // 0 = Nacional
+  ptBrOnly: true,  // padrão: só vagas em português
 };
 
 export function usePreferences() {

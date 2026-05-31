@@ -43,6 +43,7 @@ export async function fetchJobsByQuery(
   query: string,
   preferences?: UserPreferences,
   careerProfile?: CareerProfile | null,
+  linkedIn?: LinkedInData | null,
 ): Promise<ProfessionSearchResult> {
   return postProfessionJobs({
     query,
@@ -52,5 +53,6 @@ export async function fetchJobsByQuery(
     blockedSources: getBlockedSources(),
     likedSources: getLikedSources(),
     ...(careerProfile ? { careerProfile } : {}),
+    ...(linkedIn ? { linkedIn } : {}),
   });
 }

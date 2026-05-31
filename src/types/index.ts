@@ -99,6 +99,10 @@ export interface UserPreferences {
   salaryMax: string;
   level: 'any' | 'Junior' | 'Pleno' | 'Senior';
   maxAgeDays: number;
+  /** Raio de busca em km. 0 = Nacional. */
+  radiusKm: number;
+  /** Somente vagas em português. */
+  ptBrOnly: boolean;
 }
 
 export interface CvRequest {

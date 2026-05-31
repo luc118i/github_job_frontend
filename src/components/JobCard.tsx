@@ -201,8 +201,21 @@ export function JobCard({
 
           {/* Badges */}
           <div className="jcp-badges-row">
-            {!seen && <span className="jcp-badge-new">NOVA</span>}
-            {match !== undefined && <span className="jcp-badge-match">{match}% match</span>}
+            {!seen && (() => {
+              // "NOVA" só para vagas sem data OU publicadas há menos de 14 dias
+              const isRecent = !job.published_at ||
+                (Date.now() - new Date(job.published_at).getTime()) < 14 * 86_400_000;
+              return isRecent ? <span className="jcp-badge-new">NOVA</span> : null;
+            })()}
+            {match !== undefined && (() => {
+              const level = match >= 70 ? 'high' : match >= 40 ? 'mid' : 'low';
+              const label = match >= 70 ? 'Alta compatibilidade' : match >= 40 ? 'Compatível' : 'Baixa compatibilidade';
+              return (
+                <span className={`jcp-badge-match jcp-badge-match--${level}`} title={label}>
+                  {match}% · {label}
+                </span>
+              );
+            })()}
             {seen && <span className="jcp-badge-seen">visto</span>}
           </div>
 
@@ -295,13 +308,17 @@ export function JobCard({
               </span>
             </div>
           )}
-          {/* Only rendered when we have the real source publication date */}
-          {job.published_at && (
-            <div className="jcp-pub-date">
-              <IconClock />
-              PUBLICADA HÁ {pubAgo(job.published_at)}
-            </div>
-          )}
+          {/* Data de publicação — aviso visual se vaga for velha */}
+          {job.published_at && (() => {
+            const ageDays = Math.floor((Date.now() - new Date(job.published_at).getTime()) / 86_400_000);
+            const isOld = ageDays > 60;
+            return (
+              <div className={`jcp-pub-date${isOld ? ' jcp-pub-date--old' : ''}`}>
+                <IconClock />
+                {isOld ? '⚠️ ' : ''}PUBLICADA HÁ {pubAgo(job.published_at)}
+              </div>
+            );
+          })()}
         </div>
       </div>
 

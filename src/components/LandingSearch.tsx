@@ -10,6 +10,14 @@ interface Props {
   loading: boolean;
   hasSearched: boolean;
   dailyDone: boolean;
+  // Modo retornante: já tem histórico, mostra botão "Configurar" em vez da config completa
+  hasHistory?: boolean;
+  onOpenConfig?: () => void;
+  // Toggle de transição — só aparece quando o usuário tem transitionReady no perfil
+  showTransitionToggle?: boolean;
+  transitionTarget?: string | null;
+  useTransition?: boolean;
+  onToggleTransition?: (v: boolean) => void;
 }
 
 /* ── Icons ── */
@@ -92,7 +100,7 @@ const IconX = () => (
   </svg>
 );
 
-export function LandingSearch({ onNavigate, onSearch, onDailySearch, onNewSearch, hasProfile, loading, hasSearched, dailyDone }: Props) {
+export function LandingSearch({ onNavigate, onSearch, onDailySearch, onNewSearch, hasProfile, loading, hasSearched, dailyDone, hasHistory, onOpenConfig, showTransitionToggle, transitionTarget, useTransition, onToggleTransition }: Props) {
   const [query, setQuery] = useState('');
   const [searchType, setSearchType] = useState<SearchType>('Cargo');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -160,7 +168,31 @@ export function LandingSearch({ onNavigate, onSearch, onDailySearch, onNewSearch
               <IconX />
               Nova busca
             </button>
+          ) : hasHistory ? (
+            /* ── Retornante: compacto ── */
+            <>
+              {showTransitionToggle && onToggleTransition && (
+                <label className="ls-transition-toggle">
+                  <input
+                    type="checkbox"
+                    checked={!!useTransition}
+                    onChange={e => onToggleTransition(e.target.checked)}
+                  />
+                  <span>
+                    Buscar vagas para area de transicao
+                    {transitionTarget ? ` (${transitionTarget})` : ''}
+                  </span>
+                </label>
+              )}
+              <button className="ls-daily-btn" onClick={onDailySearch}>
+                <IconCalendar />Buscar vagas do dia
+              </button>
+              <button className="ls-config-btn" onClick={onOpenConfig}>
+                Configurar
+              </button>
+            </>
           ) : (
+            /* ── Primeira vez ou sem perfil ── */
             <>
               <button className="ls-daily-btn" onClick={onDailySearch}>
                 {hasProfile ? (

@@ -109,7 +109,7 @@ export function ProfessionView({
       {/* ── Career Chat (onboarding — only when no profile) ── */}
       {showChat && (
         <div className="career-chat-wrapper">
-          <CareerChat onComplete={handleCareerComplete} onClose={onCareerClose} />
+          <CareerChat linkedIn={linkedIn} onComplete={handleCareerComplete} onClose={onCareerClose} />
         </div>
       )}
 

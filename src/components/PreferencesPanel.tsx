@@ -31,6 +31,12 @@ const PERIOD_OPTIONS: { value: number; label: string }[] = [
   { value: 90, label: '3 meses' },
 ];
 
+const RADIUS_OPTIONS: { value: number; label: string; icon: string }[] = [
+  { value: 30,  label: 'Perto de mim',  icon: '📍' },
+  { value: 150, label: 'Minha região',  icon: '🗺️' },
+  { value: 0,   label: 'Nacional',      icon: '🇧🇷' },
+];
+
 const MODALITY_OPTIONS: { value: Modality; label: string }[] = [
   { value: 'any', label: 'Qualquer' },
   { value: 'remote', label: 'Remoto' },
@@ -48,12 +54,16 @@ const LEVEL_OPTIONS: { value: Level; label: string }[] = [
 function summaryText(p: UserPreferences): string {
   const parts: string[] = [];
   if (p.modality !== 'any') parts.push({ remote: 'Remoto', presencial: 'Presencial', hybrid: 'Híbrido' }[p.modality]);
-  if (p.location) parts.push(p.location);
+  if (p.location) {
+    const radiusLabel = p.radiusKm === 30 ? ' · Perto de mim' : p.radiusKm === 150 ? ' · Minha região' : '';
+    parts.push(p.location + radiusLabel);
+  }
   if (p.salaryMin && p.salaryMax) parts.push(`R$ ${p.salaryMin}–${p.salaryMax}`);
   else if (p.salaryMin) parts.push(`a partir de R$ ${p.salaryMin}`);
   else if (p.salaryMax) parts.push(`até R$ ${p.salaryMax}`);
   if (p.level !== 'any') parts.push(p.level);
   if (p.maxAgeDays !== 90) parts.push(p.maxAgeDays === 30 ? '30 dias' : '60 dias');
+  if (p.ptBrOnly) parts.push('🇧🇷 PT-BR');
   return parts.join(' · ');
 }
 
@@ -152,16 +162,65 @@ export function PreferencesPanel({ preferences, onChange, defaultOpen = false, c
             </div>
           </div>
 
-          <div className="prefs-row">
+          <div className="prefs-row prefs-row--col">
             <span className="prefs-label">Local</span>
-            <input
-              className="prefs-input"
-              type="text"
-              placeholder={detectingLocation ? 'detectando...' : 'ex: São Paulo, SP'}
-              value={preferences.location}
-              onChange={(e) => set('location', e.target.value)}
-              disabled={preferences.modality === 'remote' || detectingLocation}
-            />
+            <div className="prefs-input-wrap">
+              <input
+                className="prefs-input"
+                type="text"
+                placeholder={detectingLocation ? 'detectando...' : preferences.modality === 'remote' ? 'Remoto' : 'ex: Brasília, DF  ou  São Paulo, SP'}
+                value={preferences.location}
+                onChange={(e) => set('location', e.target.value)}
+                disabled={preferences.modality === 'remote' || detectingLocation}
+              />
+              {preferences.location && preferences.modality !== 'remote' && (
+                <button
+                  type="button"
+                  className="prefs-input-clear"
+                  title="Limpar — busca nacional"
+                  onClick={() => set('location', '')}
+                >✕</button>
+              )}
+            </div>
+            {preferences.modality !== 'remote' && !preferences.location && (
+              <span className="prefs-hint">deixe vazio para busca nacional 🇧🇷</span>
+            )}
+          </div>
+
+          {/* Raio de distância — só faz sentido em modo presencial/híbrido */}
+          {preferences.modality !== 'remote' && (
+            <div className="prefs-row">
+              <span className="prefs-label">Distância</span>
+              <div className="prefs-chips">
+                {RADIUS_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    className={`prefs-chip prefs-chip--radius ${preferences.radiusKm === o.value ? 'active' : ''}`}
+                    onClick={() => set('radiusKm', o.value)}
+                  >
+                    {o.icon} {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Idioma das vagas */}
+          <div className="prefs-row prefs-row--toggle">
+            <span className="prefs-label">Idioma das vagas</span>
+            <button
+              type="button"
+              className={`prefs-lang-toggle ${preferences.ptBrOnly ? 'active' : ''}`}
+              onClick={() => set('ptBrOnly', !preferences.ptBrOnly)}
+              title={preferences.ptBrOnly ? 'Mostrando só vagas em português' : 'Mostrando vagas em qualquer idioma'}
+            >
+              <span className="prefs-lang-flag">🇧🇷</span>
+              <span className="prefs-lang-label">
+                {preferences.ptBrOnly ? 'Só em português' : 'Qualquer idioma'}
+              </span>
+              <span className={`prefs-lang-dot ${preferences.ptBrOnly ? 'on' : 'off'}`} />
+            </button>
           </div>
 
           <div className="prefs-row">
