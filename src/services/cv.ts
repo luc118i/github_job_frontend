@@ -82,3 +82,23 @@ export async function saveCvVersion(
     throw new Error(data.error ?? 'Erro ao salvar a versão.');
   }
 }
+
+// ── Adaptar para vaga (Career Studio M4) ──────────────────────────
+
+export async function adaptCvToJob(
+  cvId: string,
+  blocks: CvBlock[],
+  job: CvRequest['job'],
+): Promise<CvBlock[]> {
+  const res = await fetch(`${API_URL}/cv/${cvId}/adapt`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ blocks, job }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao adaptar o currículo.');
+  }
+  const out = (await res.json()) as { blocks: CvBlock[] };
+  return out.blocks;
+}

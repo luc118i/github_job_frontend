@@ -18,7 +18,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { JobRecord, Profile, LinkedInData, CvRequest, CvBlock, CvBlockType, CvVersion } from '../types';
-import { generateCv, updateCv, fetchCvVersions, saveCvVersion, CvApiError } from '../services/cv';
+import { generateCv, updateCv, fetchCvVersions, saveCvVersion, adaptCvToJob, CvApiError } from '../services/cv';
 import { downloadCvPdf } from '../services/pdfExport';
 import { dismissJob } from '../services/jobs';
 import { markCvGenerated } from '../utils/dailyLimit';
@@ -135,6 +135,11 @@ export function CvEditor({
   // M3 — ATS Center
   const [atsOpen, setAtsOpen] = useState(false);
 
+  // M4 — adaptar para vaga
+  const [adapting, setAdapting] = useState(false);
+  const [adaptedBlocks, setAdaptedBlocks] = useState<CvBlock[] | null>(null);
+  const [adaptError, setAdaptError] = useState('');
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -151,16 +156,20 @@ export function CvEditor({
     return parts.length ? parts.join(' | ') : '';
   }, [linkedIn, profile.user.login]);
 
-  // Markdown derivado dos blocos visíveis — fonte para preview, PDF e save.
-  const markdown = useMemo(() => {
-    if (!blocks) return '';
+  // Deriva o Markdown (cabeçalho + blocos visíveis) de qualquer lista de blocos.
+  const buildMarkdown = useMemo(() => {
     const header = `# ${candidateName.toUpperCase()}${contactLine ? `\n${contactLine}` : ''}`;
-    const body = blocks
-      .filter((b) => b.visible)
-      .map((b) => `## ${b.title}\n${b.content.trim()}`)
-      .join('\n\n');
-    return `${header}\n\n${body}`.trim();
-  }, [blocks, candidateName, contactLine]);
+    return (bl: CvBlock[]) => {
+      const body = bl
+        .filter((b) => b.visible)
+        .map((b) => `## ${b.title}\n${b.content.trim()}`)
+        .join('\n\n');
+      return `${header}\n\n${body}`.trim();
+    };
+  }, [candidateName, contactLine]);
+
+  // Markdown derivado dos blocos visíveis — fonte para preview, PDF e save.
+  const markdown = useMemo(() => (blocks ? buildMarkdown(blocks) : ''), [blocks, buildMarkdown]);
 
   // ATS ao vivo: recalcula a cada edição de bloco/markdown (M3).
   const ats = useMemo(
@@ -356,6 +365,53 @@ export function CvEditor({
     setTimeout(() => setSaveMsg(''), 3000);
   }
 
+  // ── Adaptar para vaga (M4) ───────────────────────────────────────
+  async function handleAdapt() {
+    if (!blocks || !cvId || adapting) return;
+    setAdapting(true);
+    setAdaptError('');
+    try {
+      const optimized = await adaptCvToJob(cvId, blocks, {
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        level: job.level,
+        remote: job.remote,
+        skills: job.skills,
+        description: job.description,
+      });
+      setAdaptedBlocks(optimized);
+    } catch (e) {
+      setAdaptError((e as Error).message);
+    } finally {
+      setAdapting(false);
+    }
+  }
+
+  async function acceptAdapt() {
+    if (!adaptedBlocks || !cvId) return;
+    const optimized = adaptedBlocks;
+    setBlocks(optimized);
+    setAdaptedBlocks(null);
+    setEditingIds(new Set());
+    const md = buildMarkdown(optimized);
+    try {
+      await updateCv(cvId, md, optimized);
+      await saveCvVersion(cvId, md, optimized, `Adaptado para ${job.title}`, 'adapted');
+      setSaveMsg('otimização aplicada e versão salva');
+    } catch (e) {
+      console.error('Erro ao salvar adaptação:', e);
+      setSaveMsg('aplicado — falha ao salvar versão');
+    }
+    setTimeout(() => setSaveMsg(''), 3000);
+  }
+
+  // ATS dos blocos otimizados, para o delta no split view.
+  const adaptedAts = useMemo(
+    () => (adaptedBlocks ? analyzeAts(adaptedBlocks, buildMarkdown(adaptedBlocks), { title: job.title, skills: job.skills, description: job.description }) : null),
+    [adaptedBlocks, buildMarkdown, job.title, job.skills, job.description],
+  );
+
   return (
     <div className="cv-page">
       <div className="cv-topbar">
@@ -369,6 +425,11 @@ export function CvEditor({
             <button className="cv-ats-badge" onClick={() => setAtsOpen(true)} title="ATS Center">
               <AtsRing score={ats.score} color={tier.color} size={34} stroke={4} />
               <span className="cv-ats-badge-label">ATS</span>
+            </button>
+          )}
+          {blocks && !loading && cvId && (
+            <button className="cv-adapt-btn" onClick={handleAdapt} disabled={adapting} title="Reescrever o CV mirando esta vaga">
+              {adapting ? 'adaptando...' : 'adaptar p/ vaga'}
             </button>
           )}
           {blocks && !loading && cvId && (
@@ -425,6 +486,49 @@ export function CvEditor({
 
             <p className="cv-ats-foot">O score atualiza ao vivo conforme você edita os blocos.</p>
           </aside>
+        </div>
+      )}
+
+      {adaptError && !adaptedBlocks && (
+        <div className="cv-adapt-toast" onClick={() => setAdaptError('')}>{adaptError}</div>
+      )}
+
+      {adaptedBlocks && adaptedAts && (
+        <div className="cv-adapt-overlay">
+          <div className="cv-adapt-modal">
+            <div className="cv-adapt-head">
+              <div className="cv-adapt-head-info">
+                <span className="cv-adapt-title">Adaptar para {job.title}</span>
+                <span className="cv-adapt-delta">
+                  ATS <strong>{ats.score}</strong>
+                  <span className="cv-adapt-arrow">→</span>
+                  <strong style={{ color: atsTier(adaptedAts.score).color }}>{adaptedAts.score}</strong>
+                  {adaptedAts.score - ats.score > 0 && (
+                    <span className="cv-adapt-gain">+{adaptedAts.score - ats.score}</span>
+                  )}
+                </span>
+              </div>
+              <div className="cv-adapt-actions">
+                <button className="cv-adapt-discard" onClick={() => setAdaptedBlocks(null)}>descartar</button>
+                <button className="cv-adapt-accept" onClick={acceptAdapt}>aceitar otimização</button>
+              </div>
+            </div>
+
+            <div className="cv-adapt-cols">
+              <div className="cv-adapt-col">
+                <div className="cv-adapt-col-label">Original</div>
+                {blocks!.filter((b) => b.visible).map((b) => (
+                  <AdaptCard key={`o-${b.id}`} title={b.title} content={b.content} />
+                ))}
+              </div>
+              <div className="cv-adapt-col cv-adapt-col--opt">
+                <div className="cv-adapt-col-label">Otimizado</div>
+                {adaptedBlocks.filter((b) => b.visible).map((b) => (
+                  <AdaptCard key={`a-${b.id}`} title={b.title} content={b.content} />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -613,6 +717,30 @@ export function CvEditor({
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// ── Card de comparação (split view do M4) ──────────────────────────
+function AdaptCard({ title, content }: { title: string; content: string }) {
+  return (
+    <div className="cv-adapt-card">
+      <div className="cv-adapt-card-title">{title}</div>
+      <div className="cv-block-body">
+        <ReactMarkdown
+          components={{
+            ul: ({ children }) => <ul className="cvp-list">{children}</ul>,
+            li: ({ children }) => <li className="cvp-bullet">{children}</li>,
+            p: ({ children }) => <p className="cvp-line">{children}</p>,
+            strong: ({ children }) => <strong className="cvp-bold">{children}</strong>,
+            a: ({ href, children }) => (
+              <a href={href} className="cvp-link" target="_blank" rel="noopener noreferrer">{children}</a>
+            ),
+          }}
+        >
+          {content || '_(vazio)_'}
+        </ReactMarkdown>
+      </div>
     </div>
   );
 }
