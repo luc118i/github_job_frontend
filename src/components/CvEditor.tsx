@@ -22,6 +22,8 @@ import { generateCv, updateCv, fetchCvVersions, saveCvVersion, CvApiError } from
 import { downloadCvPdf } from '../services/pdfExport';
 import { dismissJob } from '../services/jobs';
 import { markCvGenerated } from '../utils/dailyLimit';
+import { analyzeAts, atsTier } from '../utils/atsScore';
+import { AtsRing } from './AtsRing';
 
 interface CvEditorProps {
   job: JobRecord;
@@ -130,6 +132,9 @@ export function CvEditor({
   const [savingVersion, setSavingVersion] = useState(false);
   const [versionLabel, setVersionLabel] = useState('');
 
+  // M3 — ATS Center
+  const [atsOpen, setAtsOpen] = useState(false);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -156,6 +161,13 @@ export function CvEditor({
       .join('\n\n');
     return `${header}\n\n${body}`.trim();
   }, [blocks, candidateName, contactLine]);
+
+  // ATS ao vivo: recalcula a cada edição de bloco/markdown (M3).
+  const ats = useMemo(
+    () => analyzeAts(blocks ?? [], markdown, { title: job.title, skills: job.skills, description: job.description }),
+    [blocks, markdown, job.title, job.skills, job.description],
+  );
+  const tier = atsTier(ats.score);
 
   async function handleDismiss() {
     setDismissing(true);
@@ -353,6 +365,12 @@ export function CvEditor({
           <span className="cv-topbar-company">@ {job.company}</span>
         </span>
         <div className="cv-topbar-actions">
+          {blocks && !loading && (
+            <button className="cv-ats-badge" onClick={() => setAtsOpen(true)} title="ATS Center">
+              <AtsRing score={ats.score} color={tier.color} size={34} stroke={4} />
+              <span className="cv-ats-badge-label">ATS</span>
+            </button>
+          )}
           {blocks && !loading && cvId && (
             <button className="cv-save-btn" onClick={handleSave} disabled={saving}>
               {saving ? 'salvando...' : saveMsg || 'salvar'}
@@ -370,6 +388,45 @@ export function CvEditor({
           )}
         </div>
       </div>
+
+      {atsOpen && (
+        <div className="cv-versions-overlay" onClick={() => setAtsOpen(false)}>
+          <aside className="cv-versions-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="cv-versions-head">
+              <span className="cv-versions-title">ATS Center</span>
+              <button className="cv-versions-close" onClick={() => setAtsOpen(false)}>fechar</button>
+            </div>
+
+            <div className="cv-ats-overview">
+              <AtsRing score={ats.score} color={tier.color} size={104} stroke={9} />
+              <div className="cv-ats-overview-info">
+                <span className="cv-ats-tier" style={{ color: tier.color }}>{tier.label}</span>
+                <span className="cv-ats-overview-sub">compatibilidade com a vaga</span>
+              </div>
+            </div>
+
+            <div className="cv-ats-subscores">
+              {ats.subscores.map((s) => {
+                const t = atsTier(s.score);
+                return (
+                  <div key={s.key} className="cv-ats-sub">
+                    <div className="cv-ats-sub-head">
+                      <span className="cv-ats-sub-label">{s.label}</span>
+                      <span className="cv-ats-sub-score" style={{ color: t.color }}>{s.score}</span>
+                    </div>
+                    <div className="cv-ats-bar">
+                      <div className="cv-ats-bar-fill" style={{ width: `${s.score}%`, background: t.color }} />
+                    </div>
+                    <span className="cv-ats-sub-hint">{s.hint}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="cv-ats-foot">O score atualiza ao vivo conforme você edita os blocos.</p>
+          </aside>
+        </div>
+      )}
 
       {versionsOpen && (
         <div className="cv-versions-overlay" onClick={() => setVersionsOpen(false)}>

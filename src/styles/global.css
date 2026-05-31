@@ -4384,6 +4384,97 @@ h1 {
   color: #A78BFA;
 }
 
+/* ── ATS Center (M3) ── */
+.ats-ring { display: block; }
+.ats-ring-arc { transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.ats-ring-text { font-family: var(--font-display); font-weight: 700; }
+
+.cv-ats-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 9px;
+  padding: 3px 10px 3px 4px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.cv-ats-badge:hover { background: rgba(255,255,255,0.08); }
+.cv-ats-badge-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: rgba(232,228,220,0.6);
+}
+
+.cv-ats-overview {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.cv-ats-overview-info { display: flex; flex-direction: column; gap: 2px; }
+.cv-ats-tier {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+.cv-ats-overview-sub {
+  font-size: 11.5px;
+  color: rgba(232,228,220,0.45);
+}
+
+.cv-ats-subscores {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cv-ats-sub { display: flex; flex-direction: column; gap: 6px; }
+.cv-ats-sub-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.cv-ats-sub-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(232,228,220,0.85);
+}
+.cv-ats-sub-score {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+}
+.cv-ats-bar {
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.cv-ats-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cv-ats-sub-hint {
+  font-size: 11px;
+  color: rgba(232,228,220,0.45);
+  line-height: 1.4;
+}
+.cv-ats-foot {
+  padding: 0 18px 20px;
+  margin: 0;
+  font-size: 10.5px;
+  color: rgba(232,228,220,0.3);
+  text-align: center;
+}
+
 .cv-link {
   color: #93b4e8;
   text-decoration: none;
