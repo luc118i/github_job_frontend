@@ -13,7 +13,13 @@ export async function fetchGitHubRepos(username: string): Promise<GitHubRepo[]> 
     `https://api.github.com/users/${username}/repos?sort=updated&per_page=20`,
     { headers: { Accept: 'application/vnd.github+json' } }
   );
-  if (!res.ok) return [];
+  if (!res.ok) {
+    // Falha comum: 403 = rate limit da API pública do GitHub (~60 req/h por IP).
+    // Devolvemos [] para não quebrar o fluxo, mas avisamos no console — sem isso
+    // o CV sai sem projetos de forma silenciosa e impossível de diagnosticar.
+    console.warn(`[github] falha ao buscar repos de "${username}" (HTTP ${res.status}) — CV pode sair sem projetos`);
+    return [];
+  }
   return res.json() as Promise<GitHubRepo[]>;
 }
 

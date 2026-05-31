@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { JobRecord, LinkedInData, Profile, ProfessionJobRecord } from './types';
+import { JobRecord, LinkedInData, Profile, ProfessionJobRecord, GitHubRepo } from './types';
+import { fetchGitHubRepos, extractSkills } from './services/github';
 import { Background } from './components/Background';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/Header';
@@ -157,18 +158,35 @@ export default function App() {
     }
   }
 
-  function openCvFromProfession(job: ProfessionJobRecord) {
+  async function openCvFromProfession(job: ProfessionJobRecord) {
+    const username = currentUser?.github_username;
+    let repos: GitHubRepo[] = [];
+    let skills: string[] = job.skills;
+
+    // O fluxo da busca não carrega o perfil GitHub (só o useJobSearch carrega),
+    // então o CV vinha sem a seção de projetos. Aqui buscamos os repos reais.
+    // Best-effort: se falhar (rate limit, sem username), segue sem repos.
+    if (username) {
+      try {
+        repos = await fetchGitHubRepos(username);
+        const ghSkills = extractSkills(repos);
+        if (ghSkills.length) skills = ghSkills;
+      } catch (e) {
+        console.warn('Não foi possível carregar repos do GitHub para o CV:', e);
+      }
+    }
+
     const syntheticProfile: Profile = {
       user: {
-        login: currentUser?.github_username ?? '',
+        login: username ?? '',
         name: linkedInData?.name ?? currentUser?.name ?? 'Candidato',
         bio: null,
         avatar_url: '',
         followers: 0,
-        public_repos: 0,
+        public_repos: repos.length,
       },
-      repos: [],
-      skills: job.skills,
+      repos,
+      skills,
     };
     setCvState({ job, profile: syntheticProfile });
   }
