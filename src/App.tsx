@@ -3,6 +3,7 @@ import { JobRecord, LinkedInData, Profile, ProfessionJobRecord } from './types';
 import { Background } from './components/Background';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/Header';
+import { BottomNav } from './components/BottomNav';
 import { View } from './components/TabNav';
 import { BuscarView } from './components/BuscarView';
 import { CareerDashboard } from './components/CareerDashboard';
@@ -367,6 +368,7 @@ export default function App() {
        </ErrorBoundary>
       </main>
       <Footer />
+      <BottomNav currentUser={currentUser} view={view} onViewChange={setView} />
     </div>
   );
 }

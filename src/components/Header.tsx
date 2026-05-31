@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { AuthUser } from '../services/auth';
 import { View } from './TabNav';
 
@@ -55,106 +54,77 @@ const IconCompass = () => (
   </svg>
 );
 
-const TABS: { view: View; label: string; Icon: () => JSX.Element; authOnly?: boolean }[] = [
-  { view: 'career',  label: 'carreira',     Icon: IconCompass, authOnly: true },
-  { view: 'buscar',  label: 'buscar',       Icon: IconGrid    },
-  { view: 'outros',  label: 'vagas TI',     Icon: IconMonitor, authOnly: true },
-  { view: 'analise', label: 'analisar vaga', Icon: IconSearch  },
-  { view: 'history', label: 'organizar',    Icon: IconOrg,     authOnly: true },
+/** Item de navegação. Fonte única de verdade — reusado no header (desktop) e na BottomNav (mobile). */
+export interface NavTab {
+  view: View;
+  label: string;
+  /** Label curto para a Bottom Tab Bar (espaço apertado no mobile). Cai no `label` se ausente. */
+  short?: string;
+  Icon: () => JSX.Element;
+  /** Aba exclusiva de quem tem conta (oculta para visitantes). */
+  authOnly?: boolean;
+}
+
+export const NAV_TABS: NavTab[] = [
+  { view: 'career',  label: 'carreira',      Icon: IconCompass, authOnly: true },
+  { view: 'buscar',  label: 'buscar',        Icon: IconGrid    },
+  { view: 'outros',  label: 'vagas TI',      Icon: IconMonitor, authOnly: true },
+  { view: 'analise', label: 'analisar vaga', short: 'analisar', Icon: IconSearch  },
+  { view: 'history', label: 'organizar',     Icon: IconOrg,     authOnly: true },
 ];
 
+/** Abas visíveis conforme login: visitante só vê as públicas. */
+export function visibleNavTabs(currentUser: AuthUser | null): NavTab[] {
+  return currentUser ? NAV_TABS : NAV_TABS.filter(t => !t.authOnly);
+}
+
 export function Header({ currentUser, view, onViewChange, onLogout, onLoginClick, onProfileClick }: HeaderProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  function navigate(v: View) {
-    onViewChange(v);
-    setMenuOpen(false);
-  }
-
   const displayName = currentUser?.name
     ?? currentUser?.email?.split('@')[0]?.toUpperCase()
     ?? '';
 
-  // Abas exclusivas de quem tem conta (carreira, vagas TI, organizar) ficam ocultas para visitantes.
-  const visibleTabs = currentUser ? TABS : TABS.filter(t => !t.authOnly);
+  const visibleTabs = visibleNavTabs(currentUser);
 
   return (
-    <>
-      <header className="hdr">
-        <div className="hdr-inner">
+    <header className="hdr">
+      <div className="hdr-inner">
 
-          {/* Logo */}
-          <button className="hdr-logo" onClick={() => navigate('buscar')}>
-            JOBFINDER
-          </button>
+        {/* Logo */}
+        <button className="hdr-logo" onClick={() => onViewChange('buscar')}>
+          JOBFINDER
+        </button>
 
-          {/* Desktop tabs */}
-          <nav className="hdr-tabs">
-            {visibleTabs.map(({ view: v, label, Icon }) => (
-              <button
-                key={v}
-                className={`hdr-tab${view === v ? ' hdr-tab--active' : ''}`}
-                onClick={() => navigate(v)}
-              >
-                <span className="hdr-tab-icon"><Icon /></span>
-                {label}
+        {/* Desktop tabs (no mobile, navegação fica na BottomNav) */}
+        <nav className="hdr-tabs">
+          {visibleTabs.map(({ view: v, label, Icon }) => (
+            <button
+              key={v}
+              className={`hdr-tab${view === v ? ' hdr-tab--active' : ''}`}
+              onClick={() => onViewChange(v)}
+            >
+              <span className="hdr-tab-icon"><Icon /></span>
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Auth (compacto no mobile) */}
+        <div className="hdr-auth">
+          {currentUser ? (
+            <>
+              <button className="hdr-user-btn" onClick={onProfileClick}>
+                <span className="hdr-online-dot" />
+                <span className="hdr-user-name">{displayName}</span>
+                <IconChevron />
               </button>
-            ))}
-          </nav>
-
-          {/* Auth */}
-          <div className="hdr-auth">
-            {currentUser ? (
-              <>
-                <button className="hdr-user-btn" onClick={onProfileClick}>
-                  <span className="hdr-online-dot" />
-                  <span className="hdr-user-name">{displayName}</span>
-                  <IconChevron />
-                </button>
-                <button className="hdr-logout-btn" onClick={onLogout}>sair</button>
-              </>
-            ) : (
-              <button className="hdr-login-btn" onClick={onLoginClick}>entrar</button>
-            )}
-          </div>
-
-          {/* Burger (mobile) */}
-          <button
-            className={`hdr-burger${menuOpen ? ' hdr-burger--open' : ''}`}
-            onClick={() => setMenuOpen(m => !m)}
-            aria-label="Menu"
-          >
-            <span /><span /><span />
-          </button>
-
+              <button className="hdr-logout-btn" onClick={onLogout}>sair</button>
+            </>
+          ) : (
+            <button className="hdr-login-btn" onClick={onLoginClick}>entrar</button>
+          )}
         </div>
-      </header>
 
-      {/* Mobile drawer */}
-      {menuOpen && (
-        <>
-          <div className="hdr-backdrop" onClick={() => setMenuOpen(false)} />
-          <nav className="hdr-drawer">
-            {visibleTabs.map(({ view: v, label, Icon }) => (
-              <button
-                key={v}
-                className={`hdr-drawer-item${view === v ? ' active' : ''}`}
-                onClick={() => navigate(v)}
-              >
-                <Icon /> {label}
-              </button>
-            ))}
-            {currentUser ? (
-              <>
-                <button className="hdr-drawer-item" onClick={() => { onProfileClick(); setMenuOpen(false); }}>perfil</button>
-                <button className="hdr-drawer-item" onClick={() => { onLogout(); setMenuOpen(false); }}>sair</button>
-              </>
-            ) : (
-              <button className="hdr-drawer-item" onClick={() => { onLoginClick(); setMenuOpen(false); }}>entrar</button>
-            )}
-          </nav>
-        </>
-      )}
-    </>
+      </div>
+    </header>
   );
 }
