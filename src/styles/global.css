@@ -1388,6 +1388,46 @@ h1 {
   transform: translateY(0);
 }
 
+/* CV — ação secundária visível no rodapé (gerar / ver CV por IA) */
+.jcp-cv-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: #cdd6e4;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 9px;
+  padding: 9px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+}
+
+.jcp-cv-action:hover {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+.jcp-cv-action:active {
+  transform: scale(0.97);
+}
+
+.jcp-cv-action--done {
+  color: #7aa3d8;
+  background: rgba(61,114,200,0.08);
+  border-color: rgba(61,114,200,0.3);
+}
+
+.jcp-cv-action--done:hover {
+  border-color: rgba(61,114,200,0.5);
+  color: #93b4e8;
+}
+
 /* ── Expanded details ── */
 
 .jcp-expanded {
@@ -7359,10 +7399,27 @@ main.kanban-view {
   align-items: stretch;
   height: calc(56px + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  /* isola o stacking: garante que os botões fiquem acima do ::before */
+  isolation: isolate;
+}
+
+/*
+ * Fundo + blur ficam num pseudo-elemento NÃO interativo, atrás dos botões.
+ * No iOS/WebKit, backdrop-filter aplicado direto num position:fixed engole
+ * o toque (a barra aparece mas não responde ao tap). Movendo o filtro para
+ * o ::before, os botões deixam de estar sobre uma camada filtrada e voltam
+ * a receber o toque. Visual idêntico.
+ */
+.bnav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background: rgba(10,10,15,0.96);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(255,255,255,0.07);
 }
 
 .bnav-item {

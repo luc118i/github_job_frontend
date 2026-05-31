@@ -353,10 +353,27 @@ export function JobCard({
           <button
             className={`jcp-icon-btn${expanded ? ' active' : ''}`}
             onClick={handleExpand}
-            title={expanded ? 'Fechar detalhes' : 'Detalhes / CV'}
+            title={expanded ? 'Fechar detalhes' : 'Ver detalhes'}
           >
             <IconBookmark filled={expanded} />
           </button>
+          {/* CV gerado por IA — ação primária do app, visível sem expandir */}
+          {onGenerateCv && !cvDone && (
+            <button
+              className="jcp-cv-action"
+              onClick={(e) => { e.stopPropagation(); onGenerateCv(job); }}
+            >
+              Gerar CV
+            </button>
+          )}
+          {cvDone && (
+            <button
+              className="jcp-cv-action jcp-cv-action--done"
+              onClick={(e) => { e.stopPropagation(); onViewCv?.(job); }}
+            >
+              Ver CV
+            </button>
+          )}
           {job.link && (
             <a
               href={job.link}
@@ -375,24 +392,14 @@ export function JobCard({
       {expanded && (
         <div className="jcp-expanded" onClick={(e) => e.stopPropagation()}>
           {job.description && <p className="jcp-description">{job.description}</p>}
-          <div className="jcp-expanded-row">
-            {linkMeta && (
+          {linkMeta && (
+            <div className="jcp-expanded-row">
               <span className="jcp-link-status">
                 <span className="jcp-link-dot" style={{ background: linkMeta.color }} />
                 {linkMeta.label}
               </span>
-            )}
-            {onGenerateCv && !cvDone && (
-              <button className="jcp-cv-btn" onClick={(e) => { e.stopPropagation(); onGenerateCv(job); }}>
-                Gerar CV
-              </button>
-            )}
-            {cvDone && (
-              <button className="jcp-cv-btn jcp-cv-done" onClick={(e) => { e.stopPropagation(); onViewCv?.(job); }}>
-                Ver CV gerado
-              </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
