@@ -1,4 +1,4 @@
-import { CvRequest, CvResponse, CvRecord } from '../types';
+import { CvRequest, CvResponse, CvRecord, CvBlock } from '../types';
 import { getToken } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
@@ -42,11 +42,11 @@ export async function fetchCvByJobId(jobId: string): Promise<CvRecord> {
   return res.json() as Promise<CvRecord>;
 }
 
-export async function updateCv(cvId: string, content: string): Promise<void> {
+export async function updateCv(cvId: string, content: string, blocks?: CvBlock[]): Promise<void> {
   const res = await fetch(`${API_URL}/cv/${cvId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify(blocks ? { content, blocks } : { content }),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({})) as { error?: string };

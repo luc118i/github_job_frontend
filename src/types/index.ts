@@ -130,9 +130,31 @@ export interface CvRequest {
   };
 }
 
+// ── CV em blocos (Career Studio M1) — espelha o backend ───────────
+export type CvBlockType =
+  | 'resumo'
+  | 'skills'
+  | 'experiencia'
+  | 'projetos'
+  | 'formacao'
+  | 'certificacoes'
+  | 'idiomas';
+
+export interface CvBlock {
+  id: string;
+  type: CvBlockType;
+  /** Título exibido da seção, ex: "RESUMO PROFISSIONAL". */
+  title: string;
+  /** Corpo em Markdown (parágrafo ou bullets "- "). */
+  content: string;
+  /** Oculto não entra no Markdown derivado nem no PDF. */
+  visible: boolean;
+}
+
 export interface CvResponse {
   cvId: string;
   content: string;
+  blocks: CvBlock[];
 }
 
 export interface ProfessionJobRecord extends JobRecord {
@@ -151,6 +173,7 @@ export interface JobFeedItem extends JobRecord {
 export interface CvRecord {
   id: string;
   content: string;
+  content_blocks?: CvBlock[] | null;
 }
 
 // ── Career Profile ─────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { JobRecord, LinkedInData, Profile, ProfessionJobRecord, GitHubRepo } from './types';
+import { JobRecord, LinkedInData, Profile, ProfessionJobRecord, GitHubRepo, CvBlock } from './types';
 import { fetchGitHubRepos, extractSkills } from './services/github';
 import { Background } from './components/Background';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -36,6 +36,7 @@ interface CvState {
   profile: Profile;
   existingCvId?: string;
   existingContent?: string;
+  existingBlocks?: CvBlock[] | null;
 }
 
 export default function App() {
@@ -152,7 +153,7 @@ export default function App() {
         repos: [],
         skills: job.skills,
       };
-      setCvState({ job, profile: fallback, existingCvId: cv.id, existingContent: cv.content });
+      setCvState({ job, profile: fallback, existingCvId: cv.id, existingContent: cv.content, existingBlocks: cv.content_blocks });
     } catch (e) {
       console.error('Erro ao carregar CV:', e);
     }
@@ -222,6 +223,7 @@ export default function App() {
           onDismiss={(jobId) => { removeJob(jobId); setCvState(null); }}
           initialCvId={cvState.existingCvId}
           initialContent={cvState.existingContent}
+          initialBlocks={cvState.existingBlocks}
         />
       </Suspense>
     );
