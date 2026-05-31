@@ -4220,6 +4220,170 @@ h1 {
   color: #fff;
 }
 
+/* ── Painel de versões (M2) ── */
+.cv-versions-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px;
+  color: rgba(232,228,220,0.7);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.cv-versions-btn:hover {
+  background: rgba(139,92,246,0.15);
+  color: #A78BFA;
+}
+
+.cv-versions-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.15s ease;
+}
+
+.cv-versions-panel {
+  width: min(380px, 90vw);
+  height: 100%;
+  background: #111118;
+  border-left: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -12px 0 40px rgba(0,0,0,0.4);
+}
+
+.cv-versions-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.cv-versions-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(232,228,220,0.9);
+}
+.cv-versions-close {
+  background: none;
+  border: none;
+  color: rgba(232,228,220,0.5);
+  font-size: 12px;
+  cursor: pointer;
+}
+.cv-versions-close:hover { color: rgba(232,228,220,0.9); }
+
+.cv-versions-save {
+  display: flex;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.cv-versions-input {
+  flex: 1;
+  background: #0b0b12;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px;
+  color: rgba(232,228,220,0.9);
+  font-size: 12px;
+  padding: 8px 10px;
+  outline: none;
+}
+.cv-versions-input:focus { border-color: rgba(139,92,246,0.4); }
+.cv-versions-save-btn {
+  background: rgba(139,92,246,0.15);
+  border: 1px solid rgba(139,92,246,0.4);
+  border-radius: 7px;
+  color: #A78BFA;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.cv-versions-save-btn:hover:not(:disabled) { background: rgba(139,92,246,0.25); }
+.cv-versions-save-btn:disabled { opacity: 0.6; cursor: default; }
+
+.cv-versions-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cv-versions-empty {
+  text-align: center;
+  color: rgba(232,228,220,0.35);
+  font-size: 12px;
+  padding: 24px 0;
+}
+
+.cv-version-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 9px;
+  padding: 10px 12px;
+}
+.cv-version-item:hover { background: rgba(255,255,255,0.05); }
+.cv-version-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cv-version-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(232,228,220,0.85);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cv-version-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: rgba(232,228,220,0.4);
+}
+.cv-version-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.cv-version-tag--initial { background: rgba(74,222,128,0.15); color: #4ADE80; }
+.cv-version-tag--manual { background: rgba(139,92,246,0.15); color: #A78BFA; }
+.cv-version-tag--adapted { background: rgba(236,72,153,0.15); color: #EC4899; }
+
+.cv-version-restore {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: rgba(232,228,220,0.7);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.cv-version-restore:hover {
+  background: rgba(139,92,246,0.15);
+  color: #A78BFA;
+}
+
 .cv-link {
   color: #93b4e8;
   text-decoration: none;

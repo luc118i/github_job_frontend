@@ -157,6 +157,19 @@ export interface CvResponse {
   blocks: CvBlock[];
 }
 
+// Versionamento (Career Studio M2) — espelha o backend.
+export type CvVersionSource = 'initial' | 'manual' | 'adapted';
+
+export interface CvVersion {
+  id: string;
+  cv_id: string;
+  content: string;
+  content_blocks: CvBlock[] | null;
+  label: string;
+  source: CvVersionSource;
+  created_at: string;
+}
+
 export interface ProfessionJobRecord extends JobRecord {
   match: number;
 }

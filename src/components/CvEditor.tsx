@@ -17,8 +17,8 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { JobRecord, Profile, LinkedInData, CvRequest, CvBlock, CvBlockType } from '../types';
-import { generateCv, updateCv, CvApiError } from '../services/cv';
+import { JobRecord, Profile, LinkedInData, CvRequest, CvBlock, CvBlockType, CvVersion } from '../types';
+import { generateCv, updateCv, fetchCvVersions, saveCvVersion, CvApiError } from '../services/cv';
 import { downloadCvPdf } from '../services/pdfExport';
 import { dismissJob } from '../services/jobs';
 import { markCvGenerated } from '../utils/dailyLimit';
@@ -77,6 +77,25 @@ function inferType(title: string): CvBlockType {
   return 'resumo';
 }
 
+const SOURCE_LABEL: Record<CvVersion['source'], string> = {
+  initial: 'gerado',
+  manual: 'salvo',
+  adapted: 'adaptado',
+};
+
+/** "agora", "há 5 min", "há 2 h", "há 3 d" ou data curta. */
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'agora';
+  if (min < 60) return `há ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `há ${h} h`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `há ${d} d`;
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
+
 export function CvEditor({
   job,
   profile,
@@ -103,6 +122,13 @@ export function CvEditor({
   const totalCountdownRef = useRef<number>(0);
   const [mobileTab, setMobileTab] = useState<MobileTab>('preview');
   const [addOpen, setAddOpen] = useState(false);
+
+  // M2 — versionamento
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [versions, setVersions] = useState<CvVersion[]>([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [savingVersion, setSavingVersion] = useState(false);
+  const [versionLabel, setVersionLabel] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -279,6 +305,45 @@ export function CvEditor({
     }
   }
 
+  // ── Versionamento (M2) ───────────────────────────────────────────
+  async function openVersions() {
+    setVersionsOpen(true);
+    if (!cvId) return;
+    setVersionsLoading(true);
+    try {
+      setVersions(await fetchCvVersions(cvId));
+    } catch (e) {
+      console.error('Erro ao carregar versões:', e);
+    } finally {
+      setVersionsLoading(false);
+    }
+  }
+
+  async function handleSaveVersion() {
+    if (!blocks || !cvId) return;
+    setSavingVersion(true);
+    try {
+      const label = versionLabel.trim() || `Versão de ${new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`;
+      // Persiste o estado atual e snapshota numa versão de uma vez só.
+      await updateCv(cvId, markdown, blocks);
+      await saveCvVersion(cvId, markdown, blocks, label, 'manual');
+      setVersionLabel('');
+      setVersions(await fetchCvVersions(cvId));
+    } catch (e) {
+      console.error('Erro ao salvar versão:', e);
+    } finally {
+      setSavingVersion(false);
+    }
+  }
+
+  function restoreVersion(v: CvVersion) {
+    setBlocks(v.content_blocks?.length ? v.content_blocks : markdownToBlocks(v.content));
+    setEditingIds(new Set());
+    setVersionsOpen(false);
+    setSaveMsg('versão restaurada — salve para confirmar');
+    setTimeout(() => setSaveMsg(''), 3000);
+  }
+
   return (
     <div className="cv-page">
       <div className="cv-topbar">
@@ -293,6 +358,11 @@ export function CvEditor({
               {saving ? 'salvando...' : saveMsg || 'salvar'}
             </button>
           )}
+          {blocks && !loading && cvId && (
+            <button className="cv-versions-btn" onClick={openVersions}>
+              versões
+            </button>
+          )}
           {blocks && !loading && (
             <button className="cv-download-btn" disabled={pdfLoading} onClick={handleDownload}>
               {pdfLoading ? 'gerando...' : 'baixar PDF'}
@@ -300,6 +370,49 @@ export function CvEditor({
           )}
         </div>
       </div>
+
+      {versionsOpen && (
+        <div className="cv-versions-overlay" onClick={() => setVersionsOpen(false)}>
+          <aside className="cv-versions-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="cv-versions-head">
+              <span className="cv-versions-title">Histórico de versões</span>
+              <button className="cv-versions-close" onClick={() => setVersionsOpen(false)}>fechar</button>
+            </div>
+
+            <div className="cv-versions-save">
+              <input
+                className="cv-versions-input"
+                placeholder="rótulo desta versão (opcional)"
+                value={versionLabel}
+                onChange={(e) => setVersionLabel(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSaveVersion(); }}
+              />
+              <button className="cv-versions-save-btn" onClick={handleSaveVersion} disabled={savingVersion}>
+                {savingVersion ? 'salvando...' : 'salvar versão'}
+              </button>
+            </div>
+
+            <div className="cv-versions-list">
+              {versionsLoading && <div className="cv-versions-empty">carregando...</div>}
+              {!versionsLoading && versions.length === 0 && (
+                <div className="cv-versions-empty">nenhuma versão ainda</div>
+              )}
+              {!versionsLoading && versions.map((v) => (
+                <div key={v.id} className="cv-version-item">
+                  <div className="cv-version-info">
+                    <span className="cv-version-label">{v.label}</span>
+                    <span className="cv-version-meta">
+                      <span className={`cv-version-tag cv-version-tag--${v.source}`}>{SOURCE_LABEL[v.source]}</span>
+                      {relativeTime(v.created_at)}
+                    </span>
+                  </div>
+                  <button className="cv-version-restore" onClick={() => restoreVersion(v)}>restaurar</button>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </div>
+      )}
 
       {loading && (
         <div className="cv-page-loading">

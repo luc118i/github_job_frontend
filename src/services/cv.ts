@@ -1,4 +1,4 @@
-import { CvRequest, CvResponse, CvRecord, CvBlock } from '../types';
+import { CvRequest, CvResponse, CvRecord, CvBlock, CvVersion, CvVersionSource } from '../types';
 import { getToken } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
@@ -51,5 +51,34 @@ export async function updateCv(cvId: string, content: string, blocks?: CvBlock[]
   if (!res.ok) {
     const data = await res.json().catch(() => ({})) as { error?: string };
     throw new Error(data.error ?? 'Erro ao salvar o CV. Tente novamente.');
+  }
+}
+
+// ── Versionamento (Career Studio M2) ──────────────────────────────
+
+export async function fetchCvVersions(cvId: string): Promise<CvVersion[]> {
+  const res = await fetch(`${API_URL}/cv/${cvId}/versions`, { headers: authHeaders() });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao carregar o histórico de versões.');
+  }
+  return res.json() as Promise<CvVersion[]>;
+}
+
+export async function saveCvVersion(
+  cvId: string,
+  content: string,
+  blocks: CvBlock[],
+  label: string,
+  source: CvVersionSource = 'manual',
+): Promise<void> {
+  const res = await fetch(`${API_URL}/cv/${cvId}/versions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ content, blocks, label, source }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao salvar a versão.');
   }
 }
