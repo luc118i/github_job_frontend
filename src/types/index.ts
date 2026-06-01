@@ -171,6 +171,8 @@ export interface CvVersion {
 }
 
 // ── Biblioteca de Projetos (Career Studio M5) ─────────────────────
+export type ProjectCategory = 'frontend' | 'backend' | 'fullstack' | 'data' | 'mobile' | 'outro';
+
 export interface Project {
   id: string;
   user_id: string;
@@ -178,6 +180,7 @@ export interface Project {
   description: string;
   tech: string[];
   highlights: string[];
+  category: ProjectCategory;
   link: string | null;
   repo: string | null;
   created_at: string;
@@ -190,8 +193,54 @@ export interface ProjectInput {
   description?: string;
   tech?: string[];
   highlights?: string[];
+  category?: ProjectCategory;
   link?: string | null;
   repo?: string | null;
+}
+
+// ── Cartas/Mensagens (Career Studio M6) ───────────────────────────
+export type MessageType = 'cover_letter' | 'recruiter_dm' | 'email' | 'follow_up';
+
+export interface Message {
+  id: string;
+  user_id: string;
+  job_id: string;
+  type: MessageType;
+  subject: string | null;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MessageDraft {
+  subject: string | null;
+  content: string;
+}
+
+export interface MessageInput {
+  job_id: string;
+  type: MessageType;
+  subject?: string | null;
+  content: string;
+}
+
+export interface MessageGenRequest {
+  type: MessageType;
+  job: {
+    title: string;
+    company: string;
+    level: 'Junior' | 'Pleno' | 'Senior';
+    remote: boolean;
+    skills: string[];
+    description: string;
+  };
+  candidate: {
+    name: string;
+    bio?: string | null;
+    skills?: string[];
+    currentRole?: string | null;
+    summary?: string | null;
+  };
 }
 
 export interface ProfessionJobRecord extends JobRecord {

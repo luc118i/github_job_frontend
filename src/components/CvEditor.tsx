@@ -17,9 +17,10 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { JobRecord, Profile, LinkedInData, CvRequest, CvBlock, CvBlockType, CvVersion, Project, ProjectInput } from '../types';
+import { JobRecord, Profile, LinkedInData, CvRequest, CvBlock, CvBlockType, CvVersion, Project, ProjectInput, Message, MessageType } from '../types';
 import { generateCv, updateCv, fetchCvVersions, saveCvVersion, adaptCvToJob, CvApiError } from '../services/cv';
 import { fetchProjects, createProject, updateProject, deleteProject } from '../services/projects';
+import { generateMessage, fetchMessages, saveMessage, updateMessage, deleteMessage } from '../services/messages';
 import { downloadCvPdf } from '../services/pdfExport';
 import { dismissJob } from '../services/jobs';
 import { markCvGenerated } from '../utils/dailyLimit';
@@ -31,6 +32,14 @@ import { AtsRing } from './AtsRing';
 // por vírgula e highlights por quebra de linha.
 interface ProjectForm { title: string; description: string; tech: string; highlights: string; link: string; }
 const EMPTY_PROJECT_FORM: ProjectForm = { title: '', description: '', tech: '', highlights: '', link: '' };
+
+// Tipos de mensagem (M6) — rótulo da aba e se usa assunto (e-mail).
+const MSG_TYPES: { type: MessageType; label: string; hasSubject: boolean }[] = [
+  { type: 'cover_letter', label: 'Carta', hasSubject: false },
+  { type: 'recruiter_dm', label: 'Recrutador', hasSubject: false },
+  { type: 'email', label: 'E-mail', hasSubject: true },
+  { type: 'follow_up', label: 'Follow-up', hasSubject: false },
+];
 
 interface CvEditorProps {
   job: JobRecord;
@@ -157,6 +166,19 @@ export function CvEditor({
   // null = form fechado | '' = criando | id = editando
   const [formId, setFormId] = useState<string | null>(null);
   const [projForm, setProjForm] = useState<ProjectForm>(EMPTY_PROJECT_FORM);
+
+  // M6 — Cartas/Mensagens
+  const [msgOpen, setMsgOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [msgLoading, setMsgLoading] = useState(false);
+  const [msgError, setMsgError] = useState('');
+  const [msgType, setMsgType] = useState<MessageType>('cover_letter');
+  const [msgGenerating, setMsgGenerating] = useState(false);
+  const [msgSaving, setMsgSaving] = useState(false);
+  const [draftSubject, setDraftSubject] = useState('');
+  const [draftContent, setDraftContent] = useState('');
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -547,6 +569,126 @@ export function CvEditor({
     setTimeout(() => setSaveMsg(''), 3000);
   }
 
+  // ── Cartas/Mensagens (M6) ────────────────────────────────────────
+  const msgHasSubject = msgType === 'email';
+  const savedForType = useMemo(() => messages.filter((m) => m.type === msgType), [messages, msgType]);
+
+  async function openMessages() {
+    setMsgOpen(true);
+    setMsgLoading(true);
+    setMsgError('');
+    try {
+      setMessages(await fetchMessages(job.id));
+    } catch (e) {
+      setMsgError((e as Error).message);
+    } finally {
+      setMsgLoading(false);
+    }
+  }
+
+  // Monta o contexto do candidato a partir dos dados já disponíveis no editor.
+  function buildMsgCandidate() {
+    const p0 = linkedIn?.positions?.[0];
+    const currentRole = p0 ? `${p0.title} @ ${p0.company}` : null;
+    const resumo = blocks?.find((b) => b.type === 'resumo' && b.visible);
+    return {
+      name: candidateName,
+      bio: profile.user.bio,
+      skills: profile.skills,
+      currentRole,
+      summary: resumo?.content ?? null,
+    };
+  }
+
+  function switchMsgType(t: MessageType) {
+    setMsgType(t);
+    setEditingMsgId(null);
+    setDraftSubject('');
+    setDraftContent('');
+  }
+
+  async function handleGenerateMsg() {
+    if (msgGenerating) return;
+    setMsgGenerating(true);
+    setMsgError('');
+    try {
+      const draft = await generateMessage({
+        type: msgType,
+        job: {
+          title: job.title,
+          company: job.company,
+          level: job.level,
+          remote: job.remote,
+          skills: job.skills,
+          description: job.description,
+        },
+        candidate: buildMsgCandidate(),
+      });
+      setDraftSubject(draft.subject ?? '');
+      setDraftContent(draft.content);
+      setEditingMsgId(null);
+    } catch (e) {
+      setMsgError((e as Error).message);
+    } finally {
+      setMsgGenerating(false);
+    }
+  }
+
+  async function handleSaveMsg() {
+    if (!draftContent.trim() || msgSaving) return;
+    const subject = msgHasSubject ? draftSubject.trim() || null : null;
+    setMsgSaving(true);
+    setMsgError('');
+    try {
+      if (editingMsgId) {
+        const upd = await updateMessage(editingMsgId, subject, draftContent);
+        setMessages((prev) => prev.map((m) => (m.id === editingMsgId ? upd : m)));
+      } else {
+        const created = await saveMessage({ job_id: job.id, type: msgType, subject, content: draftContent });
+        setMessages((prev) => [created, ...prev]);
+        setEditingMsgId(created.id);
+      }
+    } catch (e) {
+      setMsgError((e as Error).message);
+    } finally {
+      setMsgSaving(false);
+    }
+  }
+
+  function loadMessageToDraft(m: Message) {
+    setMsgType(m.type);
+    setDraftSubject(m.subject ?? '');
+    setDraftContent(m.content);
+    setEditingMsgId(m.id);
+  }
+
+  async function handleDeleteMsg(id: string) {
+    try {
+      await deleteMessage(id);
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+      if (editingMsgId === id) {
+        setEditingMsgId(null);
+        setDraftSubject('');
+        setDraftContent('');
+      }
+    } catch (e) {
+      setMsgError((e as Error).message);
+    }
+  }
+
+  async function copyDraft() {
+    const text = msgHasSubject && draftSubject.trim()
+      ? `Assunto: ${draftSubject.trim()}\n\n${draftContent}`
+      : draftContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard indisponível — silencioso */
+    }
+  }
+
   return (
     <div className="cv-page">
       <div className="cv-topbar">
@@ -575,6 +717,11 @@ export function CvEditor({
           {blocks && !loading && (
             <button className="cv-versions-btn" onClick={openLibrary} title="Biblioteca de Projetos">
               projetos
+            </button>
+          )}
+          {blocks && !loading && (
+            <button className="cv-versions-btn" onClick={openMessages} title="Cartas e mensagens">
+              mensagens
             </button>
           )}
           {blocks && !loading && cvId && (
@@ -793,7 +940,7 @@ export function CvEditor({
                       <div className="cv-lib-item-head">
                         <span className="cv-lib-item-title">{p.title}</span>
                         <span className="cv-lib-match" style={{ color: mt.color, borderColor: mt.color }}>
-                          {mt.label} · {score}
+                          {score}% match · {mt.label}
                         </span>
                       </div>
                       {p.description && <span className="cv-lib-item-desc">{p.description}</span>}
@@ -819,6 +966,79 @@ export function CvEditor({
                 inserir {selectedProj.size} no currículo
               </button>
             )}
+          </aside>
+        </div>
+      )}
+
+      {msgOpen && (
+        <div className="cv-versions-overlay" onClick={() => setMsgOpen(false)}>
+          <aside className="cv-lib-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="cv-versions-head">
+              <span className="cv-versions-title">Cartas e mensagens</span>
+              <button className="cv-versions-close" onClick={() => setMsgOpen(false)}>fechar</button>
+            </div>
+
+            <div className="cv-msg-tabs">
+              {MSG_TYPES.map((t) => (
+                <button
+                  key={t.type}
+                  className={`cv-msg-tab ${msgType === t.type ? 'active' : ''}`}
+                  onClick={() => switchMsgType(t.type)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {msgError && <div className="cv-lib-error" onClick={() => setMsgError('')}>{msgError}</div>}
+
+            <div className="cv-msg-draft">
+              {msgHasSubject && (
+                <input
+                  className="cv-versions-input"
+                  placeholder="assunto do e-mail"
+                  value={draftSubject}
+                  onChange={(e) => setDraftSubject(e.target.value)}
+                />
+              )}
+              <textarea
+                className="cv-lib-textarea cv-msg-textarea"
+                placeholder={msgGenerating ? 'gerando com IA...' : 'gere com IA ou escreva sua mensagem aqui'}
+                value={draftContent}
+                rows={9}
+                onChange={(e) => setDraftContent(e.target.value)}
+              />
+              <div className="cv-msg-actions">
+                <button className="cv-adapt-btn" onClick={handleGenerateMsg} disabled={msgGenerating}>
+                  {msgGenerating ? 'gerando...' : draftContent.trim() ? 'gerar de novo' : 'gerar com IA'}
+                </button>
+                {draftContent.trim() && (
+                  <>
+                    <button className="cv-msg-copy" onClick={copyDraft}>{copied ? 'copiado!' : 'copiar'}</button>
+                    <button className="cv-versions-save-btn" onClick={handleSaveMsg} disabled={msgSaving}>
+                      {msgSaving ? 'salvando...' : editingMsgId ? 'salvar alterações' : 'salvar'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="cv-versions-list">
+              {msgLoading && <div className="cv-versions-empty">carregando...</div>}
+              {!msgLoading && savedForType.length === 0 && (
+                <div className="cv-versions-empty">nenhuma mensagem salva deste tipo</div>
+              )}
+              {!msgLoading && savedForType.map((m) => (
+                <div key={m.id} className={`cv-msg-item ${editingMsgId === m.id ? 'cv-msg-item--sel' : ''}`}>
+                  <div className="cv-msg-item-body" onClick={() => loadMessageToDraft(m)}>
+                    {m.subject && <span className="cv-msg-item-subject">{m.subject}</span>}
+                    <span className="cv-msg-item-preview">{m.content.slice(0, 120)}{m.content.length > 120 ? '...' : ''}</span>
+                    <span className="cv-version-meta">{relativeTime(m.updated_at)}</span>
+                  </div>
+                  <button className="cv-block-action cv-block-action--danger" onClick={() => handleDeleteMsg(m.id)}>excluir</button>
+                </div>
+              ))}
+            </div>
           </aside>
         </div>
       )}

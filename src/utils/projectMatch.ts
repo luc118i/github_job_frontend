@@ -1,4 +1,4 @@
-import { Project } from '../types';
+import { Project, ProjectCategory, ProjectInput, GitHubRepo } from '../types';
 
 // Match determinístico projeto↔vaga (Career Studio M5). Sem IA/embeddings:
 // sobreposição de termos entre a stack/descrição do projeto e as
@@ -77,6 +77,91 @@ export function rankProjects(projects: Project[], job: MatchJob): ProjectMatch[]
       return { project, score, matched };
     })
     .sort((a, b) => b.score - a.score);
+}
+
+// ── Importação do GitHub ──────────────────────────────────────────
+// Metadados por categoria: rótulo (chips de filtro) e cor (borda dos
+// chips de stack / acento do card). Mesmos tokens de cor do MVC.
+export const CATEGORY: Record<ProjectCategory, { label: string; color: string }> = {
+  frontend: { label: 'Frontend', color: '#8B5CF6' },
+  backend: { label: 'Backend', color: '#14B8A6' },
+  fullstack: { label: 'Full Stack', color: '#EC4899' },
+  data: { label: 'Data', color: '#F97316' },
+  mobile: { label: 'Mobile', color: '#A78BFA' },
+  outro: { label: 'Outro', color: '#64748B' },
+};
+
+// Pistas (substrings normalizadas) por categoria. A inferência olha
+// linguagem + topics + nome + descrição do repo e decide de forma
+// determinística — sem IA. Ordem de desempate definida em inferCategory.
+const FRONT_HINTS = [
+  'react', 'vue', 'angular', 'svelte', 'next', 'nuxt', 'vite', 'tailwind',
+  'css', 'sass', 'html', 'frontend', 'front-end', 'ui', 'webpack',
+];
+const BACK_HINTS = [
+  'node', 'express', 'nest', 'django', 'flask', 'fastapi', 'spring', 'rails',
+  'laravel', 'php', 'backend', 'back-end', 'api', 'graphql', 'postgres',
+  'mysql', 'mongodb', 'redis', 'dotnet', '.net', 'golang', 'rust',
+];
+const DATA_HINTS = [
+  'pandas', 'numpy', 'jupyter', 'notebook', 'tensorflow', 'pytorch', 'keras',
+  'sklearn', 'scikit', 'data', 'machine-learning', 'ml', 'analytics', 'etl',
+  'spark', 'airflow', 'matplotlib',
+];
+const MOBILE_HINTS = [
+  'react-native', 'reactnative', 'flutter', 'dart', 'swift', 'kotlin',
+  'android', 'ios', 'expo', 'ionic', 'mobile', 'swiftui',
+];
+
+/** true se algum termo das pistas aparece no texto normalizado do repo. */
+function hits(haystack: string, hints: string[]): boolean {
+  return hints.some((h) => haystack.includes(h));
+}
+
+/**
+ * Infere a categoria do projeto a partir do repo (linguagem + topics +
+ * nome + descrição). Determinístico: se casar front E back → fullstack;
+ * senão a primeira categoria mais específica (mobile/data antes de front/back).
+ */
+export function inferCategory(repo: GitHubRepo): ProjectCategory {
+  const text = normalize(
+    [repo.language ?? '', repo.topics.join(' '), repo.name, repo.description ?? ''].join(' '),
+  );
+
+  // Mobile e Data são mais específicos — checados primeiro.
+  if (hits(text, MOBILE_HINTS)) return 'mobile';
+  if (hits(text, DATA_HINTS)) return 'data';
+
+  const isFront = hits(text, FRONT_HINTS);
+  const isBack = hits(text, BACK_HINTS);
+  if (isFront && isBack) return 'fullstack';
+  if (isFront) return 'frontend';
+  if (isBack) return 'backend';
+  return 'outro';
+}
+
+/**
+ * Converte repos do GitHub em payloads de projeto para importar.
+ * Ignora forks (ruído). Stack = linguagem + topics; categoria inferida;
+ * `repo` recebe o nome (chave de dedupe no backend).
+ */
+export function reposToProjectInputs(repos: GitHubRepo[]): ProjectInput[] {
+  return repos
+    .filter((r) => !r.fork)
+    .map((r) => {
+      const tech = Array.from(
+        new Set([r.language, ...r.topics].filter((t): t is string => Boolean(t))),
+      );
+      return {
+        title: r.name,
+        description: r.description ?? '',
+        tech,
+        highlights: [],
+        category: inferCategory(r),
+        link: r.html_url,
+        repo: r.name,
+      };
+    });
 }
 
 /** Faixa qualitativa para cor/rótulo da relevância. */

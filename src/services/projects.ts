@@ -45,6 +45,21 @@ export async function updateProject(id: string, input: ProjectInput): Promise<Pr
   return res.json() as Promise<Project>;
 }
 
+// Importa vários projetos de uma vez (do GitHub). O backend deduplica
+// pelo nome do repo e retorna só os que foram realmente criados.
+export async function importProjects(projects: ProjectInput[]): Promise<Project[]> {
+  const res = await fetch(`${API_URL}/projects/import`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ projects }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao importar os projetos.');
+  }
+  return res.json() as Promise<Project[]>;
+}
+
 export async function deleteProject(id: string): Promise<void> {
   const res = await fetch(`${API_URL}/projects/${id}`, {
     method: 'DELETE',
