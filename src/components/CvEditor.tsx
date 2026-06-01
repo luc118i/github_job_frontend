@@ -17,13 +17,20 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { JobRecord, Profile, LinkedInData, CvRequest, CvBlock, CvBlockType, CvVersion } from '../types';
+import { JobRecord, Profile, LinkedInData, CvRequest, CvBlock, CvBlockType, CvVersion, Project, ProjectInput } from '../types';
 import { generateCv, updateCv, fetchCvVersions, saveCvVersion, adaptCvToJob, CvApiError } from '../services/cv';
+import { fetchProjects, createProject, updateProject, deleteProject } from '../services/projects';
 import { downloadCvPdf } from '../services/pdfExport';
 import { dismissJob } from '../services/jobs';
 import { markCvGenerated } from '../utils/dailyLimit';
 import { analyzeAts, atsTier } from '../utils/atsScore';
+import { rankProjects, matchTier, projectsToMarkdown } from '../utils/projectMatch';
 import { AtsRing } from './AtsRing';
+
+// Form da Biblioteca de Projetos (M5): campos em texto cru; tech vira lista
+// por vírgula e highlights por quebra de linha.
+interface ProjectForm { title: string; description: string; tech: string; highlights: string; link: string; }
+const EMPTY_PROJECT_FORM: ProjectForm = { title: '', description: '', tech: '', highlights: '', link: '' };
 
 interface CvEditorProps {
   job: JobRecord;
@@ -139,6 +146,17 @@ export function CvEditor({
   const [adapting, setAdapting] = useState(false);
   const [adaptedBlocks, setAdaptedBlocks] = useState<CvBlock[] | null>(null);
   const [adaptError, setAdaptError] = useState('');
+
+  // M5 — Biblioteca de Projetos
+  const [libOpen, setLibOpen] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projLoading, setProjLoading] = useState(false);
+  const [projError, setProjError] = useState('');
+  const [savingProj, setSavingProj] = useState(false);
+  const [selectedProj, setSelectedProj] = useState<Set<string>>(new Set());
+  // null = form fechado | '' = criando | id = editando
+  const [formId, setFormId] = useState<string | null>(null);
+  const [projForm, setProjForm] = useState<ProjectForm>(EMPTY_PROJECT_FORM);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -412,6 +430,123 @@ export function CvEditor({
     [adaptedBlocks, buildMarkdown, job.title, job.skills, job.description],
   );
 
+  // ── Biblioteca de Projetos (M5) ──────────────────────────────────
+  // Ranqueia os projetos por relevância à vaga (determinístico, custo zero).
+  const ranked = useMemo(
+    () => rankProjects(projects, { title: job.title, skills: job.skills, description: job.description }),
+    [projects, job.title, job.skills, job.description],
+  );
+
+  async function openLibrary() {
+    setLibOpen(true);
+    setProjLoading(true);
+    setProjError('');
+    try {
+      setProjects(await fetchProjects());
+    } catch (e) {
+      setProjError((e as Error).message);
+    } finally {
+      setProjLoading(false);
+    }
+  }
+
+  function startNewProject() {
+    setProjForm(EMPTY_PROJECT_FORM);
+    setFormId('');
+  }
+  function startEditProject(p: Project) {
+    setProjForm({
+      title: p.title,
+      description: p.description,
+      tech: p.tech.join(', '),
+      highlights: p.highlights.join('\n'),
+      link: p.link ?? '',
+    });
+    setFormId(p.id);
+  }
+  function cancelProjectForm() {
+    setFormId(null);
+    setProjForm(EMPTY_PROJECT_FORM);
+  }
+
+  function parseProjectForm(): ProjectInput {
+    return {
+      title: projForm.title.trim(),
+      description: projForm.description.trim(),
+      tech: projForm.tech.split(',').map((s) => s.trim()).filter(Boolean),
+      highlights: projForm.highlights.split('\n').map((s) => s.trim()).filter(Boolean),
+      link: projForm.link.trim() || null,
+    };
+  }
+
+  async function submitProjectForm() {
+    const input = parseProjectForm();
+    if (!input.title) {
+      setProjError('Informe o título do projeto.');
+      return;
+    }
+    setSavingProj(true);
+    setProjError('');
+    try {
+      if (formId) {
+        const upd = await updateProject(formId, input);
+        setProjects((prev) => prev.map((p) => (p.id === formId ? upd : p)));
+      } else {
+        const created = await createProject(input);
+        setProjects((prev) => [created, ...prev]);
+      }
+      cancelProjectForm();
+    } catch (e) {
+      setProjError((e as Error).message);
+    } finally {
+      setSavingProj(false);
+    }
+  }
+
+  async function handleDeleteProject(id: string) {
+    try {
+      await deleteProject(id);
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+      setSelectedProj((prev) => {
+        const n = new Set(prev);
+        n.delete(id);
+        return n;
+      });
+      if (formId === id) cancelProjectForm();
+    } catch (e) {
+      setProjError((e as Error).message);
+    }
+  }
+
+  function toggleSelectProject(id: string) {
+    setSelectedProj((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  }
+
+  // Insere os projetos marcados no bloco "projetos" (cria se não existir).
+  function insertSelectedProjects() {
+    const chosen = projects.filter((p) => selectedProj.has(p.id));
+    if (chosen.length === 0) return;
+    const md = projectsToMarkdown(chosen);
+    setBlocks((prev) => {
+      if (!prev) return prev;
+      const i = prev.findIndex((b) => b.type === 'projetos');
+      if (i === -1) {
+        return [...prev, { id: uid(), type: 'projetos', title: BLOCK_META.projetos.title, content: md, visible: true }];
+      }
+      const existing = prev[i];
+      const merged = existing.content.trim() ? `${existing.content.trim()}\n\n${md}` : md;
+      return prev.map((b, idx) => (idx === i ? { ...b, content: merged, visible: true } : b));
+    });
+    setSelectedProj(new Set());
+    setLibOpen(false);
+    setSaveMsg('projetos inseridos — salve para confirmar');
+    setTimeout(() => setSaveMsg(''), 3000);
+  }
+
   return (
     <div className="cv-page">
       <div className="cv-topbar">
@@ -435,6 +570,11 @@ export function CvEditor({
           {blocks && !loading && cvId && (
             <button className="cv-save-btn" onClick={handleSave} disabled={saving}>
               {saving ? 'salvando...' : saveMsg || 'salvar'}
+            </button>
+          )}
+          {blocks && !loading && (
+            <button className="cv-versions-btn" onClick={openLibrary} title="Biblioteca de Projetos">
+              projetos
             </button>
           )}
           {blocks && !loading && cvId && (
@@ -571,6 +711,114 @@ export function CvEditor({
                 </div>
               ))}
             </div>
+          </aside>
+        </div>
+      )}
+
+      {libOpen && (
+        <div className="cv-versions-overlay" onClick={() => setLibOpen(false)}>
+          <aside className="cv-lib-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="cv-versions-head">
+              <span className="cv-versions-title">Biblioteca de Projetos</span>
+              <button className="cv-versions-close" onClick={() => setLibOpen(false)}>fechar</button>
+            </div>
+
+            <p className="cv-lib-sub">
+              Ordenados por relevância para <strong>{job.title}</strong>. Marque e insira no bloco de projetos.
+            </p>
+
+            {projError && <div className="cv-lib-error" onClick={() => setProjError('')}>{projError}</div>}
+
+            {/* Form de criar/editar */}
+            {formId === null ? (
+              <button className="cv-lib-new" onClick={startNewProject}>+ novo projeto</button>
+            ) : (
+              <div className="cv-lib-form">
+                <input
+                  className="cv-versions-input"
+                  placeholder="título do projeto *"
+                  value={projForm.title}
+                  onChange={(e) => setProjForm((f) => ({ ...f, title: e.target.value }))}
+                />
+                <textarea
+                  className="cv-lib-textarea"
+                  placeholder="descrição curta (o que é / seu papel)"
+                  value={projForm.description}
+                  rows={2}
+                  onChange={(e) => setProjForm((f) => ({ ...f, description: e.target.value }))}
+                />
+                <input
+                  className="cv-versions-input"
+                  placeholder="stack / tecnologias (separe por vírgula)"
+                  value={projForm.tech}
+                  onChange={(e) => setProjForm((f) => ({ ...f, tech: e.target.value }))}
+                />
+                <textarea
+                  className="cv-lib-textarea"
+                  placeholder="destaques / conquistas (um por linha)"
+                  value={projForm.highlights}
+                  rows={3}
+                  onChange={(e) => setProjForm((f) => ({ ...f, highlights: e.target.value }))}
+                />
+                <input
+                  className="cv-versions-input"
+                  placeholder="link (opcional)"
+                  value={projForm.link}
+                  onChange={(e) => setProjForm((f) => ({ ...f, link: e.target.value }))}
+                />
+                <div className="cv-lib-form-actions">
+                  <button className="cv-lib-cancel" onClick={cancelProjectForm}>cancelar</button>
+                  <button className="cv-versions-save-btn" onClick={submitProjectForm} disabled={savingProj}>
+                    {savingProj ? 'salvando...' : formId ? 'salvar alterações' : 'adicionar à biblioteca'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Lista ranqueada */}
+            <div className="cv-versions-list">
+              {projLoading && <div className="cv-versions-empty">carregando...</div>}
+              {!projLoading && ranked.length === 0 && (
+                <div className="cv-versions-empty">nenhum projeto na biblioteca ainda</div>
+              )}
+              {!projLoading && ranked.map(({ project: p, score, matched }) => {
+                const mt = matchTier(score);
+                const checked = selectedProj.has(p.id);
+                return (
+                  <div key={p.id} className={`cv-lib-item ${checked ? 'cv-lib-item--sel' : ''}`}>
+                    <label className="cv-lib-check">
+                      <input type="checkbox" checked={checked} onChange={() => toggleSelectProject(p.id)} />
+                    </label>
+                    <div className="cv-lib-item-body">
+                      <div className="cv-lib-item-head">
+                        <span className="cv-lib-item-title">{p.title}</span>
+                        <span className="cv-lib-match" style={{ color: mt.color, borderColor: mt.color }}>
+                          {mt.label} · {score}
+                        </span>
+                      </div>
+                      {p.description && <span className="cv-lib-item-desc">{p.description}</span>}
+                      {p.tech.length > 0 && (
+                        <div className="cv-lib-tags">
+                          {p.tech.map((t) => (
+                            <span key={t} className={`cv-lib-tag ${matched.includes(t) ? 'cv-lib-tag--hit' : ''}`}>{t}</span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="cv-lib-item-actions">
+                        <button className="cv-block-action" onClick={() => startEditProject(p)}>editar</button>
+                        <button className="cv-block-action cv-block-action--danger" onClick={() => handleDeleteProject(p.id)}>excluir</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {selectedProj.size > 0 && (
+              <button className="cv-lib-insert" onClick={insertSelectedProjects}>
+                inserir {selectedProj.size} no currículo
+              </button>
+            )}
           </aside>
         </div>
       )}

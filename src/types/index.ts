@@ -170,6 +170,30 @@ export interface CvVersion {
   created_at: string;
 }
 
+// ── Biblioteca de Projetos (Career Studio M5) ─────────────────────
+export interface Project {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  tech: string[];
+  highlights: string[];
+  link: string | null;
+  repo: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Payload de criação/edição (sem campos do servidor).
+export interface ProjectInput {
+  title: string;
+  description?: string;
+  tech?: string[];
+  highlights?: string[];
+  link?: string | null;
+  repo?: string | null;
+}
+
 export interface ProfessionJobRecord extends JobRecord {
   match: number;
 }
