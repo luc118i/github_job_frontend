@@ -80,8 +80,32 @@ export function BuscarView({
   const [query, setQuery] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const [locationDraft, setLocationDraft] = useState(preferences.location ?? '');
+  const [detectingLocation, setDetectingLocation] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleDetectLocation() {
+    if (!navigator.geolocation) return;
+    setDetectingLocation(true);
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
+      );
+      const { latitude, longitude } = pos.coords;
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=pt-BR`
+      );
+      const data = await res.json() as { address?: Record<string, string> };
+      const city = data.address?.city ?? data.address?.town ?? data.address?.municipality ?? '';
+      const state = data.address?.state ?? '';
+      const location = city ? `${city}, ${state}` : state;
+      if (location) setLocationDraft(location);
+    } catch {
+      // usuario negou ou timeout — não faz nada
+    } finally {
+      setDetectingLocation(false);
+    }
+  }
 
   // Fecha o popover ao clicar fora
   useEffect(() => {
@@ -256,9 +280,19 @@ export function BuscarView({
                       onKeyDown={e => e.key === 'Enter' && applyLocation()}
                       autoFocus
                     />
-                    {locationDraft && (
-                      <button className="bv-fp-clear" onClick={() => setLocationDraft('')}>✕</button>
-                    )}
+                    {locationDraft
+                      ? <button className="bv-fp-clear" onClick={() => setLocationDraft('')}>✕</button>
+                      : navigator.geolocation && (
+                          <button
+                            className={`bv-fp-geo-btn${detectingLocation ? ' bv-fp-geo-btn--loading' : ''}`}
+                            onClick={handleDetectLocation}
+                            disabled={detectingLocation}
+                            title="Usar minha localização"
+                          >
+                            {detectingLocation ? '...' : '⊕'}
+                          </button>
+                        )
+                    }
                   </div>
                   {!locationDraft && (
                     <span className="bv-fp-hint">vazio = nacional 🇧🇷</span>
