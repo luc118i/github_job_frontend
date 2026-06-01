@@ -1,0 +1,675 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM — Geometric Premium Layer
+   Identity: Stripe · Linear · Vercel · Arc
+   Diagonal-cut geometry + solid surfaces + micro interactions
+   Import AFTER global.css
+═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Token overrides ───────────────────────────────────────────────── */
+:root {
+  --geo-cut:    12px;
+  --geo-cut-sm:  8px;
+  --geo-cut-xs:  5px;
+
+  --surface-card:        rgba(255,255,255,0.038);
+  --surface-card-hover:  rgba(255,255,255,0.058);
+  --surface-modal:       #111118;
+
+  --border-card:         rgba(255,255,255,0.07);
+  --border-card-hover:   rgba(61,114,200,0.28);
+  --border-input:        rgba(255,255,255,0.08);
+  --border-input-focus:  rgba(61,114,200,0.5);
+
+  --shadow-xs:          0 1px 3px rgba(0,0,0,0.2);
+  --shadow-sm:          0 2px 8px rgba(0,0,0,0.22), 0 1px 2px rgba(0,0,0,0.16);
+  --shadow-md:          0 4px 16px rgba(0,0,0,0.28), 0 2px 4px rgba(0,0,0,0.18);
+  --shadow-btn-hover:   0 4px 14px rgba(61,114,200,0.28);
+  --shadow-modal:       0 24px 64px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4);
+
+  /* Kill heavy effects from global */
+  --glass-bg:           var(--surface-card);
+  --glass-border:       var(--border-card);
+  --glass-shadow:       var(--shadow-sm);
+  --glass-hover-shadow: var(--shadow-md);
+  --glow-blue:          0 4px 14px rgba(61,114,200,0.28);
+
+  /* Border radius */
+  --r-card: 10px;
+  --r-btn:   8px;
+  --r-chip:  6px;
+  --r-md:    8px;
+  --r-pill:  8px; /* remove pill shape */
+
+  /* Motion */
+  --t-fast:   0.1s ease-out;
+  --t-base:   0.15s ease-out;
+  --t-smooth: 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CLIP-PATH MIXINS
+   top-right + bottom-left diagonal cuts = brand signature geometry
+══════════════════════════════════════════════════════════════════════ */
+
+/* Full card cut — both corners */
+.geo-cut-full {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut)) 0,
+    100% var(--geo-cut),
+    100% 100%,
+    var(--geo-cut) 100%,
+    0 calc(100% - var(--geo-cut))
+  );
+}
+
+/* Button cut — top-right only */
+.geo-cut-btn {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-sm)) 0,
+    100% var(--geo-cut-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   GLASS CARD — core primitive
+══════════════════════════════════════════════════════════════════════ */
+.glass-card {
+  position: relative;
+  background: var(--surface-card);
+  border: 1px solid var(--border-card);
+  box-shadow: none;
+  border-radius: 0;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut)) 0,
+    100% var(--geo-cut),
+    100% 100%,
+    var(--geo-cut) 100%,
+    0 calc(100% - var(--geo-cut))
+  );
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.22));
+  transition: filter var(--t-smooth), border-color var(--t-smooth), background var(--t-smooth);
+}
+
+.glass-card:hover {
+  transform: none;
+  background: var(--surface-card-hover);
+  border-color: var(--border-card-hover);
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.32));
+}
+
+/* Corner accent triangle */
+.glass-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--geo-cut);
+  height: var(--geo-cut);
+  background: var(--brand);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   BTN PRIMARY — core button primitive
+══════════════════════════════════════════════════════════════════════ */
+.btn-primary {
+  height: 44px;
+  padding: 0 22px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 0;
+  background: var(--brand);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.28);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-sm)) 0,
+    100% var(--geo-cut-sm),
+    100% 100%,
+    0 100%
+  );
+  transition: filter var(--t-base), transform var(--t-base), box-shadow var(--t-base);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: none;
+  filter: brightness(1.1);
+  box-shadow: var(--shadow-btn-hover);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.98) translateY(1px);
+  filter: brightness(0.95);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════════════════════════════════ */
+.hdr-login-btn,
+.hdr-logout-btn {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    0 100%
+  );
+  transition: filter var(--t-base), border-color var(--t-base), background var(--t-base) !important;
+}
+
+.hdr-login-btn:hover { filter: brightness(1.15); }
+.hdr-logout-btn:hover { filter: brightness(1.1); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   BUSCAR VIEW — landing + search
+══════════════════════════════════════════════════════════════════════ */
+
+/* Feature cards (Universal / Inteligente / Atualizado) */
+.bv-feature-card {
+  position: relative;
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut)) 0,
+    100% var(--geo-cut),
+    100% 100%,
+    var(--geo-cut) 100%,
+    0 calc(100% - var(--geo-cut))
+  );
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.22));
+  transition: filter var(--t-smooth), border-color var(--t-smooth), background var(--t-smooth);
+}
+
+.bv-feature-card:hover {
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.32));
+  border-color: var(--border-card-hover) !important;
+}
+
+/* Corner accent on feature cards */
+.bv-feature-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--geo-cut);
+  height: var(--geo-cut);
+  background: var(--brand);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  opacity: 0.22;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Search input wrapper */
+.bv-search-input-wrap {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-sm)) 0,
+    100% var(--geo-cut-sm),
+    100% 100%,
+    0 100%
+  );
+  transition: border-color var(--t-base) !important;
+}
+
+/* Discover / Search button */
+.bv-search-btn {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-sm)) 0,
+    100% var(--geo-cut-sm),
+    100% 100%,
+    0 100%
+  );
+  transition: filter var(--t-base), transform var(--t-base) !important;
+}
+
+.bv-search-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.bv-search-btn:active:not(:disabled) {
+  transform: scale(0.98) translateY(1px);
+  filter: brightness(0.95);
+}
+
+/* Filter button */
+.bv-filter-btn {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    0 100%
+  );
+  transition: filter var(--t-base), background var(--t-base) !important;
+}
+
+.bv-filter-btn:hover { filter: brightness(1.12); }
+
+/* Profile score card (psc-card has glass-card already, but also target directly) */
+.psc-card {
+  position: relative;
+}
+
+/* Filter popover */
+.bv-filter-popover {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-sm)) 0,
+    100% var(--geo-cut-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+/* Suggestion chips */
+.bv-suggestion-chip {
+  border-radius: var(--r-chip) !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    0 100%
+  );
+  transition: filter var(--t-base), background var(--t-base) !important;
+}
+
+.bv-suggestion-chip:hover { filter: brightness(1.15); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   JOB CARD (jcp-*)
+══════════════════════════════════════════════════════════════════════ */
+.jcp-card {
+  position: relative;
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut)) 0,
+    100% var(--geo-cut),
+    100% 100%,
+    var(--geo-cut) 100%,
+    0 calc(100% - var(--geo-cut))
+  );
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+  transition: filter var(--t-smooth), border-color var(--t-smooth);
+}
+
+.jcp-card:hover {
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.3));
+}
+
+/* Corner accent */
+.jcp-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--geo-cut);
+  height: var(--geo-cut);
+  background: var(--brand);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Apply button inside job card */
+.jcp-apply-btn {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    0 100%
+  );
+  transition: filter var(--t-base), transform var(--t-base) !important;
+}
+
+.jcp-apply-btn:hover { filter: brightness(1.1); }
+.jcp-apply-btn:active { transform: scale(0.98) translateY(1px); }
+
+/* Skill tags */
+.jcp-skill-tag {
+  border-radius: var(--r-chip) !important;
+}
+
+/* Level badge */
+.jcp-level-badge {
+  border-radius: var(--r-chip) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   AUTH MODAL
+══════════════════════════════════════════════════════════════════════ */
+.auth-modal {
+  border-radius: 0 !important;
+  box-shadow: var(--shadow-modal) !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut)) 0,
+    100% var(--geo-cut),
+    100% 100%,
+    0 100%
+  );
+}
+
+.auth-submit {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-sm)) 0,
+    100% var(--geo-cut-sm),
+    100% 100%,
+    0 100%
+  );
+  transition: filter var(--t-base), transform var(--t-base) !important;
+}
+
+.auth-submit:hover { filter: brightness(1.1); }
+.auth-submit:active { transform: scale(0.98) translateY(1px); }
+
+/* Auth input fields */
+.auth-input {
+  border-radius: var(--r-md) !important;
+  transition: border-color var(--t-base), box-shadow var(--t-base) !important;
+}
+
+.auth-input:focus {
+  border-color: var(--border-input-focus) !important;
+  box-shadow: inset 2px 0 0 var(--brand) !important;
+  outline: none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ONBOARDING
+══════════════════════════════════════════════════════════════════════ */
+.onb-card {
+  position: relative;
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut)) 0,
+    100% var(--geo-cut),
+    100% 100%,
+    var(--geo-cut) 100%,
+    0 calc(100% - var(--geo-cut))
+  ) !important;
+  filter: drop-shadow(0 4px 20px rgba(0,0,0,0.35));
+}
+
+.onb-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--geo-cut);
+  height: var(--geo-cut);
+  background: var(--brand);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.onb-tag {
+  border-radius: var(--r-chip) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   KANBAN BOARD
+══════════════════════════════════════════════════════════════════════ */
+.kb-card {
+  position: relative;
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-sm)) 0,
+    100% var(--geo-cut-sm),
+    100% 100%,
+    var(--geo-cut-sm) 100%,
+    0 calc(100% - var(--geo-cut-sm))
+  ) !important;
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+  transition: filter var(--t-smooth) !important;
+}
+
+.kb-card:hover {
+  filter: drop-shadow(0 3px 12px rgba(0,0,0,0.3)) !important;
+}
+
+.kb-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--geo-cut-sm);
+  height: var(--geo-cut-sm);
+  background: var(--brand);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  opacity: 0.2;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.kb-action-btn {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    0 100%
+  );
+  transition: filter var(--t-base) !important;
+}
+
+.kb-action-btn:hover { filter: brightness(1.12); }
+
+.kb-skill {
+  border-radius: var(--r-chip) !important;
+}
+
+.kb-summary-chip {
+  border-radius: var(--r-chip) !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    0 100%
+  );
+}
+
+/* Panel (detail side panel) */
+.kb-panel {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    var(--geo-cut) 0,
+    100% 0,
+    100% 100%,
+    0 100%,
+    0 var(--geo-cut)
+  ) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CAREER DASHBOARD
+══════════════════════════════════════════════════════════════════════ */
+.cd-root {
+  position: relative;
+}
+
+/* CD action buttons */
+.cd-actions .cd-action-label,
+[class*="cd-action"] button,
+.cd-next {
+  border-radius: 0 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   BUSCAR CONFIG CARDS
+══════════════════════════════════════════════════════════════════════ */
+.buscar-transition-card {
+  position: relative;
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut)) 0,
+    100% var(--geo-cut),
+    100% 100%,
+    var(--geo-cut) 100%,
+    0 calc(100% - var(--geo-cut))
+  );
+}
+
+.buscar-config-btn {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-sm)) 0,
+    100% var(--geo-cut-sm),
+    100% 100%,
+    0 100%
+  );
+  transition: filter var(--t-base), transform var(--t-base) !important;
+}
+
+.buscar-config-btn:hover { filter: brightness(1.1); }
+.buscar-config-btn:active { transform: scale(0.98) translateY(1px); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   TAG FILTER BAR
+══════════════════════════════════════════════════════════════════════ */
+.tfb-tag {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    0 100%
+  );
+  transition: filter var(--t-base), background var(--t-base) !important;
+}
+
+.tfb-tag:hover { filter: brightness(1.15); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   CAREER CHAT CHIPS
+══════════════════════════════════════════════════════════════════════ */
+.cc-chip,
+.crc-chip {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    0 100%
+  );
+  transition: filter var(--t-base), background var(--t-base) !important;
+}
+
+.cc-chip:hover,
+.crc-chip:hover { filter: brightness(1.15); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   SEARCH CARD BUTTON (legacy search)
+══════════════════════════════════════════════════════════════════════ */
+.search-card-btn {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-sm)) 0,
+    100% var(--geo-cut-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+.search-card-btn:active:not(:disabled) {
+  transform: scale(0.98) translateY(1px);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   INPUT FIELDS — global
+══════════════════════════════════════════════════════════════════════ */
+.bv-search-input input,
+.kb-search-input,
+.auth-input,
+input[type="text"]:not([class]),
+input[type="email"]:not([class]),
+input[type="password"]:not([class]),
+textarea:not([class]) {
+  border-radius: var(--r-md) !important;
+  transition: border-color var(--t-base), box-shadow var(--t-base) !important;
+}
+
+input:focus,
+textarea:focus {
+  outline: none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   BOTTOM NAV
+══════════════════════════════════════════════════════════════════════ */
+.bottom-nav {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    var(--geo-cut-sm) 0,
+    calc(100% - var(--geo-cut-sm)) 0,
+    100% var(--geo-cut-sm),
+    100% 100%,
+    0 100%,
+    0 var(--geo-cut-sm)
+  ) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SCROLLBAR — minimal
+══════════════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   FOCUS RING — accessible, not aggressive
+══════════════════════════════════════════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid rgba(61,114,200,0.5);
+  outline-offset: 2px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY — hierarchy
+══════════════════════════════════════════════════════════════════════ */
+h1, h2, h3 {
+  letter-spacing: -0.02em;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MICRO INTERACTIONS — universal
+══════════════════════════════════════════════════════════════════════ */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  transition: filter var(--t-base), transform var(--t-base), opacity var(--t-base);
+}

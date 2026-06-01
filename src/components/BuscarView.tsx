@@ -15,6 +15,13 @@ const MODALITY_OPTIONS: { value: UserPreferences['modality']; label: string }[] 
   { value: 'hybrid',     label: 'Híbrido'  },
 ];
 
+const AGE_OPTIONS: { value: number; label: string }[] = [
+  { value: 7,  label: '7 dias'  },
+  { value: 30, label: '30 dias' },
+  { value: 60, label: '60 dias' },
+  { value: 90, label: '3 meses' },
+];
+
 interface BuscarViewProps {
   careerProfile: CareerProfile | null;
   preferences: UserPreferences;
@@ -95,7 +102,7 @@ export function BuscarView({
     setFilterOpen(false);
   }
 
-  const hasActiveFilter = !!(preferences.location || preferences.modality !== 'any');
+  const hasActiveFilter = !!(preferences.location || preferences.modality !== 'any' || preferences.maxAgeDays !== 90);
 
   // Foca o input ao montar
   useEffect(() => { inputRef.current?.focus(); }, []);
@@ -266,6 +273,21 @@ export function BuscarView({
                         key={opt.value}
                         className={`bv-fp-mod-btn${preferences.modality === opt.value ? ' bv-fp-mod-btn--active' : ''}`}
                         onClick={() => onPreferencesChange({ ...preferences, modality: opt.value })}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bv-fp-field">
+                  <label className="bv-fp-label">Publicação</label>
+                  <div className="bv-fp-modality-row">
+                    {AGE_OPTIONS.map(opt => (
+                      <button
+                        key={opt.value}
+                        className={`bv-fp-mod-btn${preferences.maxAgeDays === opt.value ? ' bv-fp-mod-btn--active' : ''}`}
+                        onClick={() => onPreferencesChange({ ...preferences, maxAgeDays: opt.value })}
                       >
                         {opt.label}
                       </button>

@@ -43,7 +43,7 @@ interface CvState {
 export default function App() {
   const [username, setUsername] = useState('');
   const [view, setView] = useState<View>('buscar');
-  const [onboardingDone, setOnboardingDone] = useState(false);
+  const [, setOnboardingDone] = useState(false);
   const [forceOnboarding, setForceOnboarding] = useState(false);
   const [cvState, setCvState] = useState<CvState | null>(null);
   const [linkedInData, setLinkedInData] = useState<LinkedInData | null>(null);
@@ -193,8 +193,8 @@ export default function App() {
     setCvState({ job, profile: syntheticProfile });
   }
 
-  // ── Onboarding: mostra na 1ª visita (sem perfil) ou quando forçado (ex.: "Descobrir" sem CV) ──
-  const needsOnboarding = forceOnboarding || (!careerProfile && !onboardingDone);
+  // ── Onboarding: só exibe quando explicitamente solicitado (ex.: clicar em "Descobrir Vagas") ──
+  const needsOnboarding = forceOnboarding;
 
   if (needsOnboarding) {
     return (
