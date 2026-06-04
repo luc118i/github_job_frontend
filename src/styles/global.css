@@ -4694,6 +4694,94 @@ h1 {
   border-radius: 0 6px 6px 0;
 }
 
+/* ── Interview Studio (M7) ── */
+.iv-panel { width: min(480px, 100%); }
+/* Prep: não encolhe (cards mantêm a altura natural; o painel rola). */
+.iv-body { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+
+.iv-tabs { display: flex; gap: 6px; }
+.iv-tab {
+  flex: 1; padding: 8px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03);
+  color: rgba(232,228,220,0.65); font-size: 12.5px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s;
+}
+.iv-tab:hover { color: rgba(232,228,220,0.9); }
+.iv-tab--active { border-color: #8B5CF6; background: rgba(139,92,246,0.16); color: #c9b6f5; }
+
+.iv-prep-actions { display: flex; gap: 8px; }
+.iv-prep-actions .cv-lib-ai-btn { flex: 1; }
+.iv-save-btn {
+  padding: 9px 14px; border-radius: 9px;
+  border: 1px solid rgba(74,222,128,0.4); background: rgba(74,222,128,0.12);
+  color: #86efac; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.iv-save-btn:disabled { opacity: 0.55; cursor: default; }
+.iv-hint { font-size: 12px; color: rgba(232,228,220,0.5); line-height: 1.5; margin: 0; }
+
+/* Perguntas prováveis (accordion) */
+.iv-q {
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+  background: rgba(255,255,255,0.02); overflow: hidden;
+}
+.iv-q--open { border-color: rgba(139,92,246,0.4); }
+.iv-q-head {
+  display: flex; align-items: flex-start; gap: 8px; width: 100%;
+  padding: 10px 12px; background: none; border: none; cursor: pointer; text-align: left;
+}
+/* Categoria em cima, pergunta embaixo — evita sobreposição no drawer estreito */
+.iv-q-main { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.iv-q-cat {
+  align-self: flex-start;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+  padding: 2px 7px; border-radius: 5px; white-space: nowrap;
+}
+.iv-q-cat--tecnica { color: #14B8A6; background: rgba(20,184,166,0.14); }
+.iv-q-cat--comportamental { color: #A78BFA; background: rgba(167,139,250,0.14); }
+.iv-q-text { font-size: 12.5px; color: rgba(232,228,220,0.9); line-height: 1.45; }
+.iv-q-chev { color: rgba(232,228,220,0.5); font-size: 15px; width: 14px; text-align: center; flex-shrink: 0; padding-top: 2px; }
+.iv-q-answer {
+  padding: 0 12px 12px; font-size: 12px; line-height: 1.6; color: rgba(232,228,220,0.75);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.iv-q-answer-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #8B5CF6; letter-spacing: 0.4px; }
+
+/* Perguntas para o recrutador */
+.iv-recruiter { margin-top: 6px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.07); }
+.iv-recruiter-title { font-size: 12.5px; color: rgba(232,228,220,0.85); margin: 0 0 8px; }
+.iv-recruiter-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.iv-recruiter-list li { font-size: 12px; color: rgba(232,228,220,0.7); line-height: 1.45; }
+
+/* Simulação (chat) */
+/* Sim: preenche a altura restante p/ o chat rolar internamente. */
+.iv-sim { flex: 1 1 auto; min-height: 0; }
+.iv-chat { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
+.iv-sim-start { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; padding-top: 8px; }
+.iv-msg { display: flex; flex-direction: column; gap: 3px; max-width: 92%; }
+.iv-msg--interviewer { align-self: flex-start; }
+.iv-msg--candidate { align-self: flex-end; align-items: flex-end; }
+.iv-msg-who { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: rgba(232,228,220,0.4); }
+.iv-msg-text {
+  margin: 0; font-size: 12.5px; line-height: 1.55; padding: 9px 12px; border-radius: 12px;
+  white-space: pre-wrap;
+}
+.iv-msg--interviewer .iv-msg-text { background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.25); color: rgba(232,228,220,0.9); border-bottom-left-radius: 3px; }
+.iv-msg--candidate .iv-msg-text { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(232,228,220,0.85); border-bottom-right-radius: 3px; }
+.iv-typing { font-size: 12px; color: rgba(167,139,250,0.7); font-style: italic; padding: 8px 4px; }
+
+.iv-input-row { display: flex; gap: 8px; align-items: flex-end; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.07); }
+.iv-input {
+  flex: 1; padding: 9px 11px; border-radius: 9px; resize: none;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03);
+  color: rgba(232,228,220,0.92); font-size: 12.5px; font-family: inherit;
+}
+.iv-input:focus { border-color: rgba(139,92,246,0.5); outline: none; }
+.iv-send-btn {
+  padding: 9px 16px; border-radius: 9px; border: 1px solid rgba(139,92,246,0.4);
+  background: rgba(139,92,246,0.18); color: #c9b6f5; font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.iv-send-btn:disabled { opacity: 0.5; cursor: default; }
+
 .cv-lib-error {
   background: rgba(239,68,68,0.12);
   border: 1px solid rgba(239,68,68,0.35);
@@ -4834,12 +4922,45 @@ h1 {
   border-color: rgba(139,92,246,0.45);
   color: #c4b5fd;
 }
+/* M6+ — dica do tipo, controles, variações */
+.cv-msg-hint {
+  margin: 0; font-size: 12px; line-height: 1.5; color: rgba(232,228,220,0.55);
+}
+.cv-msg-controls { display: flex; flex-direction: column; gap: 8px; }
+.cv-msg-control { display: flex; align-items: center; gap: 8px; }
+.cv-msg-control-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+  color: rgba(232,228,220,0.45); width: 58px; flex-shrink: 0;
+}
+.cv-msg-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.cv-msg-chip {
+  padding: 5px 11px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03);
+  color: rgba(232,228,220,0.7); font-size: 12px; cursor: pointer; transition: all 0.15s;
+}
+.cv-msg-chip:hover { border-color: rgba(255,255,255,0.25); color: rgba(232,228,220,0.95); }
+.cv-msg-chip.active { border-color: #8B5CF6; background: rgba(139,92,246,0.16); color: #c4b5fd; }
+
+.cv-msg-variations { display: flex; flex-direction: column; gap: 8px; }
+.cv-msg-variations-label { font-size: 12px; font-weight: 600; color: #c4b5fd; }
+.cv-msg-variation {
+  display: flex; flex-direction: column; gap: 4px; text-align: left;
+  padding: 10px 12px; border-radius: 10px;
+  border: 1px solid rgba(139,92,246,0.3); background: rgba(139,92,246,0.06);
+  cursor: pointer; transition: all 0.15s;
+}
+.cv-msg-variation:hover { border-color: rgba(139,92,246,0.6); background: rgba(139,92,246,0.12); }
+.cv-msg-variation-num { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #A78BFA; }
+.cv-msg-variation-subject { font-size: 12px; font-weight: 600; color: rgba(232,228,220,0.9); }
+.cv-msg-variation-preview { font-size: 11.5px; line-height: 1.5; color: rgba(232,228,220,0.65); }
+
 .cv-msg-draft {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 .cv-msg-textarea { min-height: 160px; }
+.cv-msg-count { font-size: 11px; color: rgba(232,228,220,0.4); align-self: flex-end; }
 .cv-msg-actions {
   display: flex;
   gap: 8px;

@@ -17,7 +17,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { JobRecord, Profile, LinkedInData, CvRequest, CvBlock, CvBlockType, CvVersion, Project, ProjectInput, Message, MessageType } from '../types';
+import { JobRecord, Profile, LinkedInData, CvRequest, CvBlock, CvBlockType, CvVersion, Project, ProjectInput, Message, MessageType, MessageDraft, MessageTone, MessageLength, MessageLanguage } from '../types';
 import { generateCv, updateCv, fetchCvVersions, saveCvVersion, adaptCvToJob, CvApiError } from '../services/cv';
 import { fetchProjects, createProject, updateProject, deleteProject, importProjects, matchProjectsAi } from '../services/projects';
 import { fetchGitHubRepos } from '../services/github';
@@ -28,19 +28,38 @@ import { markCvGenerated } from '../utils/dailyLimit';
 import { analyzeAts, atsTier } from '../utils/atsScore';
 import { rankProjects, matchTier, projectsToMarkdown, reposToProjectInputs } from '../utils/projectMatch';
 import { AtsRing } from './AtsRing';
+import { InterviewStudio } from './InterviewStudio';
 
 // Form da Biblioteca de Projetos (M5): campos em texto cru; tech vira lista
 // por vírgula e highlights por quebra de linha.
 interface ProjectForm { title: string; description: string; tech: string; highlights: string; link: string; }
 const EMPTY_PROJECT_FORM: ProjectForm = { title: '', description: '', tech: '', highlights: '', link: '' };
 
-// Tipos de mensagem (M6) — rótulo da aba e se usa assunto (e-mail).
-const MSG_TYPES: { type: MessageType; label: string; hasSubject: boolean }[] = [
-  { type: 'cover_letter', label: 'Carta', hasSubject: false },
-  { type: 'recruiter_dm', label: 'Recrutador', hasSubject: false },
-  { type: 'email', label: 'E-mail', hasSubject: true },
-  { type: 'follow_up', label: 'Follow-up', hasSubject: false },
+// Tipos de mensagem (M6) — rótulo da aba, se usa assunto (e-mail) e dica do estado vazio.
+const MSG_TYPES: { type: MessageType; label: string; hasSubject: boolean; hint: string }[] = [
+  { type: 'cover_letter', label: 'Carta', hasSubject: false, hint: 'Carta de apresentação formal conectando sua experiência à vaga.' },
+  { type: 'recruiter_dm', label: 'Recrutador', hasSubject: false, hint: 'Mensagem curta e direta para o recrutador (LinkedIn/WhatsApp).' },
+  { type: 'email', label: 'E-mail', hasSubject: true, hint: 'E-mail de candidatura pronto para enviar com o currículo.' },
+  { type: 'follow_up', label: 'Follow-up', hasSubject: false, hint: 'Mensagem educada para acompanhar uma candidatura/entrevista.' },
 ];
+
+// Controles de geração (M6+) — rótulos curtos dos chips.
+const MSG_TONES: { value: MessageTone; label: string }[] = [
+  { value: 'formal', label: 'Formal' },
+  { value: 'balanced', label: 'Equilibrado' },
+  { value: 'casual', label: 'Descontraído' },
+];
+const MSG_LENGTHS: { value: MessageLength; label: string }[] = [
+  { value: 'short', label: 'Curta' },
+  { value: 'medium', label: 'Média' },
+  { value: 'long', label: 'Longa' },
+];
+const MSG_LANGS: { value: MessageLanguage; label: string }[] = [
+  { value: 'pt', label: 'PT' },
+  { value: 'en', label: 'EN' },
+];
+// Quantas variações gerar de uma vez.
+const MSG_VARIATION_COUNT = 3;
 
 interface CvEditorProps {
   job: JobRecord;
@@ -184,6 +203,14 @@ export function CvEditor({
   const [draftContent, setDraftContent] = useState('');
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  // M6+ — controles de geração e variações
+  const [msgTone, setMsgTone] = useState<MessageTone>('balanced');
+  const [msgLength, setMsgLength] = useState<MessageLength>('medium');
+  const [msgLang, setMsgLang] = useState<MessageLanguage>('pt');
+  const [msgVariations, setMsgVariations] = useState<MessageDraft[]>([]);
+
+  // M7 — Interview Studio
+  const [ivOpen, setIvOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -622,6 +649,7 @@ export function CvEditor({
   // ── Cartas/Mensagens (M6) ────────────────────────────────────────
   const msgHasSubject = msgType === 'email';
   const savedForType = useMemo(() => messages.filter((m) => m.type === msgType), [messages, msgType]);
+  const currentTypeHint = MSG_TYPES.find((t) => t.type === msgType)?.hint ?? '';
 
   async function openMessages() {
     setMsgOpen(true);
@@ -650,19 +678,36 @@ export function CvEditor({
     };
   }
 
+  // Candidato para o Interview Studio (M7): contexto das mensagens + títulos
+  // de projetos reais (repos não-fork) para ancorar as respostas STAR.
+  function buildInterviewCandidate() {
+    const projectTitles = profile.repos.filter((r) => !r.fork).slice(0, 8).map((r) => r.name);
+    return { ...buildMsgCandidate(), projects: projectTitles };
+  }
+
   function switchMsgType(t: MessageType) {
     setMsgType(t);
     setEditingMsgId(null);
     setDraftSubject('');
     setDraftContent('');
+    setMsgVariations([]);
+  }
+
+  // Carrega uma variação gerada para o rascunho editável.
+  function pickVariation(d: MessageDraft) {
+    setDraftSubject(d.subject ?? '');
+    setDraftContent(d.content);
+    setEditingMsgId(null);
+    setMsgVariations([]);
   }
 
   async function handleGenerateMsg() {
     if (msgGenerating) return;
     setMsgGenerating(true);
     setMsgError('');
+    setMsgVariations([]);
     try {
-      const draft = await generateMessage({
+      const drafts = await generateMessage({
         type: msgType,
         job: {
           title: job.title,
@@ -673,10 +718,19 @@ export function CvEditor({
           description: job.description,
         },
         candidate: buildMsgCandidate(),
+        tone: msgTone,
+        length: msgLength,
+        language: msgLang,
+        variations: MSG_VARIATION_COUNT,
       });
-      setDraftSubject(draft.subject ?? '');
-      setDraftContent(draft.content);
-      setEditingMsgId(null);
+      // 1 versão → vai direto pro rascunho; várias → mostra cards p/ escolher.
+      if (drafts.length <= 1) {
+        const d = drafts[0];
+        if (d) { setDraftSubject(d.subject ?? ''); setDraftContent(d.content); }
+        setEditingMsgId(null);
+      } else {
+        setMsgVariations(drafts);
+      }
     } catch (e) {
       setMsgError((e as Error).message);
     } finally {
@@ -772,6 +826,11 @@ export function CvEditor({
           {blocks && !loading && (
             <button className="cv-versions-btn" onClick={openMessages} title="Cartas e mensagens">
               mensagens
+            </button>
+          )}
+          {blocks && !loading && (
+            <button className="cv-versions-btn" onClick={() => setIvOpen(true)} title="Interview Studio">
+              entrevista
             </button>
           )}
           {blocks && !loading && cvId && (
@@ -1057,6 +1116,51 @@ export function CvEditor({
 
             {msgError && <div className="cv-lib-error" onClick={() => setMsgError('')}>{msgError}</div>}
 
+            {/* Dica do tipo selecionado */}
+            <p className="cv-msg-hint">{currentTypeHint}</p>
+
+            {/* Controles de geração: tom, tamanho, idioma */}
+            <div className="cv-msg-controls">
+              <div className="cv-msg-control">
+                <span className="cv-msg-control-label">Tom</span>
+                <div className="cv-msg-chips">
+                  {MSG_TONES.map((o) => (
+                    <button key={o.value} className={`cv-msg-chip ${msgTone === o.value ? 'active' : ''}`} onClick={() => setMsgTone(o.value)}>{o.label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="cv-msg-control">
+                <span className="cv-msg-control-label">Tamanho</span>
+                <div className="cv-msg-chips">
+                  {MSG_LENGTHS.map((o) => (
+                    <button key={o.value} className={`cv-msg-chip ${msgLength === o.value ? 'active' : ''}`} onClick={() => setMsgLength(o.value)}>{o.label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="cv-msg-control">
+                <span className="cv-msg-control-label">Idioma</span>
+                <div className="cv-msg-chips">
+                  {MSG_LANGS.map((o) => (
+                    <button key={o.value} className={`cv-msg-chip ${msgLang === o.value ? 'active' : ''}`} onClick={() => setMsgLang(o.value)}>{o.label}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Variações geradas — escolha uma para editar */}
+            {msgVariations.length > 0 && (
+              <div className="cv-msg-variations">
+                <span className="cv-msg-variations-label">{msgVariations.length} versões geradas — escolha uma:</span>
+                {msgVariations.map((v, i) => (
+                  <button key={i} className="cv-msg-variation" onClick={() => pickVariation(v)}>
+                    <span className="cv-msg-variation-num">opção {i + 1}</span>
+                    {v.subject && <span className="cv-msg-variation-subject">{v.subject}</span>}
+                    <span className="cv-msg-variation-preview">{v.content.slice(0, 160)}{v.content.length > 160 ? '…' : ''}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="cv-msg-draft">
               {msgHasSubject && (
                 <input
@@ -1073,9 +1177,10 @@ export function CvEditor({
                 rows={9}
                 onChange={(e) => setDraftContent(e.target.value)}
               />
+              {draftContent.trim() && <span className="cv-msg-count">{draftContent.length} caracteres</span>}
               <div className="cv-msg-actions">
                 <button className="cv-adapt-btn" onClick={handleGenerateMsg} disabled={msgGenerating}>
-                  {msgGenerating ? 'gerando...' : draftContent.trim() ? 'gerar de novo' : 'gerar com IA'}
+                  {msgGenerating ? 'gerando…' : draftContent.trim() || msgVariations.length ? '↻ gerar de novo' : '✨ gerar com IA'}
                 </button>
                 {draftContent.trim() && (
                   <>
@@ -1106,6 +1211,22 @@ export function CvEditor({
             </div>
           </aside>
         </div>
+      )}
+
+      {ivOpen && (
+        <InterviewStudio
+          jobId={job.id}
+          job={{
+            title: job.title,
+            company: job.company,
+            level: job.level,
+            remote: job.remote,
+            skills: job.skills,
+            description: job.description,
+          }}
+          candidate={buildInterviewCandidate()}
+          onClose={() => setIvOpen(false)}
+        />
       )}
 
       {loading && (

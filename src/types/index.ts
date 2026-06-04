@@ -233,6 +233,11 @@ export interface MessageInput {
   content: string;
 }
 
+// Controles de geração (M6+).
+export type MessageTone = 'formal' | 'balanced' | 'casual';
+export type MessageLength = 'short' | 'medium' | 'long';
+export type MessageLanguage = 'pt' | 'en';
+
 export interface MessageGenRequest {
   type: MessageType;
   job: {
@@ -250,6 +255,74 @@ export interface MessageGenRequest {
     currentRole?: string | null;
     summary?: string | null;
   };
+  tone?: MessageTone;
+  length?: MessageLength;
+  language?: MessageLanguage;
+  variations?: number;
+}
+
+// ── Interview Studio (Career Studio M7) ───────────────────────────
+export interface InterviewJob {
+  title: string;
+  company: string;
+  level: 'Junior' | 'Pleno' | 'Senior';
+  remote: boolean;
+  skills: string[];
+  description: string;
+}
+
+export interface InterviewCandidate {
+  name: string;
+  bio?: string | null;
+  skills?: string[];
+  currentRole?: string | null;
+  summary?: string | null;
+  projects?: string[];
+}
+
+export type InterviewQCategory = 'tecnica' | 'comportamental';
+
+export interface InterviewQuestion {
+  category: InterviewQCategory;
+  question: string;
+  /** Resposta sugerida (STAR). */
+  suggestedAnswer: string;
+}
+
+export interface InterviewPrepDraft {
+  questions: InterviewQuestion[];
+  recruiterQuestions: string[];
+}
+
+export interface InterviewPrep extends InterviewPrepDraft {
+  id: string;
+  user_id: string;
+  job_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InterviewPrepInput {
+  job_id: string;
+  questions: InterviewQuestion[];
+  recruiterQuestions: string[];
+}
+
+export interface InterviewGenRequest {
+  job: InterviewJob;
+  candidate: InterviewCandidate;
+}
+
+/** Turno do chat de simulação. */
+export interface InterviewChatTurn {
+  role: 'interviewer' | 'candidate';
+  content: string;
+}
+
+export interface InterviewChatRequest {
+  job: InterviewJob;
+  candidate: InterviewCandidate;
+  history: InterviewChatTurn[];
 }
 
 export interface ProfessionJobRecord extends JobRecord {

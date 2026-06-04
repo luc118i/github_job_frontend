@@ -10,8 +10,8 @@ function authHeaders(): Record<string, string> {
 
 // ── Cartas/Mensagens (Career Studio M6) ───────────────────────────
 
-/** Gera a mensagem com IA (não persiste). */
-export async function generateMessage(req: MessageGenRequest): Promise<MessageDraft> {
+/** Gera 1-3 variações da mensagem com IA (não persiste). */
+export async function generateMessage(req: MessageGenRequest): Promise<MessageDraft[]> {
   const res = await fetch(`${API_URL}/messages/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -21,7 +21,7 @@ export async function generateMessage(req: MessageGenRequest): Promise<MessageDr
     const data = await res.json().catch(() => ({})) as { error?: string };
     throw new Error(data.error ?? 'Erro ao gerar a mensagem.');
   }
-  return res.json() as Promise<MessageDraft>;
+  return res.json() as Promise<MessageDraft[]>;
 }
 
 export async function fetchMessages(jobId: string): Promise<Message[]> {
