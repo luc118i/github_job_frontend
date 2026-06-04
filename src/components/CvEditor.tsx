@@ -19,13 +19,14 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { JobRecord, Profile, LinkedInData, CvRequest, CvBlock, CvBlockType, CvVersion, Project, ProjectInput, Message, MessageType } from '../types';
 import { generateCv, updateCv, fetchCvVersions, saveCvVersion, adaptCvToJob, CvApiError } from '../services/cv';
-import { fetchProjects, createProject, updateProject, deleteProject } from '../services/projects';
+import { fetchProjects, createProject, updateProject, deleteProject, importProjects } from '../services/projects';
+import { fetchGitHubRepos } from '../services/github';
 import { generateMessage, fetchMessages, saveMessage, updateMessage, deleteMessage } from '../services/messages';
 import { downloadCvPdf } from '../services/pdfExport';
 import { dismissJob } from '../services/jobs';
 import { markCvGenerated } from '../utils/dailyLimit';
 import { analyzeAts, atsTier } from '../utils/atsScore';
-import { rankProjects, matchTier, projectsToMarkdown } from '../utils/projectMatch';
+import { rankProjects, matchTier, projectsToMarkdown, reposToProjectInputs } from '../utils/projectMatch';
 import { AtsRing } from './AtsRing';
 
 // Form da Biblioteca de Projetos (M5): campos em texto cru; tech vira lista
@@ -160,6 +161,7 @@ export function CvEditor({
   const [libOpen, setLibOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [projLoading, setProjLoading] = useState(false);
+  const [projImporting, setProjImporting] = useState(false);
   const [projError, setProjError] = useState('');
   const [savingProj, setSavingProj] = useState(false);
   const [selectedProj, setSelectedProj] = useState<Set<string>>(new Set());
@@ -464,10 +466,28 @@ export function CvEditor({
     setProjLoading(true);
     setProjError('');
     try {
-      setProjects(await fetchProjects());
+      const saved = await fetchProjects();
+      setProjects(saved);
+      setProjLoading(false);
+
+      // Sincroniza com o GitHub sempre que abre (best-effort): importa repos
+      // novos (o backend deduplica por nome de repo). Se falhar — rate limit,
+      // sem username — segue com a biblioteca salva, sem travar o drawer.
+      const ghUser = profile.user.login;
+      if (ghUser) {
+        setProjImporting(true);
+        try {
+          const repos = await fetchGitHubRepos(ghUser);
+          const created = await importProjects(reposToProjectInputs(repos));
+          if (created.length) setProjects((prev) => [...created, ...prev]);
+        } catch (e) {
+          console.warn('Sync de projetos do GitHub falhou:', e);
+        } finally {
+          setProjImporting(false);
+        }
+      }
     } catch (e) {
       setProjError((e as Error).message);
-    } finally {
       setProjLoading(false);
     }
   }
@@ -925,7 +945,8 @@ export function CvEditor({
             {/* Lista ranqueada */}
             <div className="cv-versions-list">
               {projLoading && <div className="cv-versions-empty">carregando...</div>}
-              {!projLoading && ranked.length === 0 && (
+              {projImporting && <div className="cv-versions-empty">sincronizando projetos do GitHub…</div>}
+              {!projLoading && !projImporting && ranked.length === 0 && (
                 <div className="cv-versions-empty">nenhum projeto na biblioteca ainda</div>
               )}
               {!projLoading && ranked.map(({ project: p, score, matched }) => {
