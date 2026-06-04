@@ -19,7 +19,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { JobRecord, Profile, LinkedInData, CvRequest, CvBlock, CvBlockType, CvVersion, Project, ProjectInput, Message, MessageType } from '../types';
 import { generateCv, updateCv, fetchCvVersions, saveCvVersion, adaptCvToJob, CvApiError } from '../services/cv';
-import { fetchProjects, createProject, updateProject, deleteProject, importProjects } from '../services/projects';
+import { fetchProjects, createProject, updateProject, deleteProject, importProjects, matchProjectsAi } from '../services/projects';
 import { fetchGitHubRepos } from '../services/github';
 import { generateMessage, fetchMessages, saveMessage, updateMessage, deleteMessage } from '../services/messages';
 import { downloadCvPdf } from '../services/pdfExport';
@@ -162,6 +162,9 @@ export function CvEditor({
   const [projects, setProjects] = useState<Project[]>([]);
   const [projLoading, setProjLoading] = useState(false);
   const [projImporting, setProjImporting] = useState(false);
+  // Match por IA (lê o README): id → {score, reason}. null = ainda não rodou.
+  const [aiMatches, setAiMatches] = useState<Map<string, { score: number; reason: string }> | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
   const [projError, setProjError] = useState('');
   const [savingProj, setSavingProj] = useState(false);
   const [selectedProj, setSelectedProj] = useState<Set<string>>(new Set());
@@ -455,16 +458,25 @@ export function CvEditor({
   );
 
   // ── Biblioteca de Projetos (M5) ──────────────────────────────────
-  // Ranqueia os projetos por relevância à vaga (determinístico, custo zero).
-  const ranked = useMemo(
-    () => rankProjects(projects, { title: job.title, skills: job.skills, description: job.description }),
-    [projects, job.title, job.skills, job.description],
-  );
+  // Ranqueia os projetos por relevância à vaga. Por padrão é determinístico
+  // (léxico, custo zero); se o match por IA já rodou, usa o score semântico
+  // (que lê o README) e mostra a justificativa.
+  const ranked = useMemo(() => {
+    const base = rankProjects(projects, { title: job.title, skills: job.skills, description: job.description });
+    if (!aiMatches) return base.map((r) => ({ ...r, reason: '' }));
+    return base
+      .map((r) => {
+        const ai = aiMatches.get(r.project.id);
+        return { ...r, score: ai ? ai.score : r.score, reason: ai?.reason ?? '' };
+      })
+      .sort((a, b) => b.score - a.score);
+  }, [projects, job.title, job.skills, job.description, aiMatches]);
 
   async function openLibrary() {
     setLibOpen(true);
     setProjLoading(true);
     setProjError('');
+    setAiMatches(null); // reset do match por IA ao reabrir (vaga pode ter mudado)
     try {
       const saved = await fetchProjects();
       setProjects(saved);
@@ -489,6 +501,24 @@ export function CvEditor({
     } catch (e) {
       setProjError((e as Error).message);
       setProjLoading(false);
+    }
+  }
+
+  // Dispara o match semântico por IA (backend lê o README de cada projeto).
+  async function handleAiMatch() {
+    setAiLoading(true);
+    setProjError('');
+    try {
+      const matches = await matchProjectsAi({
+        title: job.title,
+        skills: job.skills,
+        description: job.description,
+      });
+      setAiMatches(new Map(matches.map((m) => [m.id, { score: m.score, reason: m.reason }])));
+    } catch (e) {
+      setProjError((e as Error).message);
+    } finally {
+      setAiLoading(false);
     }
   }
 
@@ -894,6 +924,18 @@ export function CvEditor({
               Ordenados por relevância para <strong>{job.title}</strong>. Marque e insira no bloco de projetos.
             </p>
 
+            {/* Match por IA: lê o README e reordena por relevância semântica */}
+            <button
+              className="cv-lib-ai-btn"
+              onClick={handleAiMatch}
+              disabled={aiLoading || projLoading || ranked.length === 0}
+            >
+              {aiLoading ? 'analisando READMEs…' : aiMatches ? '↻ recalcular match com IA' : '✨ match com IA (lê o README)'}
+            </button>
+            {aiMatches && !aiLoading && (
+              <p className="cv-lib-ai-note">Relevância calculada por IA a partir do README de cada projeto.</p>
+            )}
+
             {projError && <div className="cv-lib-error" onClick={() => setProjError('')}>{projError}</div>}
 
             {/* Form de criar/editar */}
@@ -949,7 +991,7 @@ export function CvEditor({
               {!projLoading && !projImporting && ranked.length === 0 && (
                 <div className="cv-versions-empty">nenhum projeto na biblioteca ainda</div>
               )}
-              {!projLoading && ranked.map(({ project: p, score, matched }) => {
+              {!projLoading && ranked.map(({ project: p, score, matched, reason }) => {
                 const mt = matchTier(score);
                 const checked = selectedProj.has(p.id);
                 return (
@@ -964,6 +1006,8 @@ export function CvEditor({
                           {score}% match · {mt.label}
                         </span>
                       </div>
+                      {/* Justificativa da IA (só aparece quando o match por IA rodou) */}
+                      {reason && <span className="cv-lib-reason">{reason}</span>}
                       {p.description && <span className="cv-lib-item-desc">{p.description}</span>}
                       {p.tech.length > 0 && (
                         <div className="cv-lib-tags">

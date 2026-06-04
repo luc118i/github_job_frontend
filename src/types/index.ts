@@ -198,6 +198,15 @@ export interface ProjectInput {
   repo?: string | null;
 }
 
+/** Score semântico de um projeto para a vaga (IA lê o README). */
+export interface ProjectAiMatch {
+  id: string;
+  /** 0-100 — relevância considerando transferência de competências. */
+  score: number;
+  /** 1 frase explicando o porquê do score. */
+  reason: string;
+}
+
 // ── Cartas/Mensagens (Career Studio M6) ───────────────────────────
 export type MessageType = 'cover_letter' | 'recruiter_dm' | 'email' | 'follow_up';
 

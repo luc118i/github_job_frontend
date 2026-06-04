@@ -1,4 +1,4 @@
-import { Project, ProjectInput } from '../types';
+import { Project, ProjectInput, ProjectAiMatch } from '../types';
 import { getToken } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
@@ -58,6 +58,23 @@ export async function importProjects(projects: ProjectInput[]): Promise<Project[
     throw new Error(data.error ?? 'Erro ao importar os projetos.');
   }
   return res.json() as Promise<Project[]>;
+}
+
+// Match semântico por IA: o backend lê o README de cada projeto e ranqueia
+// pela relevância à vaga (considera transferência de competências).
+export async function matchProjectsAi(
+  job: { title: string; skills: string[]; description: string },
+): Promise<ProjectAiMatch[]> {
+  const res = await fetch(`${API_URL}/projects/match-ai`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ job }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao calcular o match por IA.');
+  }
+  return res.json() as Promise<ProjectAiMatch[]>;
 }
 
 export async function deleteProject(id: string): Promise<void> {
