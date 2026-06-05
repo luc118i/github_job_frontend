@@ -1150,7 +1150,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
     <div className="kb-root">
       <div className="kb-header">
         <div className="kb-header-left">
-          <h2 className="kb-board-title">Pipeline de Carreira</h2>
+          <h2 className="kb-board-title">Organizar candidaturas</h2>
           <span className="kb-total">{jobs.length} oportunidades</span>
         </div>
         <div className="kb-header-right">
