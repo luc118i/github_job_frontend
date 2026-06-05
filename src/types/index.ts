@@ -397,14 +397,47 @@ export interface PortfolioData {
   education: LinkedInEducation[];
 }
 
-export type KanbanStatus = 'salvas' | 'aplicadas' | 'em_analise' | 'entrevista' | 'finalizadas';
+// Pipeline CRM (MVC v4.0) — 7 etapas. 'finalizadas' (legado) vira 'contratado'.
+export type KanbanStatus =
+  | 'salvas' | 'preparar' | 'aplicadas' | 'em_analise' | 'entrevista' | 'proposta' | 'contratado';
 
 export interface KanbanJobData {
   status: KanbanStatus;
   notes: string;
   favorite: boolean;
   movedAt: string;
-  deadline?: string; // ISO date YYYY-MM-DD — prazo limite de candidatura
+  /** Próxima ação (CRM) + data opcional. */
+  nextStep?: string;
+  nextStepDate?: string; // ISO date YYYY-MM-DD
+  /** CV utilizado nessa candidatura (cvs.id). */
+  cvId?: string;
+}
+
+// ── Pipeline CRM — entrada persistida (espelha o backend) ─────────
+export type PipelineStatus = KanbanStatus;
+
+export interface PipelineEntry {
+  id: string;
+  user_id: string;
+  job_id: string;
+  status: PipelineStatus;
+  favorite: boolean;
+  notes: string;
+  next_step: string | null;
+  next_step_date: string | null;
+  cv_id: string | null;
+  moved_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PipelineEntryInput {
+  status?: PipelineStatus;
+  favorite?: boolean;
+  notes?: string;
+  next_step?: string | null;
+  next_step_date?: string | null;
+  cv_id?: string | null;
 }
 
 export interface MatchAnalysis {

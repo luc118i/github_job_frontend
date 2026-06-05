@@ -85,7 +85,7 @@ export const NAV_TABS: NavTab[] = [
   { view: 'buscar',  label: 'buscar',        Icon: IconGrid    },
   { view: 'outros',  label: 'vagas TI',      Icon: IconMonitor, authOnly: true },
   { view: 'analise', label: 'analisar vaga', short: 'analisar', Icon: IconSearch  },
-  { view: 'history', label: 'organizar',     Icon: IconOrg,     authOnly: true },
+  { view: 'history', label: 'pipeline',       Icon: IconOrg,     authOnly: true },
   { view: 'projetos', label: 'projetos',     Icon: IconStack,   authOnly: true },
   { view: 'portfolio', label: 'portfólio',   Icon: IconGlobe,   authOnly: true },
 ];

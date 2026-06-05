@@ -14,13 +14,21 @@ interface Column {
   accent: string;
 }
 
+// 7 etapas do Pipeline CRM (MVC v4.0) — cor = etapa = estado da candidatura.
 const COLUMNS: Column[] = [
-  { id: 'salvas',      label: 'Salvas',      accent: '#06b6d4' },
-  { id: 'aplicadas',   label: 'Aplicadas',   accent: '#7c3aed' },
-  { id: 'em_analise',  label: 'Em análise',  accent: '#f59e0b' },
-  { id: 'entrevista',  label: 'Entrevista',  accent: '#f97316' },
-  { id: 'finalizadas', label: 'Finalizadas', accent: '#10b981' },
+  { id: 'salvas',     label: 'Salvas',     accent: '#3B82F6' },
+  { id: 'preparar',   label: 'Preparar',   accent: '#14B8A6' },
+  { id: 'aplicadas',  label: 'Aplicadas',  accent: '#8B5CF6' },
+  { id: 'em_analise', label: 'Em análise', accent: '#F59E0B' },
+  { id: 'entrevista', label: 'Entrevista', accent: '#F97316' },
+  { id: 'proposta',   label: 'Proposta',   accent: '#22C55E' },
+  { id: 'contratado', label: 'Contratado', accent: '#4ADE80' },
 ];
+
+// Record vazio das 7 etapas (helper p/ agrupamentos).
+function emptyByColumn<T>(): Record<KanbanStatus, T[]> {
+  return { salvas: [], preparar: [], aplicadas: [], em_analise: [], entrevista: [], proposta: [], contratado: [] };
+}
 
 // ── Filter types ─────────────────────────────────────────────
 
@@ -43,9 +51,11 @@ const DEFAULT_FILTERS: BoardFilters = {
 };
 
 const STATUS_FILTER_CHIPS: { id: KanbanStatus; label: string; accent: string }[] = [
-  { id: 'aplicadas',  label: 'Aplicadas',  accent: '#7c3aed' },
-  { id: 'em_analise', label: 'Em análise', accent: '#f59e0b' },
-  { id: 'entrevista', label: 'Entrevista', accent: '#f97316' },
+  { id: 'preparar',   label: 'Preparar',   accent: '#14B8A6' },
+  { id: 'aplicadas',  label: 'Aplicadas',  accent: '#8B5CF6' },
+  { id: 'em_analise', label: 'Em análise', accent: '#F59E0B' },
+  { id: 'entrevista', label: 'Entrevista', accent: '#F97316' },
+  { id: 'proposta',   label: 'Proposta',   accent: '#22C55E' },
 ];
 
 type DateRange = BoardFilters['date'];
@@ -71,31 +81,28 @@ function relDate(iso: string): string {
   return `há ${Math.floor(d / 30)} meses`;
 }
 
-function getReminder(status: KanbanStatus, movedAt: string): string | null {
-  if (!movedAt) return null;
+// Follow-up por cor (F4 do MVC): etapas que aguardam retorno disparam alerta
+// conforme dias parados — 7d amarelo, 14d vermelho. Salvas/Preparar/Contratado
+// não geram alerta (não dependem de retorno externo).
+type FollowUpLevel = 'warn' | 'urgent';
+const WAITING_STATUSES: KanbanStatus[] = ['aplicadas', 'em_analise', 'entrevista'];
+
+function getFollowUp(status: KanbanStatus, movedAt: string): { text: string; level: FollowUpLevel } | null {
+  if (!movedAt || !WAITING_STATUSES.includes(status)) return null;
   const days = Math.floor((Date.now() - new Date(movedAt).getTime()) / 86400000);
-  if (status === 'aplicadas' && days >= 7) return `${days}d sem resposta`;
-  if (status === 'entrevista' && days >= 14) return `processo há ${days}d`;
+  if (days >= 14) return { text: `sem resposta há ${days}d`, level: 'urgent' };
+  if (days >= 7) return { text: `aguardando há ${days}d`, level: 'warn' };
   return null;
 }
 
-// Retorna o status visual do prazo: vencido, próximo (≤2 dias) ou ok
-function getDeadlineStatus(deadline: string): 'overdue' | 'soon' | 'ok' {
-  const diff = new Date(deadline).getTime() - Date.now();
-  const days = diff / 86400000;
-  if (days < 0) return 'overdue';
-  if (days <= 2) return 'soon';
-  return 'ok';
-}
-
-// Formata o prazo para exibição no card
-function formatDeadline(deadline: string): string {
-  const diff = new Date(deadline).getTime() - Date.now();
+// Formata a data do próximo passo para exibição (nextStepDate).
+function formatNextStep(date: string): string {
+  const diff = new Date(date).getTime() - Date.now();
   const days = Math.round(diff / 86400000);
-  if (days < 0) return `venceu há ${Math.abs(days)}d`;
-  if (days === 0) return 'vence hoje';
-  if (days === 1) return 'vence amanhã';
-  return `vence em ${days}d`;
+  if (days < 0) return `atrasado ${Math.abs(days)}d`;
+  if (days === 0) return 'hoje';
+  if (days === 1) return 'amanhã';
+  return `em ${days}d`;
 }
 
 // ── StatusSummary ────────────────────────────────────────────
@@ -131,36 +138,94 @@ interface FunnelStatsProps {
   get: (id: string) => KanbanJobData;
 }
 
+// Acumula a contagem por etapa "ou adiante" — uma vaga em entrevista também
+// já passou por aplicadas/análise no funil. Reflete o afunilamento real.
+function pipelineCounts(jobs: JobFeedItem[], get: (id: string) => KanbanJobData) {
+  const raw = emptyByColumn<JobFeedItem>();
+  jobs.forEach(j => raw[get(j.id).status].push(j));
+  const at = (s: KanbanStatus) => raw[s].length;
+  // ordem do funil
+  const aplicadasPlus = at('aplicadas') + at('em_analise') + at('entrevista') + at('proposta') + at('contratado');
+  const analisePlus = at('em_analise') + at('entrevista') + at('proposta') + at('contratado');
+  const entrevistaPlus = at('entrevista') + at('proposta') + at('contratado');
+  const propostaPlus = at('proposta') + at('contratado');
+  return {
+    total: jobs.length,
+    salvas: jobs.length,
+    aplicadas: aplicadasPlus,
+    analise: analisePlus,
+    entrevista: entrevistaPlus,
+    proposta: propostaPlus,
+    contratado: at('contratado'),
+  };
+}
+
 function FunnelStats({ jobs, get }: FunnelStatsProps) {
-  const counts = useMemo(() => {
-    const c = { salvas: 0, aplicadas: 0, em_analise: 0, entrevista: 0, finalizadas: 0 };
-    jobs.forEach(j => { c[get(j.id).status]++; });
-    return c;
-  }, [jobs, get]);
+  const c = useMemo(() => pipelineCounts(jobs, get), [jobs, get]);
+  if (c.total === 0) return null;
 
-  const total = jobs.length;
-  if (total === 0) return null;
-
-  // Calcula percentual — retorna 0 quando denominador é zero
-  const pct = (num: number, den: number) =>
-    den > 0 ? Math.round((num / den) * 100) : 0;
+  const steps = [
+    { n: c.salvas, label: 'salvas' },
+    { n: c.aplicadas, label: 'aplicadas' },
+    { n: c.analise, label: 'em análise' },
+    { n: c.entrevista, label: 'entrevistas' },
+    { n: c.proposta, label: 'propostas' },
+  ];
 
   return (
     <div className="kb-funnel">
-      <span className="kb-funnel-title">Funil</span>
       <div className="kb-funnel-steps">
-        <span className="kb-funnel-step">
-          <strong>{pct(counts.aplicadas, total)}%</strong> aplicaram
-        </span>
-        <span className="kb-funnel-arrow">→</span>
-        <span className="kb-funnel-step">
-          <strong>{pct(counts.entrevista, counts.aplicadas)}%</strong> entrevistaram
-        </span>
-        <span className="kb-funnel-arrow">→</span>
-        <span className="kb-funnel-step">
-          <strong>{pct(counts.finalizadas, counts.entrevista)}%</strong> finalizaram
-        </span>
+        {steps.map((s, i) => (
+          <span key={s.label} className="kb-funnel-cell">
+            <span className="kb-funnel-step"><strong>{s.n}</strong> {s.label}</span>
+            {i < steps.length - 1 && <span className="kb-funnel-arrow">→</span>}
+          </span>
+        ))}
       </div>
+    </div>
+  );
+}
+
+// ── HeaderMetrics (F1) ───────────────────────────────────────
+// 6 KPIs agregados do pipeline. Match/ATS exigem dados por vaga (slice
+// futuro), então mostramos os que dá calcular do pipeline hoje.
+function HeaderMetrics({ jobs, get }: { jobs: JobFeedItem[]; get: (id: string) => KanbanJobData }) {
+  const m = useMemo(() => {
+    const c = pipelineCounts(jobs, get);
+    const followUps = jobs.filter(j => {
+      const kd = get(j.id);
+      return !!getFollowUp(kd.status, kd.movedAt);
+    }).length;
+    // Taxa de resposta = (análise + entrevista + proposta + contratado) / aplicadas-ou-adiante.
+    const responded = c.analise; // já saiu de "aplicadas" parada
+    const respRate = c.aplicadas > 0 ? Math.round((responded / c.aplicadas) * 100) : 0;
+    return {
+      aplicadas: c.aplicadas,
+      entrevistas: c.entrevista,
+      propostas: c.proposta,
+      respRate,
+      followUps,
+      contratado: c.contratado,
+    };
+  }, [jobs, get]);
+
+  const cards = [
+    { label: 'Aplicações', value: m.aplicadas, accent: '#8B5CF6' },
+    { label: 'Entrevistas', value: m.entrevistas, accent: '#F97316' },
+    { label: 'Propostas', value: m.propostas, accent: '#22C55E' },
+    { label: 'Taxa resposta', value: `${m.respRate}%`, accent: '#14B8A6' },
+    { label: 'Follow-up', value: m.followUps, accent: '#F59E0B' },
+    { label: 'Contratado', value: m.contratado, accent: '#4ADE80' },
+  ];
+
+  return (
+    <div className="kb-metrics">
+      {cards.map(c => (
+        <div key={c.label} className="kb-metric" style={{ '--col-accent': c.accent } as React.CSSProperties}>
+          <span className="kb-metric-value">{c.value}</span>
+          <span className="kb-metric-label">{c.label}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -199,9 +264,8 @@ interface KanbanCardProps {
 
 function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onToggleFavorite }: KanbanCardProps) {
   const topSkills = job.skills.slice(0, 3);
-  const reminder = getReminder(kd.status, kd.movedAt);
+  const followUp = getFollowUp(kd.status, kd.movedAt);
   const levelClass = job.level.toLowerCase();
-  const deadlineStatus = kd.deadline ? getDeadlineStatus(kd.deadline) : null;
   const initials = companyInitials(job.company);
   const bgColor  = avatarColor(job.company);
   const source   = job.github_username ? 'GitHub' : 'LinkedIn';
@@ -252,20 +316,27 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
         </div>
       </div>
 
-      {/* Footer: source + date */}
+      {/* Footer: source + salário + última ação */}
       <div className="kb-card-footer">
         <span className="kb-source">{source}</span>
         {job.salary && <span className="kb-salary">{job.salary}</span>}
-        <span className="kb-date">{relDate(job.created_at)}</span>
+        <span className="kb-date">{relDate(kd.movedAt || job.created_at)}</span>
       </div>
 
-      {kd.deadline && deadlineStatus && (
-        <div className={`kb-deadline-badge kb-deadline--${deadlineStatus}`}>
-          {formatDeadline(kd.deadline)}
+      {/* Próximo passo (CRM) */}
+      {kd.nextStep && (
+        <div className="kb-nextstep">
+          → {kd.nextStep}{kd.nextStepDate ? ` · ${formatNextStep(kd.nextStepDate)}` : ''}
         </div>
       )}
 
-      {reminder && <div className="kb-reminder">{reminder}</div>}
+      {/* Preparar: sinaliza ação requerida (F2) */}
+      {kd.status === 'preparar' && !kd.nextStep && (
+        <div className="kb-nextstep kb-nextstep--todo">ação requerida — adaptar CV / gerar carta</div>
+      )}
+
+      {/* Follow-up por cor (F4) */}
+      {followUp && <div className={`kb-followup kb-followup--${followUp.level}`}>{followUp.text}</div>}
     </div>
   );
 }
@@ -438,7 +509,7 @@ interface PanelProps {
   onClose: () => void;
   onStatusChange: (s: KanbanStatus) => void;
   onNotesChange: (n: string) => void;
-  onDeadlineChange: (d: string) => void;
+  onNextStepChange: (text: string, date: string) => void;
   onGenerateCv: (job: JobFeedItem, profile: Profile) => void;
   onViewCv: (job: JobFeedItem) => void;
   onDelete: (id: string) => void;
@@ -446,7 +517,7 @@ interface PanelProps {
 
 function JobDetailPanel({
   job, kd, linkedInData, githubUsername,
-  onClose, onStatusChange, onNotesChange, onDeadlineChange,
+  onClose, onStatusChange, onNotesChange, onNextStepChange,
   onGenerateCv, onViewCv, onDelete,
 }: PanelProps) {
   const [cvLoading, setCvLoading] = useState(false);
@@ -548,19 +619,24 @@ function JobDetailPanel({
             </div>
           )}
 
-          {/* prazo de candidatura — alerta quando a vaga tem data limite */}
+          {/* próximo passo (CRM): a próxima ação + quando fazê-la */}
           <div className="kb-panel-section">
-            <span className="kb-panel-label">Prazo de candidatura</span>
+            <span className="kb-panel-label">Próximo passo</span>
+            <input
+              type="text"
+              className="kb-notes-area"
+              placeholder="Ex.: enviar follow-up, preparar entrevista..."
+              value={kd.nextStep ?? ''}
+              onChange={e => onNextStepChange(e.target.value, kd.nextStepDate ?? '')}
+            />
             <input
               type="date"
               className="kb-deadline-input"
-              value={kd.deadline ?? ''}
-              onChange={e => onDeadlineChange(e.target.value)}
+              value={kd.nextStepDate ?? ''}
+              onChange={e => onNextStepChange(kd.nextStep ?? '', e.target.value)}
             />
-            {kd.deadline && (
-              <span className={`kb-deadline-hint kb-deadline--${getDeadlineStatus(kd.deadline)}`}>
-                {formatDeadline(kd.deadline)}
-              </span>
+            {kd.nextStepDate && (
+              <span className="kb-deadline-hint">{formatNextStep(kd.nextStepDate)}</span>
             )}
           </div>
 
@@ -642,7 +718,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeMobileCol, setActiveMobileCol] = useState<KanbanStatus>('salvas');
 
-  const { get, setStatus, setNotes, toggleFavorite, setDeadline } = useKanban();
+  const { get, setStatus, setNotes, toggleFavorite, setNextStep } = useKanban();
 
   useEffect(() => {
     fetchJobFeed()
@@ -697,9 +773,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
   }, [jobs, search, filters, get]);
 
   const byColumn = useMemo(() => {
-    const g: Record<KanbanStatus, JobFeedItem[]> = {
-      salvas: [], aplicadas: [], em_analise: [], entrevista: [], finalizadas: [],
-    };
+    const g = emptyByColumn<JobFeedItem>();
     visible.forEach(j => g[get(j.id).status].push(j));
     return g;
   }, [visible, get]);
@@ -770,8 +844,8 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
     <div className="kb-root">
       <div className="kb-header">
         <div className="kb-header-left">
-          <h2 className="kb-board-title">Candidaturas</h2>
-          <span className="kb-total">{jobs.length} vagas</span>
+          <h2 className="kb-board-title">Pipeline de Carreira</h2>
+          <span className="kb-total">{jobs.length} oportunidades</span>
         </div>
         <input
           type="text"
@@ -781,6 +855,9 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
           onChange={e => setSearch(e.target.value)}
         />
       </div>
+
+      {/* F1 — métricas agregadas do pipeline */}
+      <HeaderMetrics jobs={jobs} get={get} />
 
       {/* resumo por status — snapshot rápido do funil atual */}
       <StatusSummary byColumn={byColumn} />
@@ -839,7 +916,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
           onClose={() => setSelectedJob(null)}
           onStatusChange={s => setStatus(selectedJob.id, s)}
           onNotesChange={n => setNotes(selectedJob.id, n)}
-          onDeadlineChange={d => setDeadline(selectedJob.id, d)}
+          onNextStepChange={(text, date) => setNextStep(selectedJob.id, text, date)}
           onGenerateCv={onGenerateCv}
           onViewCv={onViewCv}
           onDelete={handleDelete}

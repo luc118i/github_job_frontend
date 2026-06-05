@@ -8103,6 +8103,33 @@ main.kanban-view {
   color: rgba(232,228,220,0.2);
   font-size: 11px;
 }
+.kb-funnel-cell { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ── Pipeline CRM (MVC v4.0) — métricas, próximo passo, follow-up ── */
+.kb-metrics {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; padding: 4px 24px 12px;
+}
+.kb-metric {
+  display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 12px;
+  background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07); border-left: 2px solid var(--col-accent);
+}
+.kb-metric-value { font-size: 20px; font-weight: 700; color: var(--col-accent); font-family: var(--font-display); }
+.kb-metric-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.4px; color: rgba(232,228,220,0.5); }
+@media (max-width: 760px) {
+  .kb-metrics { grid-template-columns: repeat(3, 1fr); }
+}
+
+.kb-nextstep {
+  margin-top: 6px; font-size: 11px; line-height: 1.4; color: #c9b6f5;
+  background: rgba(139,92,246,0.1); border-radius: 6px; padding: 4px 8px;
+}
+.kb-nextstep--todo { color: #7fe3d4; background: rgba(20,184,166,0.12); }
+
+.kb-followup {
+  margin-top: 6px; font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 6px; display: inline-block;
+}
+.kb-followup--warn { color: #fcd34d; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.35); }
+.kb-followup--urgent { color: #fca5a5; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); }
 
 /* ── kb-deadline-badge ── */
 
