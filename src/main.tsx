@@ -1,8 +1,14 @@
-import { StrictMode } from "react";
+import { StrictMode, Suspense, lazy } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/global.css";
 import "./styles/design-system.css";
 import App from "./App";
+
+// Rota pública do portfólio: /p/<github_username>. O app não usa react-router,
+// então detectamos o path aqui e renderizamos a página pública isolada (sem
+// header/nav nem os fetches de auth do App). Requer fallback SPA no host.
+const PublicPortfolio = lazy(() => import("./components/PublicPortfolio").then((m) => ({ default: m.PublicPortfolio })));
+const portfolioMatch = window.location.pathname.match(/^\/p\/([^/]+)\/?$/);
 
 console.log(
   "%c JobFinder %c v1.0 %c",
@@ -18,6 +24,10 @@ console.log(
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    {portfolioMatch
+      ? <Suspense fallback={<div className="pf-state">carregando portfólio…</div>}>
+          <PublicPortfolio username={decodeURIComponent(portfolioMatch[1])} />
+        </Suspense>
+      : <App />}
   </StrictMode>,
 );

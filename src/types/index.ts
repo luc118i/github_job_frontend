@@ -370,6 +370,33 @@ export interface CareerChatMessage {
   content: string;
 }
 
+// ── Portfólio Público (Career Studio M8) ──────────────────────────
+export interface PortfolioSettings {
+  published: boolean;
+  headline: string | null;
+  summary: string | null;
+}
+
+export interface PortfolioProject {
+  title: string;
+  description: string;
+  tech: string[];
+  category: string;
+  link: string | null;
+  repo: string | null;
+}
+
+export interface PortfolioData {
+  githubUsername: string;
+  name: string;
+  headline: string | null;
+  summary: string | null;
+  contactEmail: string | null;
+  projects: PortfolioProject[];
+  positions: LinkedInPosition[];
+  education: LinkedInEducation[];
+}
+
 export type KanbanStatus = 'salvas' | 'aplicadas' | 'em_analise' | 'entrevista' | 'finalizadas';
 
 export interface KanbanJobData {

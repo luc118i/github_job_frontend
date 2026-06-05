@@ -41,6 +41,13 @@ const IconOrg = () => (
   </svg>
 );
 
+const IconGlobe = () => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+    <circle cx="6.5" cy="6.5" r="6" stroke="currentColor" strokeOpacity="0.7"/>
+    <path d="M0.7 6.5h11.6M6.5 0.7c1.7 1.8 1.7 9.8 0 11.6M6.5 0.7c-1.7 1.8-1.7 9.8 0 11.6" stroke="currentColor" strokeOpacity="0.7"/>
+  </svg>
+);
+
 const IconStack = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
     <path d="M6.5 1L12 3.75 6.5 6.5 1 3.75 6.5 1z" stroke="currentColor" strokeOpacity="0.7" strokeLinejoin="round"/>
@@ -80,6 +87,7 @@ export const NAV_TABS: NavTab[] = [
   { view: 'analise', label: 'analisar vaga', short: 'analisar', Icon: IconSearch  },
   { view: 'history', label: 'organizar',     Icon: IconOrg,     authOnly: true },
   { view: 'projetos', label: 'projetos',     Icon: IconStack,   authOnly: true },
+  { view: 'portfolio', label: 'portfólio',   Icon: IconGlobe,   authOnly: true },
 ];
 
 /** Abas visíveis conforme login: visitante só vê as públicas. */

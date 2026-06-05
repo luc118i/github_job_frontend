@@ -24,6 +24,7 @@ const KanbanBoard      = lazy(() => import('./components/KanbanBoard').then(m =>
 const LinkAnalysisView = lazy(() => import('./components/LinkAnalysisView').then(m => ({ default: m.LinkAnalysisView })));
 const OnboardingView   = lazy(() => import('./components/OnboardingView').then(m => ({ default: m.OnboardingView })));
 const ProjectLibrary   = lazy(() => import('./components/ProjectLibrary').then(m => ({ default: m.ProjectLibrary })));
+const PortfolioManager = lazy(() => import('./components/PortfolioManager').then(m => ({ default: m.PortfolioManager })));
 import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
 import { useCareerProfile } from './hooks/useCareerProfile';
@@ -72,7 +73,7 @@ export default function App() {
   // Áreas exclusivas de quem tem conta: carreira, vagas TI e organizar.
   // Visitante que tente acessá-las (via link/CTA) volta pra 'buscar' e recebe o convite de login.
   useEffect(() => {
-    const PROTECTED: View[] = ['career', 'outros', 'history', 'projetos'];
+    const PROTECTED: View[] = ['career', 'outros', 'history', 'projetos', 'portfolio'];
     if (!currentUser && PROTECTED.includes(view)) {
       setView('buscar');
       setAuthReason('Essa área é exclusiva para quem tem conta. Faça login para acessar.');
@@ -388,6 +389,10 @@ export default function App() {
 
           {view === 'projetos' && (
             <ProjectLibrary githubUsername={currentUser?.github_username ?? (username || null)} />
+          )}
+
+          {view === 'portfolio' && (
+            <PortfolioManager githubUsername={currentUser?.github_username ?? (username || null)} />
           )}
         </Suspense>
        </ErrorBoundary>
