@@ -8126,6 +8126,58 @@ main.kanban-view {
 .pa-fu-company { font-size: 13px; color: rgba(232,228,220,0.85); }
 .pa-fu-when { font-size: 11.5px; font-weight: 600; color: rgba(232,228,220,0.6); }
 
+/* ── Pipeline CRM — responsivo mobile (≤640px) ── */
+@media (max-width: 640px) {
+  /* Métricas: 3 colunas compactas, alinhadas ao padding do main */
+  .kb-metrics {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 0 0 12px;
+  }
+  .kb-metric { padding: 8px 9px; border-radius: 10px; }
+  .kb-metric-value { font-size: 16px; }
+  .kb-metric-label { font-size: 9px; }
+
+  /* Funil compacto e rolável (em vez de escondido) */
+  .kb-funnel { display: flex; padding: 0 0 12px; overflow-x: auto; scrollbar-width: none; }
+  .kb-funnel::-webkit-scrollbar { display: none; }
+
+  /* Header: toggle + busca ocupam a linha toda */
+  .kb-header-right { width: 100%; flex-wrap: wrap; gap: 8px; }
+  .kb-viewtoggle { flex: 1; }
+  .kb-vt-btn { flex: 1; }
+
+  /* Painel de detalhe vira bottom sheet (sobe de baixo) */
+  .kb-panel {
+    top: auto; left: 0; right: 0; bottom: 0;
+    width: 100%; max-width: 100%;
+    height: auto; max-height: 88vh;
+    border-left: none;
+    border-top: 2px solid rgba(139,92,246,0.5);
+    border-radius: 16px 16px 0 0;
+    animation: slideUpSheet 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  /* Alça de arraste no topo do sheet */
+  .kb-panel-head::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px; border-radius: 2px;
+    background: rgba(255,255,255,0.2);
+    margin: -8px auto 12px;
+  }
+
+  /* Analytics: cards e funil mais compactos */
+  .pa-card { padding: 14px; }
+  .pa-funnel-row { grid-template-columns: 84px 1fr 40px; gap: 8px; }
+  .pa-funnel-label { font-size: 11px; }
+  .pa-timeline { gap: 6px; }
+}
+
+@keyframes slideUpSheet {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
 /* ── tab-stale-badge ── */
 
 .tab-stale-badge {
