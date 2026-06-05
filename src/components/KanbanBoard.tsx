@@ -232,6 +232,128 @@ function HeaderMetrics({ jobs, get }: { jobs: JobFeedItem[]; get: (id: string) =
   );
 }
 
+// ── PipelineAnalytics (F7) ───────────────────────────────────
+// Funil de conversão, taxas por etapa, benchmark e timeline mensal.
+// Tudo client-side a partir dos dados do pipeline (sem libs de gráfico).
+
+// Médias de mercado ilustrativas (referência p/ o benchmark do MVC).
+const MARKET_RESPONSE_RATE = 12; // %
+const MARKET_INTERVIEWS = 3;
+
+function PipelineAnalytics({ jobs, get }: { jobs: JobFeedItem[]; get: (id: string) => KanbanJobData }) {
+  const a = useMemo(() => {
+    const c = pipelineCounts(jobs, get);
+    const stages = [
+      { label: 'Salvas', n: c.salvas, accent: '#3B82F6' },
+      { label: 'Aplicadas', n: c.aplicadas, accent: '#8B5CF6' },
+      { label: 'Em análise', n: c.analise, accent: '#F59E0B' },
+      { label: 'Entrevista', n: c.entrevista, accent: '#F97316' },
+      { label: 'Proposta', n: c.proposta, accent: '#22C55E' },
+      { label: 'Contratado', n: c.contratado, accent: '#4ADE80' },
+    ];
+    const rate = (num: number, den: number) => (den > 0 ? Math.round((num / den) * 100) : 0);
+    const conversions = [
+      { label: 'Salva → Aplicada', pct: rate(c.aplicadas, c.salvas) },
+      { label: 'Aplicada → Análise', pct: rate(c.analise, c.aplicadas) },
+      { label: 'Análise → Entrevista', pct: rate(c.entrevista, c.analise) },
+      { label: 'Entrevista → Proposta', pct: rate(c.proposta, c.entrevista) },
+      { label: 'Proposta → Contratado', pct: rate(c.contratado, c.proposta) },
+    ];
+    // Timeline: vagas adicionadas por mês (últimos 6 meses).
+    const months: { key: string; label: string; n: number }[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleDateString('pt-BR', { month: 'short' }), n: 0 });
+    }
+    const idx = new Map(months.map((m, i) => [m.key, i]));
+    jobs.forEach((j) => {
+      const d = new Date(j.created_at);
+      const k = `${d.getFullYear()}-${d.getMonth()}`;
+      const i = idx.get(k);
+      if (i !== undefined) months[i].n++;
+    });
+    const respRate = rate(c.analise, c.aplicadas);
+    return { stages, conversions, months, respRate, interviews: c.entrevista, total: c.total };
+  }, [jobs, get]);
+
+  if (a.total === 0) return <div className="kb-col-empty" style={{ margin: '40px auto' }}>Sem dados para analisar ainda.</div>;
+
+  const maxMonth = Math.max(1, ...a.months.map((m) => m.n));
+
+  return (
+    <div className="pa-root">
+      {/* Funil de conversão */}
+      <section className="pa-card">
+        <h3 className="pa-title">Funil de conversão</h3>
+        <div className="pa-funnel">
+          {a.stages.map((s, i) => {
+            const widthPct = a.stages[0].n > 0 ? Math.max(6, Math.round((s.n / a.stages[0].n) * 100)) : 6;
+            const dropFromPrev = i > 0 && a.stages[i - 1].n > 0 ? Math.round((s.n / a.stages[i - 1].n) * 100) : null;
+            return (
+              <div key={s.label} className="pa-funnel-row">
+                <span className="pa-funnel-label">{s.label}</span>
+                <div className="pa-funnel-track">
+                  <div className="pa-funnel-bar" style={{ width: `${widthPct}%`, background: s.accent }}>
+                    <span className="pa-funnel-n">{s.n}</span>
+                  </div>
+                </div>
+                <span className="pa-funnel-pct">{dropFromPrev !== null ? `${dropFromPrev}%` : '100%'}</span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <div className="pa-grid">
+        {/* Taxas de conversão */}
+        <section className="pa-card">
+          <h3 className="pa-title">Taxas de conversão</h3>
+          <div className="pa-rates">
+            {a.conversions.map((r) => (
+              <div key={r.label} className="pa-rate">
+                <span className="pa-rate-label">{r.label}</span>
+                <span className="pa-rate-val">{r.pct}%</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Benchmark de mercado */}
+        <section className="pa-card">
+          <h3 className="pa-title">Benchmark de mercado</h3>
+          <div className="pa-bench">
+            <div className="pa-bench-row">
+              <span className="pa-bench-k">Taxa de resposta</span>
+              <span className="pa-bench-me">{a.respRate}%</span>
+              <span className="pa-bench-avg">média {MARKET_RESPONSE_RATE}%</span>
+            </div>
+            <div className="pa-bench-row">
+              <span className="pa-bench-k">Entrevistas</span>
+              <span className="pa-bench-me">{a.interviews}</span>
+              <span className="pa-bench-avg">média {MARKET_INTERVIEWS}</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* Timeline de atividade */}
+      <section className="pa-card">
+        <h3 className="pa-title">Atividade — vagas adicionadas/mês</h3>
+        <div className="pa-timeline">
+          {a.months.map((m) => (
+            <div key={m.key} className="pa-tl-col">
+              <span className="pa-tl-n">{m.n || ''}</span>
+              <div className="pa-tl-bar" style={{ height: `${Math.round((m.n / maxMonth) * 100)}%` }} />
+              <span className="pa-tl-month">{m.label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 // ── KanbanCard helpers ────────────────────────────────────────
 
 function companyInitials(name: string): string {
@@ -806,6 +928,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
   const [dragOverCol, setDragOverCol] = useState<KanbanStatus | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeMobileCol, setActiveMobileCol] = useState<KanbanStatus>('salvas');
+  const [boardView, setBoardView] = useState<'board' | 'analytics'>('board');
 
   const { get, setStatus, setNotes, toggleFavorite, setNextStep } = useKanban();
 
@@ -936,18 +1059,31 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
           <h2 className="kb-board-title">Pipeline de Carreira</h2>
           <span className="kb-total">{jobs.length} oportunidades</span>
         </div>
-        <input
-          type="text"
-          className="kb-search-input"
-          placeholder="buscar vagas..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <div className="kb-header-right">
+          {/* Alterna entre o quadro (kanban) e o analytics (F7) */}
+          <div className="kb-viewtoggle">
+            <button className={`kb-vt-btn${boardView === 'board' ? ' active' : ''}`} onClick={() => setBoardView('board')}>Quadro</button>
+            <button className={`kb-vt-btn${boardView === 'analytics' ? ' active' : ''}`} onClick={() => setBoardView('analytics')}>Analytics</button>
+          </div>
+          {boardView === 'board' && (
+            <input
+              type="text"
+              className="kb-search-input"
+              placeholder="buscar vagas..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          )}
+        </div>
       </div>
 
       {/* F1 — métricas agregadas do pipeline */}
       <HeaderMetrics jobs={jobs} get={get} />
 
+      {boardView === 'analytics' ? (
+        <PipelineAnalytics jobs={jobs} get={get} />
+      ) : (
+      <>
       {/* resumo por status — snapshot rápido do funil atual */}
       <StatusSummary byColumn={byColumn} />
 
@@ -995,6 +1131,8 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
           />
         ))}
       </div>
+      </>
+      )}
 
       {selectedJob && (
         <JobDetailPanel

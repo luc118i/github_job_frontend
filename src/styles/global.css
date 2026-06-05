@@ -8054,6 +8054,49 @@ main.kanban-view {
 }
 .kb-move-cta:hover { background: color-mix(in srgb, var(--col-accent) 26%, transparent); }
 
+/* ── Pipeline Analytics (F7) ── */
+.kb-viewtoggle { display: inline-flex; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 2px; }
+.kb-vt-btn {
+  padding: 5px 14px; border: none; background: none; cursor: pointer; border-radius: 6px;
+  font-size: 12px; color: rgba(232,228,220,0.55); transition: all 0.15s;
+}
+.kb-vt-btn.active { background: rgba(139,92,246,0.2); color: #c4b5fd; }
+
+.pa-root { display: flex; flex-direction: column; gap: 16px; padding-bottom: 32px; }
+.pa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 760px) { .pa-grid { grid-template-columns: 1fr; } }
+.pa-card { padding: 18px 20px; border-radius: 14px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); }
+.pa-title { font-size: 13px; font-weight: 600; color: rgba(232,228,220,0.85); margin: 0 0 16px; }
+
+/* Funil */
+.pa-funnel { display: flex; flex-direction: column; gap: 10px; }
+.pa-funnel-row { display: grid; grid-template-columns: 110px 1fr 48px; align-items: center; gap: 12px; }
+.pa-funnel-label { font-size: 12px; color: rgba(232,228,220,0.65); }
+.pa-funnel-track { background: rgba(255,255,255,0.04); border-radius: 8px; overflow: hidden; }
+.pa-funnel-bar { height: 28px; border-radius: 8px; display: flex; align-items: center; min-width: 28px; transition: width 0.4s ease; }
+.pa-funnel-n { font-size: 12px; font-weight: 700; color: #0a0a0f; padding: 0 10px; }
+.pa-funnel-pct { font-size: 12px; font-weight: 600; color: rgba(232,228,220,0.6); text-align: right; }
+
+/* Taxas */
+.pa-rates { display: flex; flex-direction: column; gap: 10px; }
+.pa-rate { display: flex; align-items: center; justify-content: space-between; }
+.pa-rate-label { font-size: 12.5px; color: rgba(232,228,220,0.65); }
+.pa-rate-val { font-size: 14px; font-weight: 700; color: #c4b5fd; }
+
+/* Benchmark */
+.pa-bench { display: flex; flex-direction: column; gap: 14px; }
+.pa-bench-row { display: grid; grid-template-columns: 1fr auto auto; align-items: baseline; gap: 12px; }
+.pa-bench-k { font-size: 12.5px; color: rgba(232,228,220,0.65); }
+.pa-bench-me { font-size: 18px; font-weight: 700; color: #4ADE80; }
+.pa-bench-avg { font-size: 11px; color: rgba(232,228,220,0.4); }
+
+/* Timeline */
+.pa-timeline { display: flex; align-items: flex-end; gap: 12px; height: 140px; padding-top: 8px; }
+.pa-tl-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%; }
+.pa-tl-n { font-size: 11px; color: rgba(232,228,220,0.6); height: 14px; }
+.pa-tl-bar { width: 100%; max-width: 48px; min-height: 3px; background: linear-gradient(180deg, #8B5CF6, #6d28d9); border-radius: 6px 6px 0 0; transition: height 0.4s ease; }
+.pa-tl-month { font-size: 11px; color: rgba(232,228,220,0.4); text-transform: capitalize; }
+
 /* ── tab-stale-badge ── */
 
 .tab-stale-badge {
