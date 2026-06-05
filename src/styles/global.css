@@ -8020,6 +8020,40 @@ main.kanban-view {
   border-color: rgba(239,68,68,0.35);
 }
 
+/* ── Side panel rico (Pipeline F6) ── */
+.kb-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kb-info-cell {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06);
+}
+.kb-info-k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: rgba(232,228,220,0.4); }
+.kb-info-v { font-size: 13px; color: rgba(232,228,220,0.9); }
+
+.kb-cv-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.kb-cv-link {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font-size: 13px; color: #8B5CF6; text-decoration: underline; text-underline-offset: 2px;
+}
+.kb-cv-loading, .kb-cv-empty { font-size: 12px; color: rgba(232,228,220,0.4); }
+.kb-ats-kpi {
+  font-size: 12px; font-weight: 700; color: var(--col-accent);
+  padding: 2px 9px; border-radius: 999px; border: 1px solid var(--col-accent); background: rgba(255,255,255,0.02);
+}
+
+.kb-timeline { display: flex; flex-direction: column; gap: 8px; padding-left: 2px; }
+.kb-tl-item { display: flex; align-items: center; gap: 8px; }
+.kb-tl-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.25); flex-shrink: 0; }
+.kb-tl-dot--active { box-shadow: 0 0 0 3px rgba(255,255,255,0.06); }
+.kb-tl-text { font-size: 12.5px; color: rgba(232,228,220,0.8); flex: 1; }
+.kb-tl-when { font-size: 11px; color: rgba(232,228,220,0.4); }
+
+.kb-move-cta {
+  width: 100%; margin-top: 4px; padding: 11px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--col-accent); background: color-mix(in srgb, var(--col-accent) 16%, transparent);
+  color: var(--col-accent); font-size: 13px; font-weight: 600; transition: background 0.15s;
+}
+.kb-move-cta:hover { background: color-mix(in srgb, var(--col-accent) 26%, transparent); }
+
 /* ── tab-stale-badge ── */
 
 .tab-stale-badge {

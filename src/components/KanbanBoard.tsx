@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { JobFeedItem, KanbanJobData, KanbanStatus, LinkedInData, Profile } from '../types';
 import { fetchJobFeed } from '../services/searches';
 import { dismissJob } from '../services/jobs';
+import { fetchCvByJobId } from '../services/cv';
+import { analyzeAts, atsTier, AtsResult } from '../utils/atsScore';
 import { useKanban } from '../hooks/useKanban';
 import { fetchGitHubUser, fetchGitHubRepos, extractSkills } from '../services/github';
 import { getToken } from '../services/auth';
@@ -521,12 +523,34 @@ function JobDetailPanel({
   onGenerateCv, onViewCv, onDelete,
 }: PanelProps) {
   const [cvLoading, setCvLoading] = useState(false);
+  const [ats, setAts] = useState<AtsResult | null>(null);
+  const [hasCv, setHasCv] = useState<boolean | null>(null); // null = ainda carregando
   const isLinkedIn = !job.github_username;
   const daysInStatus = kd.movedAt
     ? Math.floor((Date.now() - new Date(kd.movedAt).getTime()) / 86400000)
     : null;
-  const currentCol = COLUMNS.find(c => c.id === kd.status);
+  const currentColIdx = COLUMNS.findIndex(c => c.id === kd.status);
+  const currentCol = COLUMNS[currentColIdx];
+  const nextCol = currentColIdx >= 0 && currentColIdx < COLUMNS.length - 1 ? COLUMNS[currentColIdx + 1] : null;
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Busca o CV gerado p/ essa vaga e calcula o ATS (F6: "currículo utilizado").
+  useEffect(() => {
+    let alive = true;
+    setAts(null);
+    setHasCv(null);
+    fetchCvByJobId(job.id)
+      .then((cv) => {
+        if (!alive) return;
+        const blocks = cv.content_blocks ?? [];
+        setHasCv(true);
+        if (blocks.length) {
+          setAts(analyzeAts(blocks, cv.content ?? '', { title: job.title, skills: job.skills, description: job.description }));
+        }
+      })
+      .catch(() => { if (alive) setHasCv(false); }); // 404 = sem CV ainda
+    return () => { alive = false; };
+  }, [job.id, job.title, job.skills, job.description]);
 
   // Fecha o painel com Escape
   useEffect(() => {
@@ -603,6 +627,35 @@ function JobDetailPanel({
             </div>
           </div>
 
+          {/* Info da vaga — grid 2x2 compacto (F6) */}
+          <div className="kb-panel-section">
+            <div className="kb-info-grid">
+              <div className="kb-info-cell"><span className="kb-info-k">Empresa</span><span className="kb-info-v">{job.company}</span></div>
+              <div className="kb-info-cell"><span className="kb-info-k">Local</span><span className="kb-info-v">{locationLabel}</span></div>
+              <div className="kb-info-cell"><span className="kb-info-k">Salário</span><span className="kb-info-v">{job.salary ?? '—'}</span></div>
+              <div className="kb-info-cell"><span className="kb-info-k">Nível</span><span className="kb-info-v">{job.level}</span></div>
+            </div>
+          </div>
+
+          {/* Currículo utilizado + ATS (F6) */}
+          <div className="kb-panel-section">
+            <span className="kb-panel-label">Currículo utilizado</span>
+            {hasCv === null ? (
+              <span className="kb-cv-loading">verificando…</span>
+            ) : hasCv ? (
+              <div className="kb-cv-row">
+                <button className="kb-cv-link" onClick={() => onViewCv(job)}>CV salvo para esta vaga</button>
+                {ats && (
+                  <span className="kb-ats-kpi" style={{ '--col-accent': atsTier(ats.score).color } as React.CSSProperties}>
+                    ATS {ats.score}%
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="kb-cv-empty">nenhum CV gerado ainda</span>
+            )}
+          </div>
+
           {job.description && (
             <div className="kb-panel-section">
               <span className="kb-panel-label">Descrição</span>
@@ -640,6 +693,31 @@ function JobDetailPanel({
             )}
           </div>
 
+          {/* Histórico — timeline simples a partir do que rastreamos (F6) */}
+          <div className="kb-panel-section">
+            <span className="kb-panel-label">Histórico</span>
+            <div className="kb-timeline">
+              <div className="kb-tl-item">
+                <span className="kb-tl-dot" />
+                <span className="kb-tl-text">Vaga adicionada</span>
+                <span className="kb-tl-when">{relDate(job.created_at)}</span>
+              </div>
+              {hasCv && (
+                <div className="kb-tl-item">
+                  <span className="kb-tl-dot" />
+                  <span className="kb-tl-text">CV gerado{ats ? ` · ATS ${ats.score}%` : ''}</span>
+                </div>
+              )}
+              {currentCol && (
+                <div className="kb-tl-item">
+                  <span className="kb-tl-dot kb-tl-dot--active" style={{ background: currentCol.accent }} />
+                  <span className="kb-tl-text">Em &quot;{currentCol.label}&quot;</span>
+                  <span className="kb-tl-when">{daysInStatus === 0 ? 'hoje' : `há ${daysInStatus}d`}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="kb-panel-section">
             <span className="kb-panel-label">Notas pessoais</span>
             <textarea
@@ -650,6 +728,17 @@ function JobDetailPanel({
               rows={5}
             />
           </div>
+
+          {/* CTA primário: avança para a próxima etapa (F6) */}
+          {nextCol && (
+            <button
+              className="kb-move-cta"
+              style={{ '--col-accent': nextCol.accent } as React.CSSProperties}
+              onClick={() => onStatusChange(nextCol.id)}
+            >
+              Mover para {nextCol.label} →
+            </button>
+          )}
 
           <div className="kb-panel-section kb-panel-meta-row">
             {job.salary && <span>{job.salary}</span>}
