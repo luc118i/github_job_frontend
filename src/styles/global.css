@@ -8178,6 +8178,47 @@ main.kanban-view {
   to   { transform: translateY(0); }
 }
 
+/* ── Navegação por etapas (tablet + mobile, ≤900px) ──
+   Em telas estreitas o board de 7 colunas vira "uma etapa por vez",
+   navegada pelas TABS de etapa (com contador) — sem arrastar pro lado. */
+@media (max-width: 900px) {
+  .kb-status-summary { display: none; } /* redundante: as tabs já mostram contagem */
+
+  /* Métricas viram uma faixa horizontal rolável (chips), como no MVC mobile */
+  .kb-metrics {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 0 0 12px;
+    scrollbar-width: none;
+    grid-template-columns: none;
+  }
+  .kb-metrics::-webkit-scrollbar { display: none; }
+  .kb-metric { flex: 0 0 auto; min-width: 100px; }
+
+  .kb-col-pills {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #0a0a12;
+    margin-bottom: 14px;
+  }
+  /* alvo de toque confortável */
+  .kb-col-pill { padding: 12px 16px 10px; font-size: 12px; }
+
+  .kb-board { overflow-x: visible; min-height: unset; gap: 0; }
+  .kb-column {
+    display: none;
+    flex: none;
+    width: 100%;
+    min-width: unset;
+    max-width: 100%;
+  }
+  .kb-column--mobile-active { display: flex; }
+  .kb-col-header { display: none; }
+}
+
 /* ── tab-stale-badge ── */
 
 .tab-stale-badge {
