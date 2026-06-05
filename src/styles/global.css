@@ -7245,7 +7245,9 @@ h1 {
 /* ── Kanban layout override ──────────────────────────────────── */
 
 main.kanban-view {
-  max-width: 1400px;
+  /* Pipeline CRM usa a largura toda da tela (não centraliza em 1400px). */
+  max-width: 100%;
+  padding: 32px 40px;
 }
 
 /* ── Kanban root ─────────────────────────────────────────────── */
@@ -7480,7 +7482,11 @@ main.kanban-view {
 /* ── Column ──────────────────────────────────────────────────── */
 
 .kb-column {
-  flex: 0 0 248px;
+  /* Cresce para dividir a largura entre as 7 etapas; nunca abaixo de 240px
+     (aí o board rola na horizontal). Cap evita colunas gigantes em telas 4K. */
+  flex: 1 1 240px;
+  min-width: 240px;
+  max-width: 420px;
   display: flex;
   flex-direction: column;
   background: rgba(255,255,255,0.015);
