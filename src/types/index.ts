@@ -440,6 +440,28 @@ export interface PipelineEntryInput {
   cv_id?: string | null;
 }
 
+// ── IA Insights do Pipeline (MVC v4.0 F5) ─────────────────────────
+export interface PipelineInsightItem {
+  title: string;
+  company: string;
+  skills: string[];
+  status: PipelineStatus;
+  days: number;
+}
+
+export interface PipelineTopChance {
+  label: string;
+  score: number;
+  reason: string;
+}
+
+export interface PipelineInsights {
+  topChances: PipelineTopChance[];
+  positiveAreas: string[];
+  negativeAreas: string[];
+  recommendedAction: string;
+}
+
 export interface MatchAnalysis {
   score: number;
   level: 'baixo' | 'medio' | 'alto' | 'excelente';

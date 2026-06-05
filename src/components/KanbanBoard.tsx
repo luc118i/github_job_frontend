@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { JobFeedItem, KanbanJobData, KanbanStatus, LinkedInData, Profile } from '../types';
+import { JobFeedItem, KanbanJobData, KanbanStatus, LinkedInData, Profile, PipelineInsights } from '../types';
 import { fetchJobFeed } from '../services/searches';
+import { fetchPipelineInsights } from '../services/pipeline';
 import { dismissJob } from '../services/jobs';
 import { fetchCvByJobId } from '../services/cv';
 import { analyzeAts, atsTier, AtsResult } from '../utils/atsScore';
@@ -241,6 +242,36 @@ const MARKET_RESPONSE_RATE = 12; // %
 const MARKET_INTERVIEWS = 3;
 
 function PipelineAnalytics({ jobs, get }: { jobs: JobFeedItem[]; get: (id: string) => KanbanJobData }) {
+  const [insights, setInsights] = useState<PipelineInsights | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState('');
+
+  // Follow-up pendente (client-side, sem IA): vagas paradas em etapas que aguardam retorno.
+  const followUps = useMemo(() => {
+    return jobs
+      .map((j) => ({ job: j, fu: getFollowUp(get(j.id).status, get(j.id).movedAt) }))
+      .filter((x) => x.fu)
+      .sort((a, b) => new Date(get(a.job.id).movedAt).getTime() - new Date(get(b.job.id).movedAt).getTime())
+      .slice(0, 6);
+  }, [jobs, get]);
+
+  async function handleGenerateInsights() {
+    setInsightsLoading(true);
+    setInsightsError('');
+    try {
+      const items = jobs.map((j) => {
+        const kd = get(j.id);
+        const days = Math.floor((Date.now() - new Date(kd.movedAt).getTime()) / 86400000);
+        return { title: j.title, company: j.company, skills: j.skills, status: kd.status, days };
+      });
+      setInsights(await fetchPipelineInsights(items));
+    } catch (e) {
+      setInsightsError((e as Error).message);
+    } finally {
+      setInsightsLoading(false);
+    }
+  }
+
   const a = useMemo(() => {
     const c = pipelineCounts(jobs, get);
     const stages = [
@@ -304,6 +335,69 @@ function PipelineAnalytics({ jobs, get }: { jobs: JobFeedItem[]; get: (id: strin
           })}
         </div>
       </section>
+
+      {/* IA Insights (F5) + Follow-up pendente */}
+      <div className="pa-grid">
+        <section className="pa-card">
+          <div className="pa-ai-head">
+            <h3 className="pa-title" style={{ margin: 0 }}>IA Insights</h3>
+            <button className="pa-ai-btn" onClick={handleGenerateInsights} disabled={insightsLoading}>
+              {insightsLoading ? 'analisando…' : insights ? '↻ atualizar' : '✨ gerar'}
+            </button>
+          </div>
+          {insightsError && <div className="cv-lib-error" onClick={() => setInsightsError('')}>{insightsError}</div>}
+          {!insights && !insightsLoading && (
+            <p className="pa-ai-hint">A IA analisa seu pipeline e aponta as maiores chances de retorno, áreas que mais retornam e a próxima ação.</p>
+          )}
+          {insights && (
+            <div className="pa-ai-body">
+              {insights.topChances.length > 0 && (
+                <div className="pa-ai-block">
+                  <span className="pa-ai-label">Maior chance de retorno</span>
+                  {insights.topChances.map((c, i) => (
+                    <div key={i} className="pa-ai-chance">
+                      <span className="pa-ai-score">{c.score}%</span>
+                      <span className="pa-ai-chance-label">{c.label}</span>
+                      {c.reason && <span className="pa-ai-reason">{c.reason}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {insights.positiveAreas.length > 0 && (
+                <div className="pa-ai-block">
+                  <span className="pa-ai-label">Mais retorno em</span>
+                  <div className="pa-ai-tags">{insights.positiveAreas.map((t) => <span key={t} className="pa-ai-tag pa-ai-tag--pos">{t}</span>)}</div>
+                </div>
+              )}
+              {insights.negativeAreas.length > 0 && (
+                <div className="pa-ai-block">
+                  <span className="pa-ai-label">Menos retorno em</span>
+                  <div className="pa-ai-tags">{insights.negativeAreas.map((t) => <span key={t} className="pa-ai-tag pa-ai-tag--neg">{t}</span>)}</div>
+                </div>
+              )}
+              {insights.recommendedAction && (
+                <div className="pa-ai-action">→ {insights.recommendedAction}</div>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section className="pa-card">
+          <h3 className="pa-title">Follow-up pendente</h3>
+          {followUps.length === 0 ? (
+            <p className="pa-ai-hint">Nenhum follow-up pendente. 🎯</p>
+          ) : (
+            <div className="pa-fu-list">
+              {followUps.map(({ job, fu }) => (
+                <div key={job.id} className={`pa-fu-item pa-fu-item--${fu!.level}`}>
+                  <span className="pa-fu-company">{job.company}</span>
+                  <span className="pa-fu-when">{fu!.text}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
 
       <div className="pa-grid">
         {/* Taxas de conversão */}

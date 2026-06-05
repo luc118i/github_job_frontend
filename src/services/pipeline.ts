@@ -1,4 +1,4 @@
-import { PipelineEntry, PipelineEntryInput } from '../types';
+import { PipelineEntry, PipelineEntryInput, PipelineInsightItem, PipelineInsights } from '../types';
 import { getToken } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
@@ -32,6 +32,20 @@ export async function upsertPipelineEntry(jobId: string, input: PipelineEntryInp
     throw new Error(data.error ?? 'Erro ao salvar a candidatura.');
   }
   return res.json() as Promise<PipelineEntry>;
+}
+
+/** IA analisa o pipeline e devolve padrões (F5). Efêmero, não persiste. */
+export async function fetchPipelineInsights(items: PipelineInsightItem[]): Promise<PipelineInsights> {
+  const res = await fetch(`${API_URL}/pipeline/insights`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ items }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao gerar os insights.');
+  }
+  return res.json() as Promise<PipelineInsights>;
 }
 
 /** Remove a entrada (vaga descartada do pipeline). */
