@@ -10494,13 +10494,13 @@ main.kanban-view {
 
 /* ── Hint de swipe (estilo Tinder) — balanço único via CSS ── */
 .kb-card-swipe--hint .kb-card {
-  animation: kbHintCard 2.6s cubic-bezier(0.4, 0, 0.2, 1) 0.5s 1;
+  animation: kbHintCard 3.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s 1;
 }
 .kb-card-swipe--hint .kb-swipe-reveal--prep {
-  animation: kbHintPrep 2.6s ease 0.5s 1;
+  animation: kbHintPrep 3.8s ease 0.5s 1;
 }
 .kb-card-swipe--hint .kb-swipe-reveal--archive {
-  animation: kbHintArch 2.6s ease 0.5s 1;
+  animation: kbHintArch 3.8s ease 0.5s 1;
 }
 @keyframes kbHintCard {
   0%, 100% { transform: translateX(0); }
