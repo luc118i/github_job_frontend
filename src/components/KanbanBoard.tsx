@@ -486,7 +486,8 @@ interface KanbanCardProps {
   hint?: boolean;
 }
 
-const SWIPE_HINT_KEY = 'kb_swipe_hint_v2';
+// Toca o hint até o usuário dar o 1º swipe de verdade (marca esta chave).
+const SWIPE_DONE_KEY = 'kb_swipe_done';
 
 const SWIPE_THRESHOLD = 90; // px p/ disparar a ação
 
@@ -534,8 +535,8 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
     const lock = touch.current?.lock;
     touch.current = null;
     setAnimating(true);
-    if (lock === 'h' && dx <= -SWIPE_THRESHOLD && onSwipeLeft) { vibrate(20); onSwipeLeft(); return; }
-    if (lock === 'h' && dx >= SWIPE_THRESHOLD && onSwipeRight) { vibrate(20); onSwipeRight(); return; }
+    if (lock === 'h' && dx <= -SWIPE_THRESHOLD && onSwipeLeft) { vibrate(20); localStorage.setItem(SWIPE_DONE_KEY, '1'); setPlayHint(false); onSwipeLeft(); return; }
+    if (lock === 'h' && dx >= SWIPE_THRESHOLD && onSwipeRight) { vibrate(20); localStorage.setItem(SWIPE_DONE_KEY, '1'); setPlayHint(false); onSwipeRight(); return; }
     setDx(0); // volta ao lugar
   }
   function handleClick() {
@@ -549,8 +550,7 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
   useEffect(() => {
     if (!hint || typeof window === 'undefined') return;
     if (!window.matchMedia('(max-width: 900px)').matches) return;
-    if (localStorage.getItem(SWIPE_HINT_KEY) === '1') return;
-    localStorage.setItem(SWIPE_HINT_KEY, '1');
+    if (localStorage.getItem(SWIPE_DONE_KEY) === '1') return; // já swipou alguma vez
     setPlayHint(true);
   }, [hint]);
 
