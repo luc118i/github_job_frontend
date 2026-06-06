@@ -482,7 +482,11 @@ interface KanbanCardProps {
   onSwipeLeft?: () => void;
   /** Swipe → : arquivar/descartar (mobile). */
   onSwipeRight?: () => void;
+  /** Roda o "balanço" inicial (estilo Tinder) ensinando o swipe — 1ª vez só. */
+  hint?: boolean;
 }
+
+const SWIPE_HINT_KEY = 'kb_swipe_hint_seen';
 
 const SWIPE_THRESHOLD = 90; // px p/ disparar a ação
 
@@ -490,7 +494,7 @@ function vibrate(ms: number) {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
 }
 
-function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onToggleFavorite, onSwipeLeft, onSwipeRight }: KanbanCardProps) {
+function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onToggleFavorite, onSwipeLeft, onSwipeRight, hint }: KanbanCardProps) {
   const topSkills = job.skills.slice(0, 3);
   const followUp = getFollowUp(kd.status, kd.movedAt);
   const levelClass = job.level.toLowerCase();
@@ -538,6 +542,22 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
     if (swiped.current) { swiped.current = false; return; } // não abre o painel após um swipe
     onClick();
   }
+
+  // Balanço inicial (estilo Tinder) — revela as ações de swipe 1 vez, no mobile.
+  useEffect(() => {
+    if (!hint || typeof window === 'undefined') return;
+    if (!window.matchMedia('(max-width: 900px)').matches) return;
+    if (localStorage.getItem(SWIPE_HINT_KEY) === '1') return;
+    localStorage.setItem(SWIPE_HINT_KEY, '1');
+    setAnimating(true);
+    const t: number[] = [];
+    t.push(window.setTimeout(() => setDx(-72), 600));   // mostra "Preparar"
+    t.push(window.setTimeout(() => setDx(0), 1150));
+    t.push(window.setTimeout(() => setDx(58), 1500));    // mostra "Arquivar"
+    t.push(window.setTimeout(() => setDx(0), 2050));
+    t.push(window.setTimeout(() => setAnimating(false), 2350));
+    return () => t.forEach(clearTimeout);
+  }, [hint]);
 
   return (
     <div className="kb-card-swipe">
@@ -637,13 +657,15 @@ interface KanbanColumnProps {
   onToggleFavorite: (e: React.MouseEvent, id: string) => void;
   onCardSwipeLeft: (id: string) => void;
   onCardSwipeRight: (id: string) => void;
+  /** Dispara o hint de swipe no 1º card desta coluna. */
+  hintFirst?: boolean;
 }
 
 function KanbanColumn({
   column, jobs, isOver, isActiveMobile, get, draggingId,
   onDragOver, onDragLeave, onDrop,
   onCardDragStart, onCardDragEnd, onCardClick, onToggleFavorite,
-  onCardSwipeLeft, onCardSwipeRight,
+  onCardSwipeLeft, onCardSwipeRight, hintFirst,
 }: KanbanColumnProps) {
   return (
     <div
@@ -662,7 +684,7 @@ function KanbanColumn({
         {jobs.length === 0 && (
           <div className="kb-col-empty">Arraste vagas aqui</div>
         )}
-        {jobs.map(job => (
+        {jobs.map((job, idx) => (
           <KanbanCard
             key={job.id}
             job={job}
@@ -674,6 +696,7 @@ function KanbanColumn({
             onToggleFavorite={e => onToggleFavorite(e, job.id)}
             onSwipeLeft={() => onCardSwipeLeft(job.id)}
             onSwipeRight={() => onCardSwipeRight(job.id)}
+            hint={hintFirst && idx === 0}
           />
         ))}
       </div>
@@ -1301,6 +1324,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
             onToggleFavorite={(e, id) => { e.stopPropagation(); toggleFavorite(id); }}
             onCardSwipeLeft={(id) => setStatus(id, 'preparar')}
             onCardSwipeRight={(id) => { dismissJob(id).catch(console.error); handleDelete(id); }}
+            hintFirst={activeMobileCol === col.id}
           />
         ))}
       </div>
