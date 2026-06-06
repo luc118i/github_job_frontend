@@ -7311,6 +7311,24 @@ main.kanban-view {
   flex-wrap: wrap;
 }
 
+/* Botão "Filtros" — só no mobile (≤900) via media query */
+.kb-filter-toggle {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  color: rgba(232,228,220,0.8);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.kb-filter-toggle-chev { font-size: 9px; color: rgba(232,228,220,0.45); }
+
 .kb-filter-sep {
   width: 1px;
   height: 14px;
@@ -7413,51 +7431,55 @@ main.kanban-view {
 
 .kb-col-pills {
   display: none; /* visible only on mobile via media query */
-  gap: 0;
+  gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
   margin-bottom: 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: 2px;
 }
 
 .kb-col-pills::-webkit-scrollbar { display: none; }
 
+/* Pílula de etapa: borda na cor da etapa; ativa = preenchida (MVC mobile). */
 .kb-col-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: rgba(232,228,220,0.35);
+  gap: 7px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid color-mix(in srgb, var(--col-accent, #3d72c8) 45%, transparent);
+  border-radius: 999px;
+  color: rgba(232,228,220,0.7);
   font-family: var(--font-body);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  padding: 10px 14px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 9px 14px;
   cursor: pointer;
   white-space: nowrap;
-  transition: color 0.12s, border-color 0.12s;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
   flex-shrink: 0;
 }
 
 .kb-col-pill.active {
-  color: var(--col-accent, #3d72c8);
-  border-bottom-color: var(--col-accent, #3d72c8);
+  background: var(--col-accent, #3d72c8);
+  border-color: var(--col-accent, #3d72c8);
+  color: #0a0a0f;
 }
 
 .kb-col-pill-count {
-  background: rgba(255,255,255,0.07);
-  color: rgba(232,228,220,0.4);
-  font-size: 10px;
-  padding: 1px 6px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(232,228,220,0.55);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 7px;
   border-radius: 10px;
   min-width: 18px;
   text-align: center;
 }
 
 .kb-col-pill.active .kb-col-pill-count {
-  background: color-mix(in srgb, var(--col-accent, #3d72c8) 18%, transparent);
-  color: rgba(232,228,220,0.75);
+  background: rgba(0,0,0,0.22);
+  color: #0a0a0f;
 }
 
 /* ── Board ───────────────────────────────────────────────────── */
@@ -8217,6 +8239,17 @@ main.kanban-view {
   }
   .kb-column--mobile-active { display: flex; }
   .kb-col-header { display: none; }
+
+  /* Card mais enxuto p/ escanear: sem chips de skills, menos respiro */
+  .kb-card-skills { display: none; }
+  .kb-card-body { gap: 10px; }
+
+  /* Filtros atrás de um botão "Filtros" (colapsado por padrão) */
+  .kb-filter-toggle { display: inline-flex; }
+  .kb-filter-bar { flex-direction: column; align-items: stretch; gap: 10px; }
+  .kb-filter-chips { display: none; flex-wrap: wrap; overflow: visible; }
+  .kb-filter-chips--open { display: flex; }
+  .kb-filter-sep { display: none; }
 }
 
 /* ── tab-stale-badge ── */

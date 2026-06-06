@@ -643,10 +643,22 @@ function KanbanFilterBar({ filters, total, filtered, onChange }: KanbanFilterBar
 
   const active = hasActiveFilters(filters);
   const showCount = active && filtered < total;
+  // No mobile os filtros ficam atrás de um botão "Filtros" (menos poluição).
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const activeCount =
+    filters.statuses.length +
+    (filters.favOnly ? 1 : 0) +
+    (filters.unseenOnly ? 1 : 0) +
+    (filters.date !== 'all' ? 1 : 0) +
+    (filters.origin !== 'all' ? 1 : 0);
 
   return (
     <div className="kb-filter-bar">
-      <div className="kb-filter-chips">
+      <button className="kb-filter-toggle" onClick={() => setMobileOpen(o => !o)}>
+        Filtros{activeCount > 0 ? ` · ${activeCount}` : ''}
+        <span className="kb-filter-toggle-chev">{mobileOpen ? '▲' : '▼'}</span>
+      </button>
+      <div className={`kb-filter-chips${mobileOpen ? ' kb-filter-chips--open' : ''}`}>
         {STATUS_FILTER_CHIPS.map(chip => (
           <button
             key={chip.id}
