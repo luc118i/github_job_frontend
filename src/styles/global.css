@@ -10491,3 +10491,29 @@ main.kanban-view {
   .kb-card { background: #12121a; touch-action: pan-y; }
   .kb-card--snap { transition: transform 0.2s cubic-bezier(0.16,1,0.3,1); }
 }
+
+/* ── Hint de swipe (estilo Tinder) — balanço único via CSS ── */
+.kb-card-swipe--hint .kb-card {
+  animation: kbHintCard 2.6s cubic-bezier(0.4, 0, 0.2, 1) 0.5s 1;
+}
+.kb-card-swipe--hint .kb-swipe-reveal--prep {
+  animation: kbHintPrep 2.6s ease 0.5s 1;
+}
+.kb-card-swipe--hint .kb-swipe-reveal--archive {
+  animation: kbHintArch 2.6s ease 0.5s 1;
+}
+@keyframes kbHintCard {
+  0%, 100% { transform: translateX(0); }
+  12% { transform: translateX(-76px); }
+  26% { transform: translateX(0); }
+  42% { transform: translateX(60px); }
+  56% { transform: translateX(0); }
+}
+@keyframes kbHintPrep {
+  0%, 6%, 30%, 100% { opacity: 0; }
+  12%, 24% { opacity: 1; }
+}
+@keyframes kbHintArch {
+  0%, 34%, 60%, 100% { opacity: 0; }
+  42%, 54% { opacity: 1; }
+}

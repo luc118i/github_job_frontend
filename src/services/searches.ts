@@ -3,9 +3,15 @@ import { getToken } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
-export async function fetchJobFeed(): Promise<JobFeedItem[]> {
+/**
+ * Busca o feed de vagas. scope='recent' (usado no "organizar") traz só a
+ * última busca — e, se ela estiver vazia, as buscas do último mês. Sem scope,
+ * retorna o histórico completo (usado na tela de histórico).
+ */
+export async function fetchJobFeed(scope?: 'recent'): Promise<JobFeedItem[]> {
   const token = getToken();
-  const res = await fetch(`${API_URL}/searches`, {
+  const qs = scope === 'recent' ? '?scope=recent' : '';
+  const res = await fetch(`${API_URL}/searches${qs}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) {

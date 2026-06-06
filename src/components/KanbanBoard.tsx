@@ -486,7 +486,7 @@ interface KanbanCardProps {
   hint?: boolean;
 }
 
-const SWIPE_HINT_KEY = 'kb_swipe_hint_seen';
+const SWIPE_HINT_KEY = 'kb_swipe_hint_v2';
 
 const SWIPE_THRESHOLD = 90; // px p/ disparar a ação
 
@@ -544,23 +544,18 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
   }
 
   // Balanço inicial (estilo Tinder) — revela as ações de swipe 1 vez, no mobile.
+  // Via animação CSS (classe), não timers: robusto a StrictMode/re-render.
+  const [playHint, setPlayHint] = useState(false);
   useEffect(() => {
     if (!hint || typeof window === 'undefined') return;
     if (!window.matchMedia('(max-width: 900px)').matches) return;
     if (localStorage.getItem(SWIPE_HINT_KEY) === '1') return;
     localStorage.setItem(SWIPE_HINT_KEY, '1');
-    setAnimating(true);
-    const t: number[] = [];
-    t.push(window.setTimeout(() => setDx(-72), 600));   // mostra "Preparar"
-    t.push(window.setTimeout(() => setDx(0), 1150));
-    t.push(window.setTimeout(() => setDx(58), 1500));    // mostra "Arquivar"
-    t.push(window.setTimeout(() => setDx(0), 2050));
-    t.push(window.setTimeout(() => setAnimating(false), 2350));
-    return () => t.forEach(clearTimeout);
+    setPlayHint(true);
   }, [hint]);
 
   return (
-    <div className="kb-card-swipe">
+    <div className={`kb-card-swipe${playHint ? ' kb-card-swipe--hint' : ''}`}>
       {/* Revelações por baixo do card */}
       <div className="kb-swipe-reveal kb-swipe-reveal--prep" style={{ opacity: dx < 0 ? Math.min(1, -dx / SWIPE_THRESHOLD) : 0 }}>Preparar</div>
       <div className="kb-swipe-reveal kb-swipe-reveal--archive" style={{ opacity: dx > 0 ? Math.min(1, dx / SWIPE_THRESHOLD) : 0 }}>Arquivar</div>
@@ -1127,7 +1122,8 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
   const { get, setStatus, setNotes, toggleFavorite, setNextStep } = useKanban();
 
   useEffect(() => {
-    fetchJobFeed()
+    // "organizar" carrega só a última busca (ou o último mês, se vazia).
+    fetchJobFeed('recent')
       .then(all => setJobs(all.filter(j => !j.dismissed)))
       .catch(() => setFetchError('Erro ao carregar vagas.'))
       .finally(() => setLoading(false));
