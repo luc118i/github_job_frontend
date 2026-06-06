@@ -478,9 +478,19 @@ interface KanbanCardProps {
   onDragEnd: () => void;
   onClick: () => void;
   onToggleFavorite: (e: React.MouseEvent) => void;
+  /** Swipe ← : mover para Preparar (mobile). */
+  onSwipeLeft?: () => void;
+  /** Swipe → : arquivar/descartar (mobile). */
+  onSwipeRight?: () => void;
 }
 
-function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onToggleFavorite }: KanbanCardProps) {
+const SWIPE_THRESHOLD = 90; // px p/ disparar a ação
+
+function vibrate(ms: number) {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
+}
+
+function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onToggleFavorite, onSwipeLeft, onSwipeRight }: KanbanCardProps) {
   const topSkills = job.skills.slice(0, 3);
   const followUp = getFollowUp(kd.status, kd.movedAt);
   const levelClass = job.level.toLowerCase();
@@ -488,13 +498,62 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
   const bgColor  = avatarColor(job.company);
   const source   = job.github_username ? 'GitHub' : 'LinkedIn';
 
+  // ── Swipe (toque): ← Preparar, → Arquivar ──
+  const [dx, setDx] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const touch = useRef<{ x: number; y: number; lock: null | 'h' | 'v' } | null>(null);
+  const swiped = useRef(false);
+
+  function onTouchStart(e: React.TouchEvent) {
+    if (!onSwipeLeft && !onSwipeRight) return;
+    const t = e.touches[0];
+    touch.current = { x: t.clientX, y: t.clientY, lock: null };
+    swiped.current = false;
+    setAnimating(false);
+  }
+  function onTouchMove(e: React.TouchEvent) {
+    if (!touch.current) return;
+    const t = e.touches[0];
+    const ddx = t.clientX - touch.current.x;
+    const ddy = t.clientY - touch.current.y;
+    if (touch.current.lock === null && (Math.abs(ddx) > 8 || Math.abs(ddy) > 8)) {
+      touch.current.lock = Math.abs(ddx) > Math.abs(ddy) ? 'h' : 'v';
+    }
+    if (touch.current.lock === 'h') {
+      swiped.current = true;
+      // limita o arraste e ignora direções sem ação
+      const clamped = Math.max(-140, Math.min(140, ddx));
+      setDx(clamped < 0 ? (onSwipeLeft ? clamped : 0) : (onSwipeRight ? clamped : 0));
+    }
+  }
+  function onTouchEnd() {
+    const lock = touch.current?.lock;
+    touch.current = null;
+    setAnimating(true);
+    if (lock === 'h' && dx <= -SWIPE_THRESHOLD && onSwipeLeft) { vibrate(20); onSwipeLeft(); return; }
+    if (lock === 'h' && dx >= SWIPE_THRESHOLD && onSwipeRight) { vibrate(20); onSwipeRight(); return; }
+    setDx(0); // volta ao lugar
+  }
+  function handleClick() {
+    if (swiped.current) { swiped.current = false; return; } // não abre o painel após um swipe
+    onClick();
+  }
+
   return (
+    <div className="kb-card-swipe">
+      {/* Revelações por baixo do card */}
+      <div className="kb-swipe-reveal kb-swipe-reveal--prep" style={{ opacity: dx < 0 ? Math.min(1, -dx / SWIPE_THRESHOLD) : 0 }}>Preparar</div>
+      <div className="kb-swipe-reveal kb-swipe-reveal--archive" style={{ opacity: dx > 0 ? Math.min(1, dx / SWIPE_THRESHOLD) : 0 }}>Arquivar</div>
     <div
-      className={`kb-card${isDragging ? ' kb-card--dragging' : ''}`}
+      className={`kb-card${isDragging ? ' kb-card--dragging' : ''}${animating ? ' kb-card--snap' : ''}`}
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      onClick={onClick}
+      onClick={handleClick}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      style={dx !== 0 ? { transform: `translateX(${dx}px)` } : undefined}
     >
       {/* Top row: level + star */}
       <div className="kb-card-header">
@@ -556,6 +615,7 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
       {/* Follow-up por cor (F4) */}
       {followUp && <div className={`kb-followup kb-followup--${followUp.level}`}>{followUp.text}</div>}
     </div>
+    </div>
   );
 }
 
@@ -575,12 +635,15 @@ interface KanbanColumnProps {
   onCardDragEnd: () => void;
   onCardClick: (job: JobFeedItem) => void;
   onToggleFavorite: (e: React.MouseEvent, id: string) => void;
+  onCardSwipeLeft: (id: string) => void;
+  onCardSwipeRight: (id: string) => void;
 }
 
 function KanbanColumn({
   column, jobs, isOver, isActiveMobile, get, draggingId,
   onDragOver, onDragLeave, onDrop,
   onCardDragStart, onCardDragEnd, onCardClick, onToggleFavorite,
+  onCardSwipeLeft, onCardSwipeRight,
 }: KanbanColumnProps) {
   return (
     <div
@@ -609,6 +672,8 @@ function KanbanColumn({
             onDragEnd={onCardDragEnd}
             onClick={() => onCardClick(job)}
             onToggleFavorite={e => onToggleFavorite(e, job.id)}
+            onSwipeLeft={() => onCardSwipeLeft(job.id)}
+            onSwipeRight={() => onCardSwipeRight(job.id)}
           />
         ))}
       </div>
@@ -1234,6 +1299,8 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
             onCardDragEnd={handleDragEnd}
             onCardClick={setSelectedJob}
             onToggleFavorite={(e, id) => { e.stopPropagation(); toggleFavorite(id); }}
+            onCardSwipeLeft={(id) => setStatus(id, 'preparar')}
+            onCardSwipeRight={(id) => { dismissJob(id).catch(console.error); handleDelete(id); }}
           />
         ))}
       </div>

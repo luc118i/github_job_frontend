@@ -10455,3 +10455,39 @@ main.kanban-view {
     margin: -6px auto 12px;
   }
 }
+
+/* ── Swipe nos cards (mobile) — ← Preparar / → Arquivar ── */
+.kb-card-swipe { position: relative; }
+.kb-swipe-reveal {
+  position: absolute;
+  top: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  width: 50%;
+  padding: 0 18px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 10px;
+  pointer-events: none;
+}
+/* ← Preparar: revela à direita, em teal */
+.kb-swipe-reveal--prep {
+  right: 0;
+  justify-content: flex-end;
+  color: #0a0a0f;
+  background: #14B8A6;
+}
+/* → Arquivar: revela à esquerda, em vermelho */
+.kb-swipe-reveal--archive {
+  left: 0;
+  justify-content: flex-start;
+  color: #fff;
+  background: #EF4444;
+}
+/* O card precisa ser opaco p/ cobrir as revelações enquanto parado */
+@media (max-width: 900px) {
+  .kb-card { background: #12121a; touch-action: pan-y; }
+  .kb-card--snap { transition: transform 0.2s cubic-bezier(0.16,1,0.3,1); }
+}
