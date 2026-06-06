@@ -654,13 +654,15 @@ interface KanbanColumnProps {
   onCardSwipeRight: (id: string) => void;
   /** Dispara o hint de swipe no 1º card desta coluna. */
   hintFirst?: boolean;
+  /** Conteúdo opcional no rodapé da coluna (ex.: botão "carregar mais"). */
+  footer?: React.ReactNode;
 }
 
 function KanbanColumn({
   column, jobs, isOver, isActiveMobile, get, draggingId,
   onDragOver, onDragLeave, onDrop,
   onCardDragStart, onCardDragEnd, onCardClick, onToggleFavorite,
-  onCardSwipeLeft, onCardSwipeRight, hintFirst,
+  onCardSwipeLeft, onCardSwipeRight, hintFirst, footer,
 }: KanbanColumnProps) {
   return (
     <div
@@ -694,6 +696,7 @@ function KanbanColumn({
             hint={hintFirst && idx === 0}
           />
         ))}
+        {footer}
       </div>
     </div>
   );
@@ -1122,8 +1125,9 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
   const { get, setStatus, setNotes, toggleFavorite, setNextStep } = useKanban();
 
   useEffect(() => {
-    // "organizar" carrega só a última busca (ou o último mês, se vazia).
-    fetchJobFeed('recent')
+    // Carrega o feed completo: as outras etapas precisam das vagas em andamento
+    // (de qualquer busca). A coluna "Salvas" é que filtra a exibição (ver abaixo).
+    fetchJobFeed()
       .then(all => setJobs(all.filter(j => !j.dismissed)))
       .catch(() => setFetchError('Erro ao carregar vagas.'))
       .finally(() => setLoading(false));
@@ -1179,6 +1183,51 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
     visible.forEach(j => g[get(j.id).status].push(j));
     return g;
   }, [visible, get]);
+
+  // ── Escopo da coluna "Salvas" ──
+  // Salvas costuma acumular muitas vagas antigas. Por padrão mostramos só as
+  // da última busca; um botão revela o último mês e depois todas. As outras
+  // etapas (em andamento) nunca são filtradas.
+  const [salvasScope, setSalvasScope] = useState<'recent' | 'month' | 'all'>('recent');
+
+  const latestSearchId = useMemo(() => {
+    let id: string | null = null;
+    let best = -1;
+    for (const j of jobs) {
+      const t = new Date(j.created_at).getTime();
+      if (t > best) { best = t; id = j.search_id; }
+    }
+    return id;
+  }, [jobs]);
+
+  const salvasView = useMemo(() => {
+    const all = byColumn.salvas;
+    const monthCutoff = Date.now() - 30 * 86400000;
+    const month = all.filter(j => new Date(j.created_at).getTime() >= monthCutoff);
+    const recent = latestSearchId ? all.filter(j => j.search_id === latestSearchId) : all;
+    const visibleSalvas = salvasScope === 'all' ? all : salvasScope === 'month' ? month : recent;
+    return { all, month, recent, visibleSalvas };
+  }, [byColumn.salvas, latestSearchId, salvasScope]);
+
+  // Botão "carregar mais" no rodapé de Salvas: recent → último mês → todas.
+  function renderSalvasLoadMore(): React.ReactNode {
+    const { all, month, recent, visibleSalvas } = salvasView;
+    if (salvasScope === 'recent' && month.length > recent.length) {
+      return (
+        <button className="kb-loadmore" onClick={() => setSalvasScope('month')}>
+          Carregar último mês <span className="kb-loadmore-n">+{month.length - recent.length}</span>
+        </button>
+      );
+    }
+    if (salvasScope !== 'all' && all.length > visibleSalvas.length) {
+      return (
+        <button className="kb-loadmore" onClick={() => setSalvasScope('all')}>
+          Carregar todas <span className="kb-loadmore-n">+{all.length - visibleSalvas.length}</span>
+        </button>
+      );
+    }
+    return null;
+  }
 
   function handleDragStart(e: React.DragEvent, id: string) {
     e.dataTransfer.setData('jobId', id);
@@ -1296,7 +1345,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
             onClick={() => setActiveMobileCol(col.id)}
           >
             {col.label}
-            <span className="kb-col-pill-count">{byColumn[col.id].length}</span>
+            <span className="kb-col-pill-count">{col.id === 'salvas' ? salvasView.visibleSalvas.length : byColumn[col.id].length}</span>
           </button>
         ))}
       </div>
@@ -1306,7 +1355,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
           <KanbanColumn
             key={col.id}
             column={col}
-            jobs={byColumn[col.id]}
+            jobs={col.id === 'salvas' ? salvasView.visibleSalvas : byColumn[col.id]}
             isOver={dragOverCol === col.id}
             isActiveMobile={activeMobileCol === col.id}
             get={get}
@@ -1321,6 +1370,7 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
             onCardSwipeLeft={(id) => setStatus(id, 'preparar')}
             onCardSwipeRight={(id) => { dismissJob(id).catch(console.error); handleDelete(id); }}
             hintFirst={activeMobileCol === col.id}
+            footer={col.id === 'salvas' ? renderSalvasLoadMore() : undefined}
           />
         ))}
       </div>
