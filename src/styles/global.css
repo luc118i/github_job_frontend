@@ -10381,3 +10381,77 @@ main.kanban-view {
   background: rgba(139,92,246,0.18); color: #c9b6f5; font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .pm-save-btn:disabled { opacity: 0.55; cursor: default; }
+
+/* ============================================================
+   Pipeline CRM — overrides mobile AUTORITATIVOS (fim do arquivo)
+   Ficam por último de propósito: as bases .kb-* são declaradas
+   depois das media queries antigas, então só vencendo aqui no
+   fim o layout mobile realmente se aplica.
+   ============================================================ */
+@media (max-width: 900px) {
+  main.kanban-view { padding: 18px 14px 88px; }
+
+  /* Métricas: faixa horizontal rolável (1 linha) */
+  .kb-metrics {
+    display: flex !important;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 0 0 14px;
+    grid-template-columns: none;
+    scrollbar-width: none;
+  }
+  .kb-metrics::-webkit-scrollbar { display: none; }
+  .kb-metric { flex: 0 0 auto; min-width: 116px; padding: 10px 12px; }
+
+  /* Resumo de status some — as tabs de etapa já trazem a contagem */
+  .kb-status-summary { display: none !important; }
+
+  /* Funil compacto */
+  .kb-funnel { padding: 0 0 14px; gap: 8px; }
+
+  /* Tabs de etapa visíveis e roláveis */
+  .kb-col-pills { display: flex !important; gap: 8px; overflow-x: auto; margin-bottom: 14px; }
+
+  /* Board "uma etapa por vez" navegada pelas tabs */
+  .kb-board { overflow-x: visible; min-height: unset; gap: 0; }
+  .kb-column { display: none !important; flex: none; width: 100%; min-width: 0; max-width: 100%; }
+  .kb-column--mobile-active { display: flex !important; }
+  .kb-col-header { display: none; }
+
+  /* Filtros atrás do botão "Filtros" */
+  .kb-filter-bar { flex-direction: column; align-items: stretch; gap: 10px; }
+  .kb-filter-toggle { display: inline-flex !important; }
+  .kb-filter-chips { display: none; }
+  .kb-filter-chips--open { display: flex; }
+  .kb-filter-sep { display: none; }
+
+  /* Card enxuto */
+  .kb-card-skills { display: none; }
+
+  /* Analytics empilhado */
+  .pa-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  main.kanban-view { padding: 14px 12px 88px; }
+  .kb-metric { min-width: 104px; }
+
+  /* Painel de detalhe vira bottom sheet */
+  .kb-panel {
+    top: auto; left: 0; right: 0; bottom: 0;
+    width: 100%; max-width: 100%;
+    height: auto; max-height: 88vh;
+    border-left: none;
+    border-top: 2px solid rgba(139,92,246,0.5);
+    border-radius: 16px 16px 0 0;
+    animation: slideUpSheet 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .kb-panel-head::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px; border-radius: 2px;
+    background: rgba(255,255,255,0.2);
+    margin: -6px auto 12px;
+  }
+}
