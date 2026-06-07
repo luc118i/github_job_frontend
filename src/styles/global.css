@@ -10585,3 +10585,33 @@ main.kanban-view {
   padding: 1px 7px;
   border-radius: 10px;
 }
+
+/* ── Checklist "Preparar candidatura" (mobile MVC v4.1) ── */
+.kb-prep-head { display: flex; align-items: center; justify-content: space-between; }
+.kb-prep-pct { font-size: 12px; font-weight: 700; color: #14B8A6; }
+.kb-prep-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; margin: 8px 0 12px; }
+.kb-prep-fill { height: 100%; background: #14B8A6; border-radius: 3px; transition: width 0.3s ease; }
+.kb-prep-steps { display: flex; flex-direction: column; gap: 8px; }
+.kb-prep-step {
+  display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 10px;
+  width: 100%; text-align: left; cursor: pointer;
+  padding: 10px 12px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.025);
+  transition: border-color 0.15s, background 0.15s;
+}
+.kb-prep-step:hover { border-color: rgba(20,184,166,0.4); background: rgba(20,184,166,0.06); }
+.kb-prep-step--done { border-color: rgba(20,184,166,0.35); }
+.kb-prep-check {
+  width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #0a0a0f;
+  border: 1.5px solid rgba(255,255,255,0.2); background: transparent;
+}
+.kb-prep-step--done .kb-prep-check { background: #14B8A6; border-color: #14B8A6; }
+.kb-prep-step-label { font-size: 13px; color: rgba(232,228,220,0.9); }
+.kb-prep-step-hint { font-size: 11px; color: rgba(232,228,220,0.45); white-space: nowrap; }
+.kb-prep-apply {
+  width: 100%; margin-top: 12px; padding: 11px; border-radius: 10px; cursor: pointer;
+  border: 1px solid rgba(139,92,246,0.45); background: rgba(139,92,246,0.18);
+  color: #c9b6f5; font-size: 13px; font-weight: 600; transition: background 0.15s;
+}
+.kb-prep-apply:hover { background: rgba(139,92,246,0.28); }

@@ -4,6 +4,7 @@ import { fetchJobFeed } from '../services/searches';
 import { fetchPipelineInsights } from '../services/pipeline';
 import { dismissJob } from '../services/jobs';
 import { fetchCvByJobId } from '../services/cv';
+import { fetchMessages } from '../services/messages';
 import { analyzeAts, atsTier, AtsResult } from '../utils/atsScore';
 import { useKanban } from '../hooks/useKanban';
 import { fetchGitHubUser, fetchGitHubRepos, extractSkills } from '../services/github';
@@ -839,6 +840,10 @@ function JobDetailPanel({
   const [cvLoading, setCvLoading] = useState(false);
   const [ats, setAts] = useState<AtsResult | null>(null);
   const [hasCv, setHasCv] = useState<boolean | null>(null); // null = ainda carregando
+  const [hasMessage, setHasMessage] = useState(false); // carta/mensagem salva p/ a vaga
+  const [empresaDone, setEmpresaDone] = useState(
+    () => typeof localStorage !== 'undefined' && localStorage.getItem(`prep_emp_${job.id}`) === '1',
+  );
   const isLinkedIn = !job.github_username;
   const daysInStatus = kd.movedAt
     ? Math.floor((Date.now() - new Date(kd.movedAt).getTime()) / 86400000)
@@ -863,8 +868,27 @@ function JobDetailPanel({
         }
       })
       .catch(() => { if (alive) setHasCv(false); }); // 404 = sem CV ainda
+    // Carta/mensagem salva? (passo do checklist Preparar)
+    fetchMessages(job.id).then((m) => { if (alive) setHasMessage(m.length > 0); }).catch(() => {});
     return () => { alive = false; };
   }, [job.id, job.title, job.skills, job.description]);
+
+  // Passo "pesquisar empresa": abre busca e marca como feito (local, por vaga).
+  function researchCompany() {
+    const q = encodeURIComponent(`${job.company} empresa`);
+    window.open(`https://www.google.com/search?q=${q}`, '_blank', 'noopener,noreferrer');
+    localStorage.setItem(`prep_emp_${job.id}`, '1');
+    setEmpresaDone(true);
+  }
+
+  // Checklist de preparação (mobile MVC v4.1 — tela Preparar).
+  const prepSteps = [
+    { key: 'cv', label: 'Adaptar currículo', done: hasCv === true, hint: hasCv ? 'CV salvo' : 'gerar com IA', action: () => handleGenerateCv() },
+    { key: 'carta', label: 'Gerar carta / mensagem', done: hasMessage, hint: hasMessage ? 'salva' : 'abrir gerador', action: () => handleGenerateCv() },
+    { key: 'empresa', label: 'Pesquisar empresa', done: empresaDone, hint: empresaDone ? 'pesquisada' : `buscar ${job.company}`, action: researchCompany },
+  ];
+  const prepDone = prepSteps.filter((s) => s.done).length;
+  const prepPct = Math.round((prepDone / prepSteps.length) * 100);
 
   // Fecha o painel com Escape
   useEffect(() => {
@@ -969,6 +993,29 @@ function JobDetailPanel({
               <span className="kb-cv-empty">nenhum CV gerado ainda</span>
             )}
           </div>
+
+          {/* Checklist de preparação — só quando a vaga está em "Preparar" */}
+          {kd.status === 'preparar' && (
+            <div className="kb-panel-section kb-prep">
+              <div className="kb-prep-head">
+                <span className="kb-panel-label">Preparar candidatura</span>
+                <span className="kb-prep-pct">{prepDone}/{prepSteps.length}</span>
+              </div>
+              <div className="kb-prep-bar"><div className="kb-prep-fill" style={{ width: `${prepPct}%` }} /></div>
+              <div className="kb-prep-steps">
+                {prepSteps.map((s) => (
+                  <button key={s.key} className={`kb-prep-step${s.done ? ' kb-prep-step--done' : ''}`} onClick={s.action}>
+                    <span className="kb-prep-check">{s.done ? '✓' : ''}</span>
+                    <span className="kb-prep-step-label">{s.label}</span>
+                    <span className="kb-prep-step-hint">{s.hint}</span>
+                  </button>
+                ))}
+              </div>
+              <button className="kb-prep-apply" onClick={() => onStatusChange('aplicadas')}>
+                Marcar como aplicada →
+              </button>
+            </div>
+          )}
 
           {job.description && (
             <div className="kb-panel-section">
