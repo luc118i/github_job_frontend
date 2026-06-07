@@ -17,7 +17,7 @@ console.log(
   "",
 );
 console.log(
-  "%cVagas inteligentes para o seu perfil\n%cpowered by Claude AI × GitHub API\nfeito por lucca sinaacio — github.com/luc118i",
+  "%cVagas inteligentes para o seu perfil\n%cfeito por Lucas Inácio · Lucas Soluções\nhttps://lucasinaciosolucoes.vercel.app/",
   "color:#c4b5fd;font-size:12px;font-family:monospace;",
   "color:#67e8f9;font-size:11px;font-family:monospace;",
 );

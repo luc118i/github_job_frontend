@@ -8808,6 +8808,12 @@ main.kanban-view {
 .status-bar-right {
   color: rgba(232,228,220,0.18);
 }
+.status-credit {
+  color: rgba(232,228,220,0.4);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.status-credit:hover { color: #8B5CF6; }
 
 @media (max-width: 600px) {
   .status-bar { padding: 0 16px; }

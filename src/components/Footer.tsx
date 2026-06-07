@@ -11,7 +11,15 @@ export function Footer() {
         Conectado ao Github Jobs API
       </span>
       <span className="status-bar-right">
-        Powered by Claude AI
+        feito por{' '}
+        <a
+          className="status-credit"
+          href="https://lucasinaciosolucoes.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Lucas Soluções
+        </a>
       </span>
     </footer>
   );
