@@ -1322,8 +1322,8 @@ export function CvEditor({
           <div className="cv-workspace">
             <div className={`cv-edit-pane ${mobileTab === 'editor' ? 'mobile-active' : ''}`}>
               {/* Cabeçalho editável: nome + contato (entram no topo do CV/PDF) */}
+              <div className="cv-pane-label">cabeçalho</div>
               <div className="cv-header-edit">
-                <div className="cv-pane-label">cabeçalho</div>
                 <label className="cv-header-field">
                   <span>Nome</span>
                   <input
