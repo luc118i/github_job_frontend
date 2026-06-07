@@ -220,6 +220,7 @@ export default function App() {
           job={cvState.job}
           profile={cvState.profile}
           linkedIn={linkedInData}
+          accountName={currentUser?.name ?? null}
           onBack={() => setCvState(null)}
           onGoToHistory={() => { setCvState(null); setView('history'); }}
           onDismiss={(jobId) => { removeJob(jobId); setCvState(null); }}

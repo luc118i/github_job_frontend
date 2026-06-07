@@ -65,6 +65,8 @@ interface CvEditorProps {
   job: JobRecord;
   profile: Profile;
   linkedIn: LinkedInData | null;
+  /** Nome da conta (tem prioridade no cabeçalho do CV). */
+  accountName?: string | null;
   onBack: () => void;
   onDismiss: (jobId: string) => void;
   onGoToHistory: () => void;
@@ -134,10 +136,28 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
+/** Extrai nome + linha de contato do cabeçalho de um Markdown salvo. */
+function parseCvHeader(md: string): { name: string; contact: string } {
+  const lines = md.split('\n');
+  const i = lines.findIndex((l) => l.startsWith('# '));
+  if (i === -1) return { name: '', contact: '' };
+  const name = lines[i].slice(2).trim();
+  let contact = '';
+  for (let j = i + 1; j < lines.length; j++) {
+    const l = lines[j].trim();
+    if (!l) continue;
+    if (l.startsWith('## ')) break; // chegou nas seções
+    contact = l;
+    break;
+  }
+  return { name, contact };
+}
+
 export function CvEditor({
   job,
   profile,
   linkedIn,
+  accountName,
   onBack,
   onDismiss,
   onGoToHistory,
@@ -217,20 +237,31 @@ export function CvEditor({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  // Cabeçalho (nome + contato) não é bloco — vem dos dados do candidato.
-  const candidateName = linkedIn?.name ?? profile.user.name ?? profile.user.login;
-  const contactLine = useMemo(() => {
-    const parts = [
+  // Cabeçalho (nome + contato) — EDITÁVEL. Padrão: nome da conta > LinkedIn >
+  // GitHub. Em modo visualização, recupera o que foi salvo no Markdown.
+  const headerInit = useMemo(() => {
+    const defaultName = (accountName ?? linkedIn?.name ?? profile.user.name ?? profile.user.login ?? '').trim();
+    const defaultContact = [
       linkedIn?.email,
       linkedIn?.phone,
       profile.user.login ? `github.com/${profile.user.login}` : null,
-    ].filter(Boolean);
-    return parts.length ? parts.join(' | ') : '';
-  }, [linkedIn, profile.user.login]);
+    ].filter(Boolean).join(' | ');
+    if (isViewMode && initialContent) {
+      const h = parseCvHeader(initialContent);
+      return { name: h.name || defaultName, contact: h.contact || defaultContact };
+    }
+    return { name: defaultName, contact: defaultContact };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [cvName, setCvName] = useState(headerInit.name);
+  const [cvContact, setCvContact] = useState(headerInit.contact);
+  // Alias p/ o restante do editor (geração de CV, mensagens, entrevista).
+  const candidateName = cvName.trim() || profile.user.login;
 
   // Deriva o Markdown (cabeçalho + blocos visíveis) de qualquer lista de blocos.
   const buildMarkdown = useMemo(() => {
-    const header = `# ${candidateName.toUpperCase()}${contactLine ? `\n${contactLine}` : ''}`;
+    const header = `# ${candidateName.toUpperCase()}${cvContact.trim() ? `\n${cvContact.trim()}` : ''}`;
     return (bl: CvBlock[]) => {
       const body = bl
         .filter((b) => b.visible)
@@ -238,7 +269,7 @@ export function CvEditor({
         .join('\n\n');
       return `${header}\n\n${body}`.trim();
     };
-  }, [candidateName, contactLine]);
+  }, [candidateName, cvContact]);
 
   // Markdown derivado dos blocos visíveis — fonte para preview, PDF e save.
   const markdown = useMemo(() => (blocks ? buildMarkdown(blocks) : ''), [blocks, buildMarkdown]);
@@ -1290,6 +1321,29 @@ export function CvEditor({
 
           <div className="cv-workspace">
             <div className={`cv-edit-pane ${mobileTab === 'editor' ? 'mobile-active' : ''}`}>
+              {/* Cabeçalho editável: nome + contato (entram no topo do CV/PDF) */}
+              <div className="cv-header-edit">
+                <div className="cv-pane-label">cabeçalho</div>
+                <label className="cv-header-field">
+                  <span>Nome</span>
+                  <input
+                    className="cv-header-input"
+                    value={cvName}
+                    onChange={(e) => setCvName(e.target.value)}
+                    placeholder="Seu nome completo"
+                  />
+                </label>
+                <label className="cv-header-field">
+                  <span>Contato</span>
+                  <input
+                    className="cv-header-input"
+                    value={cvContact}
+                    onChange={(e) => setCvContact(e.target.value)}
+                    placeholder="email | telefone | github.com/usuario"
+                  />
+                </label>
+              </div>
+
               <div className="cv-pane-label">blocos do currículo</div>
 
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
