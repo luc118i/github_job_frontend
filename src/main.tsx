@@ -11,7 +11,7 @@ const PublicPortfolio = lazy(() => import("./components/PublicPortfolio").then((
 const portfolioMatch = window.location.pathname.match(/^\/p\/([^/]+)\/?$/);
 
 console.log(
-  "%c JobFinder %c v1.0 %c",
+  `%c JobFinder %c v${__APP_VERSION__} %c`,
   "background:#7c3aed;color:#fff;font-weight:800;font-size:13px;padding:4px 8px;border-radius:4px 0 0 4px;font-family:monospace",
   "background:#06b6d4;color:#0a0a0f;font-weight:700;font-size:13px;padding:4px 8px;border-radius:0 4px 4px 0;font-family:monospace",
   "",
