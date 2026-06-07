@@ -8,7 +8,7 @@ export function Footer() {
         <span className="status-online-dot" />
         Sistema online
         <span className="status-sep">|</span>
-        Conectado ao Github Jobs API
+        © 2026 JobFinder · Todos os direitos reservados
       </span>
       <span className="status-bar-right">
         feito por{' '}
