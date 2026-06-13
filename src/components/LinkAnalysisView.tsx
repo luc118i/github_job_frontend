@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Profile, LinkedInData, JobRecord, MatchAnalysis } from '../types';
 import { analyzeLink } from '../services/analyzeLink';
+import { fetchProjects } from '../services/projects';
+import { rankProjects, matchTier, ProjectMatch } from '../utils/projectMatch';
 
 interface LinkAnalysisViewProps {
   profile: Profile | null;
@@ -48,8 +50,26 @@ export function LinkAnalysisView({ profile, linkedIn, onGenerateCv }: LinkAnalys
   const [step, setStep] = useState<Step>('idle');
   const [error, setError] = useState('');
   const [result, setResult] = useState<AnalysisState | null>(null);
+  // Projetos da biblioteca relevantes para a vaga analisada (match determinístico).
+  const [relevant, setRelevant] = useState<ProjectMatch[]>([]);
 
   const hasProfile = !!(profile || linkedIn?.positions?.length);
+
+  // Ao concluir a análise, ranqueia os projetos do usuário pela vaga.
+  useEffect(() => {
+    if (!result) { setRelevant([]); return; }
+    let alive = true;
+    fetchProjects()
+      .then((projs) => {
+        if (!alive) return;
+        const ranked = rankProjects(projs, {
+          title: result.job.title, skills: result.job.skills, description: result.job.description,
+        }).filter((r) => r.score > 0).slice(0, 3);
+        setRelevant(ranked);
+      })
+      .catch(() => { if (alive) setRelevant([]); });
+    return () => { alive = false; };
+  }, [result]);
 
   async function handleAnalyze() {
     const trimmed = url.trim();
@@ -237,6 +257,32 @@ export function LinkAnalysisView({ profile, linkedIn, onGenerateCv }: LinkAnalys
                   <li key={i} className="la-list-item">{r}</li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {/* Projetos da biblioteca relevantes para esta vaga (Biblioteca v5.0) */}
+          {relevant.length > 0 && (
+            <div className="la-section la-projects">
+              <div className="la-section-title">Projetos seus relevantes para esta vaga</div>
+              <div className="la-proj-list">
+                {relevant.map(({ project, score, matched }) => {
+                  const mt = matchTier(score);
+                  return (
+                    <div key={project.id} className="la-proj-item">
+                      <div className="la-proj-head">
+                        <span className="la-proj-title">{project.title}</span>
+                        <span className="la-proj-match" style={{ color: mt.color, borderColor: mt.color }}>{score}% match</span>
+                      </div>
+                      {matched.length > 0 && (
+                        <div className="la-proj-chips">
+                          {matched.slice(0, 5).map((s) => <span key={s} className="la-proj-chip">{s}</span>)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="la-proj-hint">Estes projetos serão incluídos ao gerar o CV para esta vaga.</p>
             </div>
           )}
 
