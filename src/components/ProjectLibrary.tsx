@@ -26,6 +26,19 @@ function scoreColor(score: number): string {
   return '#64748B';
 }
 
+/** Termos de busca do projeto: tecnologias (stack) + metodologias (competências), sem duplicar. */
+function searchTermsOf(p: Project): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const t of [...p.tech, ...(p.competencies ?? [])]) {
+    const k = t.trim().toLowerCase();
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push(t.trim());
+  }
+  return out;
+}
+
 // Ordem dos chips de filtro (igual ao print do MVC). 'todos' é virtual.
 const FILTERS: { key: 'todos' | ProjectCategory; label: string }[] = [
   { key: 'todos', label: 'Todos' },
@@ -253,7 +266,7 @@ export function ProjectLibrary({ githubUsername, onSearchSkills }: ProjectLibrar
               onEdit={() => openEdit(p)}
               onDelete={() => handleDelete(p.id)}
               onEnrich={() => handleEnrich(p.id)}
-              onSearch={() => onSearchSkills?.((p.competencies?.length ? p.competencies : p.tech).slice(0, 3))}
+              onSearch={() => onSearchSkills?.(searchTermsOf(p))}
             />
           ))}
         </div>

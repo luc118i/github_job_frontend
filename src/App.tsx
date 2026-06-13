@@ -394,7 +394,7 @@ export default function App() {
           {view === 'projetos' && (
             <ProjectLibrary
               githubUsername={currentUser?.github_username ?? (username || null)}
-              onSearchSkills={(skills) => { setProjectQuery(skills.slice(0, 3).join(' ')); setView('buscar'); }}
+              onSearchSkills={(skills) => { setProjectQuery(skills.slice(0, 5).join(' ')); setView('buscar'); }}
             />
           )}
 
