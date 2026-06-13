@@ -77,6 +77,32 @@ export async function matchProjectsAi(
   return res.json() as Promise<ProjectAiMatch[]>;
 }
 
+// Analisa 1 projeto com IA: competências + Portfolio Score (Biblioteca v5.0).
+export async function enrichProject(id: string): Promise<Project> {
+  const res = await fetch(`${API_URL}/projects/${id}/enrich`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao analisar o projeto.');
+  }
+  return res.json() as Promise<Project>;
+}
+
+// Analisa todos os projetos ainda sem score. Retorna os atualizados.
+export async function enrichAllProjects(): Promise<Project[]> {
+  const res = await fetch(`${API_URL}/projects/enrich-all`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao analisar os projetos.');
+  }
+  return res.json() as Promise<Project[]>;
+}
+
 export async function deleteProject(id: string): Promise<void> {
   const res = await fetch(`${API_URL}/projects/${id}`, {
     method: 'DELETE',

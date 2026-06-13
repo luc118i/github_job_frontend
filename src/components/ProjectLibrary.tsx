@@ -6,6 +6,8 @@ import {
   updateProject,
   deleteProject,
   importProjects,
+  enrichProject,
+  enrichAllProjects,
 } from '../services/projects';
 import { fetchGitHubRepos } from '../services/github';
 import { CATEGORY, reposToProjectInputs } from '../utils/projectMatch';
@@ -13,6 +15,15 @@ import { CATEGORY, reposToProjectInputs } from '../utils/projectMatch';
 interface ProjectLibraryProps {
   /** username do GitHub para auto-importar os repos (best-effort). */
   githubUsername: string | null;
+  /** "buscar vagas" a partir das competências/stack de um projeto. */
+  onSearchSkills?: (skills: string[]) => void;
+}
+
+/** Cor do Portfolio Score: verde ≥85, amarelo ≥60, cinza abaixo. */
+function scoreColor(score: number): string {
+  if (score >= 85) return '#4ADE80';
+  if (score >= 60) return '#F59E0B';
+  return '#64748B';
 }
 
 // Ordem dos chips de filtro (igual ao print do MVC). 'todos' é virtual.
@@ -35,12 +46,14 @@ const EMPTY_FORM: ProjectInput = {
   repo: null,
 };
 
-export function ProjectLibrary({ githubUsername }: ProjectLibraryProps) {
+export function ProjectLibrary({ githubUsername, onSearchSkills }: ProjectLibraryProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'todos' | ProjectCategory>('todos');
+  const [enrichingId, setEnrichingId] = useState<string | null>(null);
+  const [enrichingAll, setEnrichingAll] = useState(false);
 
   // Formulário (criar/editar) — null = fechado.
   const [form, setForm] = useState<ProjectInput | null>(null);
@@ -137,18 +150,75 @@ export function ProjectLibrary({ githubUsername }: ProjectLibraryProps) {
     }
   }
 
+  // Analisa 1 projeto com IA (competências + Portfolio Score).
+  async function handleEnrich(id: string) {
+    setEnrichingId(id);
+    setError(null);
+    try {
+      const updated = await enrichProject(id);
+      setProjects((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro ao analisar o projeto.');
+    } finally {
+      setEnrichingId(null);
+    }
+  }
+
+  // Analisa todos os projetos ainda sem score.
+  async function handleEnrichAll() {
+    setEnrichingAll(true);
+    setError(null);
+    try {
+      const updated = await enrichAllProjects();
+      if (updated.length) {
+        const byId = new Map(updated.map((u) => [u.id, u]));
+        setProjects((prev) => prev.map((p) => byId.get(p.id) ?? p));
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro ao analisar os projetos.');
+    } finally {
+      setEnrichingAll(false);
+    }
+  }
+
+  // Estatísticas do topo (Biblioteca v5.0): score médio + nº de competências.
+  const stats = useMemo(() => {
+    const scored = projects.filter((p) => typeof p.portfolio_score === 'number');
+    const avg = scored.length
+      ? Math.round(scored.reduce((s, p) => s + (p.portfolio_score ?? 0), 0) / scored.length)
+      : null;
+    const comps = new Set<string>();
+    projects.forEach((p) => (p.competencies ?? []).forEach((c) => comps.add(c.toLowerCase())));
+    const pending = projects.filter((p) => p.portfolio_score == null).length;
+    return { avg, comps: comps.size, pending };
+  }, [projects]);
+
   return (
     <div className="proj-page">
       <header className="proj-head">
         <div>
           <h1 className="proj-title">Biblioteca de Projetos</h1>
           <p className="proj-sub">
-            Seus projetos do GitHub, curados uma vez e reusados nos currículos.
+            Repositório de ativos profissionais — alimenta currículo, vagas e portfólio.
             {importing && <span className="proj-importing"> Importando do GitHub…</span>}
           </p>
         </div>
-        <button className="proj-add-btn" onClick={openCreate}>+ Adicionar projeto</button>
+        <div className="proj-head-actions">
+          {stats.pending > 0 && (
+            <button className="proj-ai-btn" onClick={handleEnrichAll} disabled={enrichingAll}>
+              {enrichingAll ? 'analisando…' : `✨ analisar ${stats.pending} com IA`}
+            </button>
+          )}
+          <button className="proj-add-btn" onClick={openCreate}>+ Adicionar projeto</button>
+        </div>
       </header>
+
+      {/* Stats do repositório */}
+      <div className="proj-stats">
+        <span className="proj-stat"><strong>{projects.length}</strong> projetos</span>
+        <span className="proj-stat"><strong>{stats.comps}</strong> competências</span>
+        <span className="proj-stat"><strong>{stats.avg ?? '—'}</strong> score médio</span>
+      </div>
 
       {/* Chips de filtro por categoria */}
       <div className="proj-filters">
@@ -176,7 +246,15 @@ export function ProjectLibrary({ githubUsername }: ProjectLibraryProps) {
       ) : (
         <div className="proj-grid">
           {visible.map((p) => (
-            <ProjectCard key={p.id} project={p} onEdit={() => openEdit(p)} onDelete={() => handleDelete(p.id)} />
+            <ProjectCard
+              key={p.id}
+              project={p}
+              enriching={enrichingId === p.id}
+              onEdit={() => openEdit(p)}
+              onDelete={() => handleDelete(p.id)}
+              onEnrich={() => handleEnrich(p.id)}
+              onSearch={() => onSearchSkills?.((p.competencies?.length ? p.competencies : p.tech).slice(0, 3))}
+            />
           ))}
         </div>
       )}
@@ -195,27 +273,59 @@ export function ProjectLibrary({ githubUsername }: ProjectLibraryProps) {
   );
 }
 
-// ── Card de projeto ───────────────────────────────────────────────
-function ProjectCard({ project: p, onEdit, onDelete }: { project: Project; onEdit: () => void; onDelete: () => void }) {
+// ── Card de projeto (Biblioteca v5.0) ─────────────────────────────
+function ProjectCard({
+  project: p, enriching, onEdit, onDelete, onEnrich, onSearch,
+}: {
+  project: Project;
+  enriching: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  onEnrich: () => void;
+  onSearch: () => void;
+}) {
   const meta = CATEGORY[p.category];
+  const score = p.portfolio_score;
+  const competencies = p.competencies ?? [];
   return (
     <article className="proj-card" style={{ ['--accent' as string]: meta.color }}>
       <div className="proj-card-top">
         <span className="proj-cat" style={{ color: meta.color, borderColor: meta.color }}>{meta.label}</span>
-        {/* "IA: auto" marca projetos importados do GitHub (têm repo de origem) */}
-        {p.repo && <span className="proj-auto-badge">IA: auto</span>}
+        {typeof score === 'number'
+          ? <span className="proj-score" style={{ color: scoreColor(score), borderColor: scoreColor(score) }}>{score}</span>
+          : <span className="proj-score proj-score--na">—</span>}
       </div>
 
       <h3 className="proj-card-title">{p.title}</h3>
+      {p.repo && <span className="proj-slug">{p.repo}</span>}
       {p.description && <p className="proj-card-desc">{p.description}</p>}
 
       {p.tech.length > 0 && (
         <div className="proj-tech">
-          {p.tech.map((t) => (
+          {p.tech.slice(0, 4).map((t) => (
             <span key={t} className="proj-tech-chip" style={{ borderColor: meta.color }}>{t}</span>
           ))}
         </div>
       )}
+
+      {/* Competências detectadas pela IA */}
+      {competencies.length > 0 && (
+        <div className="proj-comps">
+          {competencies.slice(0, 4).map((c) => (
+            <span key={c} className="proj-comp">{c}</span>
+          ))}
+        </div>
+      )}
+
+      <div className="proj-card-cta">
+        {typeof score === 'number' ? (
+          <button className="proj-search-btn" onClick={onSearch}>Buscar vagas</button>
+        ) : (
+          <button className="proj-search-btn proj-search-btn--ai" onClick={onEnrich} disabled={enriching}>
+            {enriching ? 'analisando…' : '✨ analisar com IA'}
+          </button>
+        )}
+      </div>
 
       <div className="proj-card-actions">
         {p.link && <a className="proj-link" href={p.link} target="_blank" rel="noopener noreferrer">abrir ↗</a>}

@@ -183,6 +183,10 @@ export interface Project {
   category: ProjectCategory;
   link: string | null;
   repo: string | null;
+  /** Competências detectadas pela IA (Biblioteca v5.0). */
+  competencies?: string[];
+  /** Portfolio Score 0-100 (heurística). null = não analisado. */
+  portfolio_score?: number | null;
   created_at: string;
   updated_at: string;
 }
