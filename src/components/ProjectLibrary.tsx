@@ -67,6 +67,7 @@ export function ProjectLibrary({ githubUsername, onSearchSkills }: ProjectLibrar
   const [filter, setFilter] = useState<'todos' | ProjectCategory>('todos');
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
   const [enrichingAll, setEnrichingAll] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Formulário (criar/editar) — null = fechado.
   const [form, setForm] = useState<ProjectInput | null>(null);
@@ -263,6 +264,7 @@ export function ProjectLibrary({ githubUsername, onSearchSkills }: ProjectLibrar
               key={p.id}
               project={p}
               enriching={enrichingId === p.id}
+              onOpen={() => setSelectedId(p.id)}
               onEdit={() => openEdit(p)}
               onDelete={() => handleDelete(p.id)}
               onEnrich={() => handleEnrich(p.id)}
@@ -270,6 +272,17 @@ export function ProjectLibrary({ githubUsername, onSearchSkills }: ProjectLibrar
             />
           ))}
         </div>
+      )}
+
+      {selectedId && projects.find((p) => p.id === selectedId) && (
+        <ProjectDrawer
+          project={projects.find((p) => p.id === selectedId)!}
+          enriching={enrichingId === selectedId}
+          onClose={() => setSelectedId(null)}
+          onEnrich={() => handleEnrich(selectedId)}
+          onSearch={(p) => onSearchSkills?.(searchTermsOf(p))}
+          onEdit={(p) => { setSelectedId(null); openEdit(p); }}
+        />
       )}
 
       {form && (
@@ -288,10 +301,11 @@ export function ProjectLibrary({ githubUsername, onSearchSkills }: ProjectLibrar
 
 // ── Card de projeto (Biblioteca v5.0) ─────────────────────────────
 function ProjectCard({
-  project: p, enriching, onEdit, onDelete, onEnrich, onSearch,
+  project: p, enriching, onOpen, onEdit, onDelete, onEnrich, onSearch,
 }: {
   project: Project;
   enriching: boolean;
+  onOpen: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onEnrich: () => void;
@@ -300,8 +314,10 @@ function ProjectCard({
   const meta = CATEGORY[p.category];
   const score = p.portfolio_score;
   const competencies = p.competencies ?? [];
+  // Clique no card abre o drawer; os botões internos param a propagação.
+  const stop = (fn: () => void) => (e: React.MouseEvent) => { e.stopPropagation(); fn(); };
   return (
-    <article className="proj-card" style={{ ['--accent' as string]: meta.color }}>
+    <article className="proj-card proj-card--clickable" style={{ ['--accent' as string]: meta.color }} onClick={onOpen}>
       <div className="proj-card-top">
         <span className="proj-cat" style={{ color: meta.color, borderColor: meta.color }}>{meta.label}</span>
         {typeof score === 'number'
@@ -332,21 +348,153 @@ function ProjectCard({
 
       <div className="proj-card-cta">
         {typeof score === 'number' ? (
-          <button className="proj-search-btn" onClick={onSearch}>Buscar vagas</button>
+          <button className="proj-search-btn" onClick={stop(onSearch)}>Buscar vagas</button>
         ) : (
-          <button className="proj-search-btn proj-search-btn--ai" onClick={onEnrich} disabled={enriching}>
+          <button className="proj-search-btn proj-search-btn--ai" onClick={stop(onEnrich)} disabled={enriching}>
             {enriching ? 'analisando…' : '✨ analisar com IA'}
           </button>
         )}
       </div>
 
       <div className="proj-card-actions">
-        {p.link && <a className="proj-link" href={p.link} target="_blank" rel="noopener noreferrer">abrir ↗</a>}
+        {p.link && <a className="proj-link" href={p.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>abrir ↗</a>}
         <span className="proj-spacer" />
-        <button className="proj-mini-btn" onClick={onEdit}>editar</button>
-        <button className="proj-mini-btn proj-mini-btn--danger" onClick={onDelete}>excluir</button>
+        <button className="proj-mini-btn" onClick={stop(onEdit)}>editar</button>
+        <button className="proj-mini-btn proj-mini-btn--danger" onClick={stop(onDelete)}>excluir</button>
       </div>
     </article>
+  );
+}
+
+// ── Drawer rico de projeto (Biblioteca v5.0) ──────────────────────
+const ROLES_BY_CATEGORY: Record<ProjectCategory, string[]> = {
+  frontend: ['Desenvolvedor Frontend', 'Desenvolvedor React', 'Engenheiro de UI'],
+  backend: ['Desenvolvedor Backend', 'Engenheiro de APIs', 'Desenvolvedor Node'],
+  fullstack: ['Desenvolvedor Full Stack', 'Engenheiro de Software'],
+  data: ['Analista de Dados', 'Engenheiro de Dados', 'Analista de BI'],
+  mobile: ['Desenvolvedor Mobile', 'Desenvolvedor React Native'],
+  outro: ['Desenvolvedor de Software'],
+};
+
+function marketValue(score: number): { label: string; color: string } {
+  if (score >= 85) return { label: 'Alto', color: '#4ADE80' };
+  if (score >= 60) return { label: 'Médio', color: '#F59E0B' };
+  return { label: 'Inicial', color: '#64748B' };
+}
+
+/** Descrição estilo ATS gerada deterministicamente para colar no currículo. */
+function atsDescription(p: Project): string {
+  const parts: string[] = [];
+  parts.push(p.description ? `${p.title} — ${p.description}` : p.title);
+  if (p.tech.length) parts.push(`Tecnologias: ${p.tech.join(', ')}.`);
+  if (p.competencies?.length) parts.push(`Competências: ${p.competencies.join(', ')}.`);
+  if (p.highlights?.length) parts.push(p.highlights.map((h) => `- ${h}`).join('\n'));
+  return parts.join('\n');
+}
+
+function ProjectDrawer({
+  project: p, enriching, onClose, onEnrich, onSearch, onEdit,
+}: {
+  project: Project;
+  enriching: boolean;
+  onClose: () => void;
+  onEnrich: () => void;
+  onSearch: (p: Project) => void;
+  onEdit: (p: Project) => void;
+}) {
+  const meta = CATEGORY[p.category];
+  const score = p.portfolio_score;
+  const [copied, setCopied] = useState(false);
+
+  function copyAts() {
+    navigator.clipboard.writeText(atsDescription(p)).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    }).catch(() => {});
+  }
+
+  return (
+    <div className="cv-versions-overlay" onClick={onClose}>
+      <aside className="proj-drawer" style={{ ['--accent' as string]: meta.color }} onClick={(e) => e.stopPropagation()}>
+        <div className="proj-drawer-head">
+          <div>
+            <span className="proj-cat" style={{ color: meta.color, borderColor: meta.color }}>{meta.label}</span>
+            <h2 className="proj-drawer-title">{p.title}</h2>
+            {p.repo && <span className="proj-slug">{p.repo}</span>}
+          </div>
+          <button className="proj-modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="proj-drawer-body">
+          {/* KPIs */}
+          <div className="proj-kpis">
+            <div className="proj-kpi">
+              <span className="proj-kpi-val" style={{ color: typeof score === 'number' ? scoreColor(score) : 'rgba(232,228,220,0.4)' }}>
+                {typeof score === 'number' ? score : '—'}
+              </span>
+              <span className="proj-kpi-label">Portfolio Score</span>
+            </div>
+            <div className="proj-kpi">
+              <span className="proj-kpi-val" style={{ color: typeof score === 'number' ? marketValue(score).color : 'rgba(232,228,220,0.4)', fontSize: 16 }}>
+                {typeof score === 'number' ? marketValue(score).label : '—'}
+              </span>
+              <span className="proj-kpi-label">Valor de Mercado</span>
+            </div>
+            <div className="proj-kpi">
+              <span className="proj-kpi-val">{(p.competencies ?? []).length}</span>
+              <span className="proj-kpi-label">Competências</span>
+            </div>
+          </div>
+
+          {typeof score !== 'number' && (
+            <button className="proj-search-btn proj-search-btn--ai" onClick={onEnrich} disabled={enriching}>
+              {enriching ? 'analisando…' : '✨ analisar com IA (score + competências)'}
+            </button>
+          )}
+
+          {p.description && <p className="proj-drawer-desc">{p.description}</p>}
+
+          {p.tech.length > 0 && (
+            <section className="proj-drawer-section">
+              <span className="proj-drawer-label">Tecnologias</span>
+              <div className="proj-tech">
+                {p.tech.map((t) => <span key={t} className="proj-tech-chip" style={{ borderColor: meta.color }}>{t}</span>)}
+              </div>
+            </section>
+          )}
+
+          {(p.competencies?.length ?? 0) > 0 && (
+            <section className="proj-drawer-section">
+              <span className="proj-drawer-label">Competências detectadas (IA)</span>
+              <div className="proj-comps">
+                {p.competencies!.map((c) => <span key={c} className="proj-comp">{c}</span>)}
+              </div>
+            </section>
+          )}
+
+          <section className="proj-drawer-section">
+            <span className="proj-drawer-label">Papéis sugeridos</span>
+            <div className="proj-comps">
+              {ROLES_BY_CATEGORY[p.category].map((r) => <span key={r} className="proj-role">{r}</span>)}
+            </div>
+          </section>
+
+          <button className="proj-search-btn" onClick={() => onSearch(p)}>Buscar vagas compatíveis</button>
+
+          <section className="proj-drawer-section">
+            <div className="proj-drawer-label-row">
+              <span className="proj-drawer-label">Descrição para o currículo</span>
+              <button className="proj-mini-btn" onClick={copyAts}>{copied ? 'copiado!' : 'copiar'}</button>
+            </div>
+            <pre className="proj-ats">{atsDescription(p)}</pre>
+          </section>
+
+          <div className="proj-drawer-foot">
+            <button className="proj-mini-btn" onClick={() => onEdit(p)}>editar projeto</button>
+          </div>
+        </div>
+      </aside>
+    </div>
   );
 }
 
