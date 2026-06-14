@@ -120,6 +120,9 @@ export function PortfolioManager({ githubUsername }: PortfolioManagerProps) {
             <button className="pm-mini-btn" onClick={copyUrl}>{copied ? 'copiado!' : 'copiar'}</button>
           </div>
         )}
+        {settings && (
+          <div className="pm-views"><strong>{settings.views}</strong> visualizaç{settings.views === 1 ? 'ão' : 'ões'}</div>
+        )}
       </div>
 
       {/* Textos curados */}

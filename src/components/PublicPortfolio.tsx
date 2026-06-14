@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { PortfolioData, GitHubUser } from '../types';
-import { fetchPublicPortfolio, askPortfolio, PortfolioChatTurn } from '../services/portfolio';
+import { fetchPublicPortfolio, askPortfolio, registerPortfolioView, PortfolioChatTurn } from '../services/portfolio';
 import { fetchGitHubUser } from '../services/github';
 import { CATEGORY } from '../utils/projectMatch';
 
@@ -66,6 +66,12 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
         if (!pf) { setNotFound(true); setLoading(false); return; }
         setData(pf);
         setLoading(false);
+        // Registra a visualização 1x por sessão (não conta refresh repetido).
+        const viewKey = `pf_viewed_${username.toLowerCase()}`;
+        if (!sessionStorage.getItem(viewKey)) {
+          sessionStorage.setItem(viewKey, '1');
+          registerPortfolioView(pf.githubUsername);
+        }
         // GitHub (avatar/bio) best-effort — não bloqueia a página.
         try {
           const user = await fetchGitHubUser(pf.githubUsername);
@@ -251,6 +257,16 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
             <a className="pf-cta-btn" href={`mailto:${data.contactEmail}`}>Entrar em contato</a>
           </section>
         )}
+
+        {/* CTA: convida o visitante a criar o próprio portfólio */}
+        <section className="pf-promo">
+          <h2 className="pf-promo-title">Gostou? Crie o seu também.</h2>
+          <p className="pf-promo-sub">
+            Monte um portfólio profissional com IA em minutos — currículo, projetos e
+            uma página pública que responde recrutadores. Grátis no JobFinder.
+          </p>
+          <a className="pf-promo-btn" href={window.location.origin + '/'}>Criar meu portfólio</a>
+        </section>
 
         <footer className="pf-footer">
           Feito com JobFinder

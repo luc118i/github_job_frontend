@@ -382,6 +382,7 @@ export interface PortfolioSettings {
   headline: string | null;
   summary: string | null;
   template: PortfolioTemplate;
+  views: number;
 }
 
 export interface PortfolioProject {

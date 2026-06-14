@@ -21,6 +21,13 @@ export async function fetchPublicPortfolio(username: string): Promise<PortfolioD
   return res.json() as Promise<PortfolioData>;
 }
 
+/** Registra uma visualização do portfólio (best-effort, sem auth). */
+export async function registerPortfolioView(username: string): Promise<void> {
+  try {
+    await fetch(`${API_URL}/portfolio/public/${encodeURIComponent(username)}/view`, { method: 'POST' });
+  } catch { /* silencioso — não afeta a página */ }
+}
+
 export interface PortfolioChatTurn { role: 'recruiter' | 'ai'; content: string; }
 
 /** Gera headline + resumo do portfólio com IA (não persiste). */
