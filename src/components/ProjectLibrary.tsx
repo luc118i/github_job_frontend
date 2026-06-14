@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Project, ProjectCategory, ProjectInput } from '../types';
+import { Project, ProjectCategory, ProjectInput, GitHubRepo } from '../types';
 import {
   fetchProjects,
   createProject,
@@ -10,7 +10,7 @@ import {
   enrichAllProjects,
 } from '../services/projects';
 import { fetchGitHubRepos } from '../services/github';
-import { CATEGORY, reposToProjectInputs } from '../utils/projectMatch';
+import { CATEGORY, reposToProjectInputs, inferCategory } from '../utils/projectMatch';
 
 interface ProjectLibraryProps {
   /** username do GitHub para auto-importar os repos (best-effort). */
@@ -68,6 +68,7 @@ export function ProjectLibrary({ githubUsername, onSearchSkills }: ProjectLibrar
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
   const [enrichingAll, setEnrichingAll] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   // Formulário (criar/editar) — null = fechado.
   const [form, setForm] = useState<ProjectInput | null>(null);
@@ -195,6 +196,27 @@ export function ProjectLibrary({ githubUsername, onSearchSkills }: ProjectLibrar
     }
   }
 
+  // Importa os projetos selecionados no modal; opcionalmente enriquece com IA.
+  async function handleImport(inputs: ProjectInput[], enrich: boolean) {
+    const created = await importProjects(inputs); // backend deduplica
+    if (created.length) setProjects((prev) => [...created, ...prev]);
+    setImportOpen(false);
+    if (enrich && created.length) {
+      setEnrichingAll(true);
+      try {
+        const updated = await enrichAllProjects();
+        if (updated.length) {
+          const byId = new Map(updated.map((u) => [u.id, u]));
+          setProjects((prev) => prev.map((p) => byId.get(p.id) ?? p));
+        }
+      } catch (e) {
+        console.warn('Enriquecimento pós-import falhou:', e);
+      } finally {
+        setEnrichingAll(false);
+      }
+    }
+  }
+
   // Estatísticas do topo (Biblioteca v5.0): score médio + nº de competências.
   const stats = useMemo(() => {
     const scored = projects.filter((p) => typeof p.portfolio_score === 'number');
@@ -222,6 +244,9 @@ export function ProjectLibrary({ githubUsername, onSearchSkills }: ProjectLibrar
             <button className="proj-ai-btn" onClick={handleEnrichAll} disabled={enrichingAll}>
               {enrichingAll ? 'analisando…' : `✨ analisar ${stats.pending} com IA`}
             </button>
+          )}
+          {githubUsername && (
+            <button className="proj-mini-btn proj-import-btn" onClick={() => setImportOpen(true)}>Importar GitHub</button>
           )}
           <button className="proj-add-btn" onClick={openCreate}>+ Adicionar projeto</button>
         </div>
@@ -293,6 +318,15 @@ export function ProjectLibrary({ githubUsername, onSearchSkills }: ProjectLibrar
           onChange={setForm}
           onClose={() => { setForm(null); setEditingId(null); }}
           onSave={handleSave}
+        />
+      )}
+
+      {importOpen && githubUsername && (
+        <ImportModal
+          username={githubUsername}
+          importedRepos={new Set(projects.map((p) => (p.repo ?? '').toLowerCase()).filter(Boolean))}
+          onClose={() => setImportOpen(false)}
+          onImport={handleImport}
         />
       )}
     </div>
@@ -569,6 +603,119 @@ function ProjectFormModal({
           <button className="proj-mini-btn" onClick={onClose} disabled={saving}>cancelar</button>
           <button className="proj-add-btn" onClick={onSave} disabled={saving || !form.title?.trim()}>
             {saving ? 'salvando…' : editing ? 'salvar' : 'adicionar'}
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+// ── Modal de import do GitHub (Biblioteca v5.0) ───────────────────
+function ImportModal({
+  username, importedRepos, onClose, onImport,
+}: {
+  username: string;
+  importedRepos: Set<string>;
+  onClose: () => void;
+  onImport: (inputs: ProjectInput[], enrich: boolean) => Promise<void>;
+}) {
+  const [repos, setRepos] = useState<GitHubRepo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [enrich, setEnrich] = useState(true);
+  const [importing, setImporting] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetchGitHubRepos(username)
+      .then((all) => {
+        if (!alive) return;
+        const usable = all.filter((r) => !r.fork);
+        setRepos(usable);
+        // Pré-seleciona os que ainda não estão na biblioteca.
+        setSelected(new Set(usable.filter((r) => !importedRepos.has(r.name.toLowerCase())).map((r) => r.name)));
+        setLoading(false);
+      })
+      .catch((e) => { if (alive) { setError(e instanceof Error ? e.message : 'Erro ao buscar repositórios.'); setLoading(false); } });
+    return () => { alive = false; };
+  }, [username, importedRepos]);
+
+  function toggle(name: string) {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      n.has(name) ? n.delete(name) : n.add(name);
+      return n;
+    });
+  }
+
+  async function confirm() {
+    const chosen = repos.filter((r) => selected.has(r.name) && !importedRepos.has(r.name.toLowerCase()));
+    if (chosen.length === 0) { onClose(); return; }
+    setImporting(true);
+    try {
+      await onImport(reposToProjectInputs(chosen), enrich);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro ao importar.');
+      setImporting(false);
+    }
+  }
+
+  const newCount = repos.filter((r) => selected.has(r.name) && !importedRepos.has(r.name.toLowerCase())).length;
+
+  return (
+    <div className="cv-versions-overlay" onClick={onClose}>
+      <div className="proj-modal proj-import-modal" onClick={(e) => e.stopPropagation()}>
+        <header className="proj-modal-head">
+          <div>
+            <h2>Importar do GitHub</h2>
+            <span className="proj-import-sub">github.com/{username}</span>
+          </div>
+          <button className="proj-modal-close" onClick={onClose}>✕</button>
+        </header>
+
+        <div className="proj-modal-body">
+          {error && <div className="proj-error">{error}</div>}
+          {loading ? (
+            <div className="proj-loading">buscando repositórios…</div>
+          ) : repos.length === 0 ? (
+            <div className="proj-empty">Nenhum repositório encontrado.</div>
+          ) : (
+            <div className="proj-import-list">
+              {repos.map((r) => {
+                const done = importedRepos.has(r.name.toLowerCase());
+                const cat = inferCategory(r);
+                const meta = CATEGORY[cat];
+                return (
+                  <label key={r.name} className={`proj-import-row${done ? ' proj-import-row--done' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={selected.has(r.name)}
+                      disabled={done}
+                      onChange={() => toggle(r.name)}
+                    />
+                    <span className="proj-import-info">
+                      <span className="proj-import-name">{r.name}</span>
+                      <span className="proj-import-meta">
+                        {[r.language, ...(r.topics ?? [])].filter(Boolean).slice(0, 3).join(' · ') || 'sem stack detectada'}
+                      </span>
+                    </span>
+                    <span className="proj-cat" style={{ color: meta.color, borderColor: meta.color }}>{meta.label}</span>
+                    {done && <span className="proj-import-done-badge">já importado</span>}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <footer className="proj-modal-foot proj-import-foot">
+          <label className="proj-import-toggle">
+            <input type="checkbox" checked={enrich} onChange={(e) => setEnrich(e.target.checked)} />
+            Analisar com IA ao importar (competências + score)
+          </label>
+          <button className="proj-add-btn" onClick={confirm} disabled={importing || newCount === 0}>
+            {importing ? 'importando…' : `Importar ${newCount}`}
           </button>
         </footer>
       </div>
