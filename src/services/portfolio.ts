@@ -23,6 +23,19 @@ export async function fetchPublicPortfolio(username: string): Promise<PortfolioD
 
 export interface PortfolioChatTurn { role: 'recruiter' | 'ai'; content: string; }
 
+/** Gera headline + resumo do portfólio com IA (não persiste). */
+export async function generatePortfolioTexts(): Promise<{ headline: string; summary: string }> {
+  const res = await fetch(`${API_URL}/portfolio/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao gerar com IA.');
+  }
+  return res.json() as Promise<{ headline: string; summary: string }>;
+}
+
 /** "Pergunte sobre mim": pergunta ao chat de IA do portfólio (sem auth). */
 export async function askPortfolio(username: string, question: string, history: PortfolioChatTurn[]): Promise<string> {
   const res = await fetch(`${API_URL}/portfolio/public/${encodeURIComponent(username)}/ask`, {

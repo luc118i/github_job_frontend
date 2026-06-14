@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PortfolioSettings, PortfolioTemplate } from '../types';
-import { fetchPortfolioSettings, savePortfolioSettings } from '../services/portfolio';
+import { fetchPortfolioSettings, savePortfolioSettings, generatePortfolioTexts } from '../services/portfolio';
 
 interface PortfolioManagerProps {
   /** username do GitHub do usuário — define a URL pública /p/<username>. */
@@ -16,6 +16,24 @@ export function PortfolioManager({ githubUsername }: PortfolioManagerProps) {
   const [error, setError] = useState('');
   const [savedMsg, setSavedMsg] = useState('');
   const [copied, setCopied] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  // Gera headline + resumo com IA e preenche os campos (usuário revisa e salva).
+  async function generate() {
+    setGenerating(true);
+    setError('');
+    try {
+      const draft = await generatePortfolioTexts();
+      if (draft.headline) setHeadline(draft.headline);
+      if (draft.summary) setSummary(draft.summary);
+      setSavedMsg('gerado — revise e salve');
+      setTimeout(() => setSavedMsg(''), 3000);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   const publicUrl = githubUsername ? `${window.location.origin}/p/${githubUsername}` : null;
 
@@ -106,6 +124,13 @@ export function PortfolioManager({ githubUsername }: PortfolioManagerProps) {
 
       {/* Textos curados */}
       <div className="pm-card">
+        <div className="pm-texts-head">
+          <span className="pm-toggle-label">Headline e resumo</span>
+          <button className="proj-ai-btn" onClick={generate} disabled={generating}>
+            {generating ? 'gerando…' : '✨ Gerar com IA'}
+          </button>
+        </div>
+        <span className="pm-toggle-hint">a IA monta a partir do LinkedIn, projetos e perfil de carreira</span>
         <label className="pm-field">
           <span>Headline</span>
           <input
