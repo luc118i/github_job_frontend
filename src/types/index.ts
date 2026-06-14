@@ -374,20 +374,33 @@ export interface CareerChatMessage {
   content: string;
 }
 
-// ── Portfólio Público (Career Studio M8) ──────────────────────────
+// ── Portfólio Público (Career Studio M8 + v6.0) ───────────────────
+export type PortfolioTemplate = 'executivo' | 'especialista' | 'criativo' | 'tech';
+
 export interface PortfolioSettings {
   published: boolean;
   headline: string | null;
   summary: string | null;
+  template: PortfolioTemplate;
 }
 
 export interface PortfolioProject {
   title: string;
   description: string;
   tech: string[];
+  competencies: string[];
+  highlights: string[];
   category: string;
   link: string | null;
   repo: string | null;
+}
+
+export interface PortfolioRecruiter {
+  level: string | null;
+  area: string | null;
+  location: string | null;
+  remote: string | null;
+  salary: string | null;
 }
 
 export interface PortfolioData {
@@ -395,10 +408,14 @@ export interface PortfolioData {
   name: string;
   headline: string | null;
   summary: string | null;
+  template: PortfolioTemplate;
   contactEmail: string | null;
   projects: PortfolioProject[];
   positions: LinkedInPosition[];
   education: LinkedInEducation[];
+  competencies: string[];
+  certifications: LinkedInCertification[];
+  recruiter: PortfolioRecruiter;
 }
 
 // Pipeline CRM (MVC v4.0) — 7 etapas. 'finalizadas' (legado) vira 'contratado'.

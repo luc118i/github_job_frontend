@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PortfolioSettings } from '../types';
+import { PortfolioSettings, PortfolioTemplate } from '../types';
 import { fetchPortfolioSettings, savePortfolioSettings } from '../services/portfolio';
 
 interface PortfolioManagerProps {
@@ -137,6 +137,34 @@ export function PortfolioManager({ githubUsername }: PortfolioManagerProps) {
           </button>
         </div>
       </div>
+
+      {/* Seletor de template (v6.0) */}
+      <div className="pm-card">
+        <span className="pm-toggle-label">Template</span>
+        <span className="pm-toggle-hint">cada um adapta o visual e a paleta da página pública</span>
+        <div className="pm-templates">
+          {TEMPLATES.map((t) => (
+            <button
+              key={t.value}
+              className={`pm-template${settings?.template === t.value ? ' pm-template--active' : ''}`}
+              style={{ ['--tpl' as string]: t.color }}
+              onClick={() => patch({ template: t.value })}
+              disabled={saving}
+            >
+              <span className="pm-template-dot" />
+              <span className="pm-template-name">{t.label}</span>
+              <span className="pm-template-for">{t.for}</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
+
+const TEMPLATES: { value: PortfolioTemplate; label: string; for: string; color: string }[] = [
+  { value: 'executivo', label: 'Executivo', for: 'Gestão, liderança', color: '#8B5CF6' },
+  { value: 'especialista', label: 'Especialista', for: 'Dados, jurídico, RH', color: '#3B82F6' },
+  { value: 'criativo', label: 'Criativo', for: 'Marketing, design', color: '#EC4899' },
+  { value: 'tech', label: 'Tech', for: 'Dev, cloud, devops', color: '#22C55E' },
+];

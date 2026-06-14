@@ -70,8 +70,20 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
 
   const initials = data.name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('');
 
+  // Resumo do recrutador — só os campos preenchidos.
+  const recruiterFields = ([
+    ['Nível', data.recruiter.level],
+    ['Área', data.recruiter.area],
+    ['Local', data.recruiter.location],
+    ['Remoto', data.recruiter.remote],
+    ['Pretensão', data.recruiter.salary],
+  ] as const).filter(([, v]) => !!v);
+
+  // Resultados — destaques agregados dos projetos.
+  const resultados = data.projects.flatMap((p) => p.highlights).filter(Boolean).slice(0, 6);
+
   return (
-    <div className="pf-page">
+    <div className="pf-page" data-template={data.template}>
       <main className="pf-container">
         {/* ── Cabeçalho ── */}
         <header className="pf-hero">
@@ -89,11 +101,33 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
           </div>
         </header>
 
+        {/* ── Resumo do recrutador ── */}
+        {recruiterFields.length > 0 && (
+          <div className="pf-recruiter">
+            {recruiterFields.map(([k, v]) => (
+              <div key={k} className="pf-rec-cell">
+                <span className="pf-rec-k">{k}</span>
+                <span className="pf-rec-v">{v}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* ── Sobre ── */}
         {data.summary && (
           <section className="pf-section">
             <h2 className="pf-section-title">Sobre</h2>
             <p className="pf-summary">{data.summary}</p>
+          </section>
+        )}
+
+        {/* ── Resultados ── */}
+        {resultados.length > 0 && (
+          <section className="pf-section">
+            <h2 className="pf-section-title">Resultados</h2>
+            <div className="pf-results">
+              {resultados.map((r, i) => <div key={i} className="pf-result">{r}</div>)}
+            </div>
           </section>
         )}
 
@@ -150,6 +184,34 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
                     <span className="pf-exp-period">{period(ed.startDate ?? '', ed.endDate)}</span>
                   </div>
                   {ed.degree && <span className="pf-exp-company">{ed.degree}</span>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Competências ── */}
+        {data.competencies.length > 0 && (
+          <section className="pf-section">
+            <h2 className="pf-section-title">Competências</h2>
+            <div className="pf-comp-list">
+              {data.competencies.map((c) => <span key={c} className="pf-comp-pill">{c}</span>)}
+            </div>
+          </section>
+        )}
+
+        {/* ── Certificações ── */}
+        {data.certifications.length > 0 && (
+          <section className="pf-section">
+            <h2 className="pf-section-title">Certificações</h2>
+            <div className="pf-timeline">
+              {data.certifications.map((c, i) => (
+                <div key={i} className="pf-exp">
+                  <div className="pf-exp-head">
+                    <span className="pf-exp-title">{c.name}</span>
+                    {(c.finishedOn || c.startedOn) && <span className="pf-exp-period">{c.finishedOn ?? c.startedOn}</span>}
+                  </div>
+                  {c.authority && <span className="pf-exp-company">{c.authority}</span>}
                 </div>
               ))}
             </div>
