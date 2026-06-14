@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PortfolioData, GitHubUser } from '../types';
-import { fetchPublicPortfolio } from '../services/portfolio';
+import { fetchPublicPortfolio, askPortfolio, PortfolioChatTurn } from '../services/portfolio';
 import { fetchGitHubUser } from '../services/github';
 import { CATEGORY } from '../utils/projectMatch';
 
@@ -30,6 +30,32 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
   const [gh, setGh] = useState<GitHubUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+
+  // "Pergunte sobre mim" — chat de IA do recrutador.
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatHistory, setChatHistory] = useState<PortfolioChatTurn[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatHistory, chatLoading]);
+
+  async function sendQuestion() {
+    const q = chatInput.trim();
+    if (!q || chatLoading) return;
+    const next: PortfolioChatTurn[] = [...chatHistory, { role: 'recruiter', content: q }];
+    setChatHistory(next);
+    setChatInput('');
+    setChatLoading(true);
+    try {
+      const answer = await askPortfolio(username, q, chatHistory);
+      setChatHistory((h) => [...h, { role: 'ai', content: answer }]);
+    } catch (e) {
+      setChatHistory((h) => [...h, { role: 'ai', content: (e as Error).message }]);
+    } finally {
+      setChatLoading(false);
+    }
+  }
 
   useEffect(() => {
     let alive = true;
@@ -230,6 +256,45 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
           Feito com JobFinder
         </footer>
       </main>
+
+      {/* ── "Pergunte sobre mim" — chat de IA do recrutador ── */}
+      {!chatOpen && (
+        <button className="pf-ask-fab" onClick={() => setChatOpen(true)}>
+          💬 Pergunte sobre mim
+        </button>
+      )}
+      {chatOpen && (
+        <div className="pf-chat">
+          <div className="pf-chat-head">
+            <span className="pf-chat-title">Pergunte sobre {data.name.split(' ')[0]}</span>
+            <button className="pf-chat-close" onClick={() => setChatOpen(false)}>✕</button>
+          </div>
+          <div className="pf-chat-body">
+            {chatHistory.length === 0 && !chatLoading && (
+              <p className="pf-chat-hint">IA treinada no perfil. Pergunte sobre experiência, skills, disponibilidade…</p>
+            )}
+            {chatHistory.map((t, i) => (
+              <div key={i} className={`pf-chat-msg pf-chat-msg--${t.role}`}>
+                <span className="pf-chat-who">{t.role === 'ai' ? 'IA' : 'Você'}</span>
+                <p className="pf-chat-text">{t.content}</p>
+              </div>
+            ))}
+            {chatLoading && <div className="pf-chat-msg pf-chat-msg--ai"><span className="pf-chat-typing">digitando…</span></div>}
+            <div ref={chatEndRef} />
+          </div>
+          <div className="pf-chat-input-row">
+            <input
+              className="pf-chat-input"
+              placeholder={`Pergunte sobre ${data.name.split(' ')[0]}…`}
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') sendQuestion(); }}
+              disabled={chatLoading}
+            />
+            <button className="pf-chat-send" onClick={sendQuestion} disabled={chatLoading || !chatInput.trim()}>›</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -21,6 +21,23 @@ export async function fetchPublicPortfolio(username: string): Promise<PortfolioD
   return res.json() as Promise<PortfolioData>;
 }
 
+export interface PortfolioChatTurn { role: 'recruiter' | 'ai'; content: string; }
+
+/** "Pergunte sobre mim": pergunta ao chat de IA do portfólio (sem auth). */
+export async function askPortfolio(username: string, question: string, history: PortfolioChatTurn[]): Promise<string> {
+  const res = await fetch(`${API_URL}/portfolio/public/${encodeURIComponent(username)}/ask`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question, history }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(data.error ?? 'Erro ao perguntar.');
+  }
+  const data = await res.json() as { answer: string };
+  return data.answer;
+}
+
 /** Configurações do portfólio do usuário logado. */
 export async function fetchPortfolioSettings(): Promise<PortfolioSettings> {
   const res = await fetch(`${API_URL}/portfolio/settings`, { headers: authHeaders() });

@@ -10801,3 +10801,40 @@ main.kanban-view {
 .pm-template-dot { width: 22px; height: 6px; border-radius: 3px; background: var(--tpl); margin-bottom: 4px; }
 .pm-template-name { font-size: 13.5px; font-weight: 600; color: rgba(232,228,220,0.92); }
 .pm-template-for { font-size: 11px; color: rgba(232,228,220,0.45); }
+
+/* ── "Pergunte sobre mim" — chat de IA do recrutador (v6.0) ── */
+.pf-ask-fab {
+  position: fixed; bottom: 20px; right: 20px; z-index: 40;
+  padding: 12px 20px; border-radius: 999px; cursor: pointer; border: none;
+  background: var(--pf-accent, #8B5CF6); color: #fff; font-size: 14px; font-weight: 600;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--pf-accent, #8B5CF6) 45%, transparent);
+  transition: transform 0.15s, filter 0.15s;
+}
+.pf-ask-fab:hover { transform: translateY(-2px); filter: brightness(1.05); }
+
+.pf-chat {
+  position: fixed; bottom: 20px; right: 20px; z-index: 41;
+  width: min(380px, calc(100vw - 32px)); height: min(560px, calc(100vh - 80px));
+  display: flex; flex-direction: column; overflow: hidden;
+  background: #111118; border: 1px solid rgba(255,255,255,0.1);
+  border-top: 2px solid var(--pf-accent, #8B5CF6); border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: fadeIn 0.18s ease;
+}
+.pf-chat-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.pf-chat-title { font-weight: 700; font-size: 14px; color: rgba(232,228,220,0.95); }
+.pf-chat-close { background: none; border: none; color: rgba(232,228,220,0.5); font-size: 15px; cursor: pointer; }
+.pf-chat-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.pf-chat-hint { font-size: 12.5px; line-height: 1.5; color: rgba(232,228,220,0.5); margin: 0; }
+.pf-chat-msg { display: flex; flex-direction: column; gap: 3px; max-width: 90%; }
+.pf-chat-msg--ai { align-self: flex-start; }
+.pf-chat-msg--recruiter { align-self: flex-end; align-items: flex-end; }
+.pf-chat-who { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: rgba(232,228,220,0.4); }
+.pf-chat-text { margin: 0; font-size: 13px; line-height: 1.55; padding: 9px 12px; border-radius: 12px; white-space: pre-wrap; }
+.pf-chat-msg--ai .pf-chat-text { background: color-mix(in srgb, var(--pf-accent, #8B5CF6) 14%, transparent); border: 1px solid color-mix(in srgb, var(--pf-accent, #8B5CF6) 28%, transparent); color: rgba(232,228,220,0.92); border-bottom-left-radius: 3px; }
+.pf-chat-msg--recruiter .pf-chat-text { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(232,228,220,0.88); border-bottom-right-radius: 3px; }
+.pf-chat-typing { font-size: 12px; font-style: italic; color: color-mix(in srgb, var(--pf-accent, #8B5CF6) 70%, white); padding: 6px 4px; }
+.pf-chat-input-row { display: flex; gap: 8px; padding: 12px; border-top: 1px solid rgba(255,255,255,0.07); }
+.pf-chat-input { flex: 1; padding: 9px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); color: rgba(232,228,220,0.92); font-size: 13px; }
+.pf-chat-input:focus { border-color: var(--pf-accent, #8B5CF6); outline: none; }
+.pf-chat-send { width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; border: none; cursor: pointer; background: var(--pf-accent, #8B5CF6); color: #fff; font-size: 20px; line-height: 1; }
+.pf-chat-send:disabled { opacity: 0.5; cursor: default; }
