@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PortfolioData, GitHubUser } from '../types';
-import { fetchPublicPortfolio } from '../services/portfolio';
+import { fetchPublicPortfolio, askPortfolio, registerPortfolioView, PortfolioChatTurn } from '../services/portfolio';
 import { fetchGitHubUser } from '../services/github';
 import { CATEGORY } from '../utils/projectMatch';
 
@@ -31,6 +31,32 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  // "Pergunte sobre mim" — chat de IA do recrutador.
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatHistory, setChatHistory] = useState<PortfolioChatTurn[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatHistory, chatLoading]);
+
+  async function sendQuestion() {
+    const q = chatInput.trim();
+    if (!q || chatLoading) return;
+    const next: PortfolioChatTurn[] = [...chatHistory, { role: 'recruiter', content: q }];
+    setChatHistory(next);
+    setChatInput('');
+    setChatLoading(true);
+    try {
+      const answer = await askPortfolio(username, q, chatHistory);
+      setChatHistory((h) => [...h, { role: 'ai', content: answer }]);
+    } catch (e) {
+      setChatHistory((h) => [...h, { role: 'ai', content: (e as Error).message }]);
+    } finally {
+      setChatLoading(false);
+    }
+  }
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -40,6 +66,12 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
         if (!pf) { setNotFound(true); setLoading(false); return; }
         setData(pf);
         setLoading(false);
+        // Registra a visualização 1x por sessão (não conta refresh repetido).
+        const viewKey = `pf_viewed_${username.toLowerCase()}`;
+        if (!sessionStorage.getItem(viewKey)) {
+          sessionStorage.setItem(viewKey, '1');
+          registerPortfolioView(pf.githubUsername);
+        }
         // GitHub (avatar/bio) best-effort — não bloqueia a página.
         try {
           const user = await fetchGitHubUser(pf.githubUsername);
@@ -70,8 +102,20 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
 
   const initials = data.name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('');
 
+  // Resumo do recrutador — só os campos preenchidos.
+  const recruiterFields = ([
+    ['Nível', data.recruiter.level],
+    ['Área', data.recruiter.area],
+    ['Local', data.recruiter.location],
+    ['Remoto', data.recruiter.remote],
+    ['Pretensão', data.recruiter.salary],
+  ] as const).filter(([, v]) => !!v);
+
+  // Resultados — destaques agregados dos projetos.
+  const resultados = data.projects.flatMap((p) => p.highlights).filter(Boolean).slice(0, 6);
+
   return (
-    <div className="pf-page">
+    <div className="pf-page" data-template={data.template}>
       <main className="pf-container">
         {/* ── Cabeçalho ── */}
         <header className="pf-hero">
@@ -89,11 +133,33 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
           </div>
         </header>
 
+        {/* ── Resumo do recrutador ── */}
+        {recruiterFields.length > 0 && (
+          <div className="pf-recruiter">
+            {recruiterFields.map(([k, v]) => (
+              <div key={k} className="pf-rec-cell">
+                <span className="pf-rec-k">{k}</span>
+                <span className="pf-rec-v">{v}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* ── Sobre ── */}
         {data.summary && (
           <section className="pf-section">
             <h2 className="pf-section-title">Sobre</h2>
             <p className="pf-summary">{data.summary}</p>
+          </section>
+        )}
+
+        {/* ── Resultados ── */}
+        {resultados.length > 0 && (
+          <section className="pf-section">
+            <h2 className="pf-section-title">Resultados</h2>
+            <div className="pf-results">
+              {resultados.map((r, i) => <div key={i} className="pf-result">{r}</div>)}
+            </div>
           </section>
         )}
 
@@ -156,6 +222,34 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
           </section>
         )}
 
+        {/* ── Competências ── */}
+        {data.competencies.length > 0 && (
+          <section className="pf-section">
+            <h2 className="pf-section-title">Competências</h2>
+            <div className="pf-comp-list">
+              {data.competencies.map((c) => <span key={c} className="pf-comp-pill">{c}</span>)}
+            </div>
+          </section>
+        )}
+
+        {/* ── Certificações ── */}
+        {data.certifications.length > 0 && (
+          <section className="pf-section">
+            <h2 className="pf-section-title">Certificações</h2>
+            <div className="pf-timeline">
+              {data.certifications.map((c, i) => (
+                <div key={i} className="pf-exp">
+                  <div className="pf-exp-head">
+                    <span className="pf-exp-title">{c.name}</span>
+                    {(c.finishedOn || c.startedOn) && <span className="pf-exp-period">{c.finishedOn ?? c.startedOn}</span>}
+                  </div>
+                  {c.authority && <span className="pf-exp-company">{c.authority}</span>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ── Contato / CTA ── */}
         {data.contactEmail && (
           <section className="pf-cta">
@@ -164,10 +258,59 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
           </section>
         )}
 
+        {/* CTA: convida o visitante a criar o próprio portfólio */}
+        <section className="pf-promo">
+          <h2 className="pf-promo-title">Gostou? Crie o seu também.</h2>
+          <p className="pf-promo-sub">
+            Monte um portfólio profissional com IA em minutos — currículo, projetos e
+            uma página pública que responde recrutadores. Grátis no JobFinder.
+          </p>
+          <a className="pf-promo-btn" href={window.location.origin + '/'}>Criar meu portfólio</a>
+        </section>
+
         <footer className="pf-footer">
           Feito com JobFinder
         </footer>
       </main>
+
+      {/* ── "Pergunte sobre mim" — chat de IA do recrutador ── */}
+      {!chatOpen && (
+        <button className="pf-ask-fab" onClick={() => setChatOpen(true)}>
+          💬 Pergunte sobre mim
+        </button>
+      )}
+      {chatOpen && (
+        <div className="pf-chat">
+          <div className="pf-chat-head">
+            <span className="pf-chat-title">Pergunte sobre {data.name.split(' ')[0]}</span>
+            <button className="pf-chat-close" onClick={() => setChatOpen(false)}>✕</button>
+          </div>
+          <div className="pf-chat-body">
+            {chatHistory.length === 0 && !chatLoading && (
+              <p className="pf-chat-hint">IA treinada no perfil. Pergunte sobre experiência, skills, disponibilidade…</p>
+            )}
+            {chatHistory.map((t, i) => (
+              <div key={i} className={`pf-chat-msg pf-chat-msg--${t.role}`}>
+                <span className="pf-chat-who">{t.role === 'ai' ? 'IA' : 'Você'}</span>
+                <p className="pf-chat-text">{t.content}</p>
+              </div>
+            ))}
+            {chatLoading && <div className="pf-chat-msg pf-chat-msg--ai"><span className="pf-chat-typing">digitando…</span></div>}
+            <div ref={chatEndRef} />
+          </div>
+          <div className="pf-chat-input-row">
+            <input
+              className="pf-chat-input"
+              placeholder={`Pergunte sobre ${data.name.split(' ')[0]}…`}
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') sendQuestion(); }}
+              disabled={chatLoading}
+            />
+            <button className="pf-chat-send" onClick={sendQuestion} disabled={chatLoading || !chatInput.trim()}>›</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

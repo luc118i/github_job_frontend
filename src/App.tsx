@@ -52,6 +52,8 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authReason, setAuthReason] = useState<string | undefined>(undefined);
   const [pendingLinkedIn, setPendingLinkedIn] = useState<LinkedInData | null>(null);
+  // Pré-preenche a busca quando o usuário clica "buscar vagas" num projeto.
+  const [projectQuery, setProjectQuery] = useState('');
 
   const { profile, jobs, loading, step, error, filter, blockedToday: githubBlocked, remaining: githubRemaining, setFilter, search, removeJob } = useJobSearch();
   const { preferences, setPreferences } = usePreferences();
@@ -269,6 +271,7 @@ export default function App() {
             onCareerRedo={resetCareerProfile}
             onGithubChange={handleGithubChange}
             onStartOnboarding={() => setForceOnboarding(true)}
+            initialQuery={projectQuery}
           />
         )}
 
@@ -389,7 +392,10 @@ export default function App() {
           )}
 
           {view === 'projetos' && (
-            <ProjectLibrary githubUsername={currentUser?.github_username ?? (username || null)} />
+            <ProjectLibrary
+              githubUsername={currentUser?.github_username ?? (username || null)}
+              onSearchSkills={(skills) => { setProjectQuery(skills.slice(0, 5).join(' ')); setView('buscar'); }}
+            />
           )}
 
           {view === 'portfolio' && (

@@ -38,6 +38,8 @@ interface BuscarViewProps {
   onGithubChange?: (username: string | null) => void;
   /** Dispara o fluxo de upload de CV + análise da IA (onboarding) sem exigir login. */
   onStartOnboarding: () => void;
+  /** Pré-preenche a busca (ex.: ao clicar "buscar vagas" num projeto). */
+  initialQuery?: string;
 }
 
 /** Gera sugestões de busca a partir do perfil de carreira */
@@ -63,6 +65,7 @@ export function BuscarView({
   onViewCv,
   onPreferencesChange,
   onStartOnboarding,
+  initialQuery,
 }: BuscarViewProps) {
   const {
     jobs,
@@ -79,7 +82,7 @@ export function BuscarView({
     hasSearched,
   } = useProfessionSearch();
 
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery ?? '');
   const [lastQuery, setLastQuery] = useState<string | null>(null);
   const [trendSuggestions, setTrendSuggestions] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
