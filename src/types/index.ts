@@ -336,6 +336,7 @@ export interface ProfessionJobRecord extends JobRecord {
 export interface ProfessionSearchResult {
   jobs: ProfessionJobRecord[];
   profileSummary: string;
+  bonusJobs?: ProfessionJobRecord[];
 }
 
 export interface JobFeedItem extends JobRecord {

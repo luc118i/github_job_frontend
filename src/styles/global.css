@@ -9829,6 +9829,11 @@ main.kanban-view {
 .bv-suggestion-chip:hover { transform: translateY(-1px); background: var(--brand-dim); border-color: var(--brand-border); color: var(--brand-text); }
 .bv-suggestion-chip--trend { border-color: rgba(99,173,255,0.2); color: rgba(232,228,220,0.55); }
 .bv-suggestion-chip--trend:hover { background: rgba(99,173,255,0.08); border-color: rgba(99,173,255,0.4); color: rgba(99,173,255,0.9); }
+.bv-bonus-section { margin-top: 40px; display: flex; flex-direction: column; gap: 20px; }
+.bv-bonus-header { display: flex; align-items: flex-start; gap: 12px; padding: 16px 20px; background: rgba(255,200,80,0.04); border: 1px solid rgba(255,200,80,0.12); border-radius: 10px; }
+.bv-bonus-icon { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: rgba(255,200,80,0.1); border: 1px solid rgba(255,200,80,0.2); display: flex; align-items: center; justify-content: center; color: rgba(255,200,80,0.7); margin-top: 2px; }
+.bv-bonus-title { font-size: 13px; font-weight: 600; color: rgba(255,200,80,0.85); margin-bottom: 4px; }
+.bv-bonus-subtitle { font-size: 12px; color: rgba(232,228,220,0.45); line-height: 1.5; }
 .bv-prefs-row { display: flex; align-items: center; gap: 16px; }
 .bv-prefs-link { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; font-size: 12px; color: rgba(232,228,220,0.35); transition: color 0.15s; padding: 0; }
 .bv-prefs-link:hover { color: rgba(232,228,220,0.65); }

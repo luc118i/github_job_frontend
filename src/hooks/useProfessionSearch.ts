@@ -4,6 +4,7 @@ import { fetchProfessionJobs, fetchJobsByQuery } from '../services/professionJob
 
 interface UseProfessionSearchReturn {
   jobs: ProfessionJobRecord[];
+  bonusJobs: ProfessionJobRecord[];
   loading: boolean;
   error: string;
   profileSummary: string;
@@ -20,6 +21,7 @@ interface UseProfessionSearchReturn {
 
 export function useProfessionSearch(): UseProfessionSearchReturn {
   const [jobs, setJobs] = useState<ProfessionJobRecord[]>([]);
+  const [bonusJobs, setBonusJobs] = useState<ProfessionJobRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [profileSummary, setProfileSummary] = useState('');
@@ -30,11 +32,13 @@ export function useProfessionSearch(): UseProfessionSearchReturn {
     setLoading(true);
     setError('');
     setJobs([]);
+    setBonusJobs([]);
     setTagFilter('all');
 
     try {
       const result = await fetchProfessionJobs(linkedIn, preferences, careerProfile, githubUsername);
       setJobs(result.jobs);
+      setBonusJobs(result.bonusJobs ?? []);
       setProfileSummary(result.profileSummary);
       setHasSearched(true);
     } catch (e) {
@@ -48,10 +52,12 @@ export function useProfessionSearch(): UseProfessionSearchReturn {
     setLoading(true);
     setError('');
     setJobs([]);
+    setBonusJobs([]);
     setTagFilter('all');
     try {
       const result = await fetchJobsByQuery(query, preferences, careerProfile, linkedIn);
       setJobs(result.jobs);
+      setBonusJobs(result.bonusJobs ?? []);
       setProfileSummary(result.profileSummary);
       setHasSearched(true);
     } catch (e) {
@@ -66,6 +72,7 @@ export function useProfessionSearch(): UseProfessionSearchReturn {
 
   function reset() {
     setJobs([]);
+    setBonusJobs([]);
     setProfileSummary('');
     setError('');
     setHasSearched(false);
@@ -74,7 +81,8 @@ export function useProfessionSearch(): UseProfessionSearchReturn {
 
   function removeJob(id: string) {
     setJobs((prev) => prev.filter((j) => j.id !== id));
+    setBonusJobs((prev) => prev.filter((j) => j.id !== id));
   }
 
-  return { jobs, loading, error, profileSummary, tagFilter, blockedToday: false, remaining: 999, setTagFilter, search, searchByQuery, reset, removeJob, hasSearched };
+  return { jobs, bonusJobs, loading, error, profileSummary, tagFilter, blockedToday: false, remaining: 999, setTagFilter, search, searchByQuery, reset, removeJob, hasSearched };
 }

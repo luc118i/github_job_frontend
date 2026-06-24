@@ -65,6 +65,7 @@ export function BuscarView({
 }: BuscarViewProps) {
   const {
     jobs,
+    bonusJobs,
     loading,
     error,
     profileSummary,
@@ -512,7 +513,41 @@ export function BuscarView({
             </>
           ) : (
             <div className="bv-empty">
-              Nenhuma vaga encontrada. Tente outro termo.
+              {bonusJobs.length > 0
+                ? 'Nenhuma vaga encontrada dentro dos seus filtros. Veja abaixo vagas compatíveis com o seu perfil.'
+                : 'Nenhuma vaga encontrada. Tente outro termo.'}
+            </div>
+          )}
+
+          {bonusJobs.length > 0 && (
+            <div className="bv-bonus-section">
+              <div className="bv-bonus-header">
+                <div className="bv-bonus-icon">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 1l1.5 3.5L12 5l-2.5 2.5.5 3.5L7 9.5 4 11l.5-3.5L2 5l3.5-.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="bv-bonus-title">Fora dos seus filtros, mas compatíveis com o seu perfil</div>
+                  <div className="bv-bonus-subtitle">Estas vagas não atendem a todos os seus critérios, mas apresentam alta compatibilidade com a sua experiência e habilidades.</div>
+                </div>
+              </div>
+              <div className="jobs-grid bv-jobs-grid">
+                {bonusJobs.map((job, i) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    index={i}
+                    match={job.match}
+                    onGenerateCv={() => onGenerateCv(job)}
+                    onViewCv={() => onViewCv(job)}
+                    onLike={(_j, cat) => likeKeyword(cat)}
+                    onBlock={(_j, cat) => { blockKeyword(cat); removeJob(job.id); }}
+                    onLikeSource={(_j, src) => likeSource(src)}
+                    onBlockSource={(_j, src) => blockSource(src)}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>
