@@ -6,6 +6,8 @@ import { TagFilterBar } from './TagFilterBar';
 import { ProfileScoreCard } from './ProfileScoreCard';
 import { AiAnalysisPanel } from './AiAnalysisPanel';
 import { useProfessionSearch } from '../hooks/useProfessionSearch';
+import { fetchLastQuery } from '../services/searches';
+import { fetchTrendingSuggestions } from '../services/career';
 import { blockKeyword, likeKeyword, blockSource, likeSource } from '../utils/jobPreferences';
 
 const MODALITY_OPTIONS: { value: UserPreferences['modality']; label: string }[] = [
@@ -78,6 +80,8 @@ export function BuscarView({
   } = useProfessionSearch();
 
   const [query, setQuery] = useState('');
+  const [lastQuery, setLastQuery] = useState<string | null>(null);
+  const [trendSuggestions, setTrendSuggestions] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [locationDraft, setLocationDraft] = useState(preferences.location ?? '');
   const [detectingLocation, setDetectingLocation] = useState(false);
@@ -131,6 +135,18 @@ export function BuscarView({
   // Foca o input ao montar
   useEffect(() => { inputRef.current?.focus(); }, []);
 
+  // Carrega o último termo buscado — usado como semente do "Descobrir Vagas".
+  useEffect(() => { fetchLastQuery().then(r => setLastQuery(r.query)); }, []);
+
+  // Tendências de mercado para o perfil — enriquecem o "Sugerido para você".
+  // Best-effort: falha silenciosa cai no fallback das sugestões declaradas.
+  useEffect(() => {
+    if (!careerProfile) { setTrendSuggestions([]); return; }
+    let active = true;
+    fetchTrendingSuggestions(careerProfile).then(t => { if (active) setTrendSuggestions(t); });
+    return () => { active = false; };
+  }, [careerProfile]);
+
   // Foca com Ctrl+K / ⌘K
   useEffect(() => {
     function handler(e: KeyboardEvent) {
@@ -143,7 +159,19 @@ export function BuscarView({
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  const suggestions = careerProfile ? buildSuggestions(careerProfile) : [];
+  // Sugestões = perfil declarado + tendências de mercado, dedup (case-insensitive), corta em 6.
+  const suggestions = (() => {
+    const declared = careerProfile ? buildSuggestions(careerProfile) : [];
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const s of [...declared, ...trendSuggestions]) {
+      const key = s.trim().toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(s);
+    }
+    return out.slice(0, 6);
+  })();
   const hasQuery = query.trim().length > 0;
 
   // Perfil sem transitionReady para buscas genéricas (transição é exclusivo de "vagas ti")
@@ -161,9 +189,11 @@ export function BuscarView({
   }
 
   function handleDiscover() {
-    // "Descobrir Vagas" exige o CV: sem currículo, sobe o CV antes de qualquer busca.
-    if (!linkedIn) { onStartOnboarding(); return; }
-    search(linkedIn, preferences, genericProfile);
+    // Cascata: reaproveita o último termo buscado → busca por perfil (CV) →
+    // onboarding. Assim quem já buscou antes não esbarra na parede de CV.
+    if (lastQuery) { searchByQuery(lastQuery, preferences, genericProfile, linkedIn); return; }
+    if (linkedIn) { search(linkedIn, preferences, genericProfile); return; }
+    onStartOnboarding();
   }
 
   function handleKey(e: React.KeyboardEvent) {

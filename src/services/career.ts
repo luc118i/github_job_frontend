@@ -54,6 +54,26 @@ export async function fetchCareerProfile(): Promise<CareerProfile | null> {
   return data.profile;
 }
 
+/**
+ * Termos de busca em alta no mercado para o perfil. Usado para enriquecer o
+ * "Sugerido para você". Retorna [] em qualquer falha — o chamador faz fallback
+ * para as sugestões do perfil declarado.
+ */
+export async function fetchTrendingSuggestions(profile: CareerProfile): Promise<string[]> {
+  try {
+    const res = await fetch(`${API_URL}/career/trends`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile }),
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { suggestions?: string[] };
+    return Array.isArray(data.suggestions) ? data.suggestions : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function persistCareerProfile(profile: CareerProfile | null): Promise<void> {
   const token = getToken();
   if (!token) return;

@@ -21,3 +21,23 @@ export async function fetchJobFeed(scope?: 'recent'): Promise<JobFeedItem[]> {
   const data = (await res.json()) as { jobs: JobFeedItem[] };
   return data.jobs;
 }
+
+/**
+ * Última busca por texto do usuário. Alimenta o "Descobrir Vagas": em vez de
+ * exigir CV, reaproveita o termo já buscado antes. Retorna { query: null } se
+ * o usuário não estiver logado ou nunca tiver feito uma busca por texto.
+ */
+export async function fetchLastQuery(): Promise<{ query: string | null; skills: string[] }> {
+  const token = getToken();
+  if (!token) return { query: null, skills: [] };
+  try {
+    const res = await fetch(`${API_URL}/searches/last-query`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return { query: null, skills: [] };
+    const data = (await res.json()) as { query: string | null; skills?: string[] };
+    return { query: data.query ?? null, skills: data.skills ?? [] };
+  } catch {
+    return { query: null, skills: [] };
+  }
+}
