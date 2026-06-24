@@ -42,18 +42,14 @@ interface BuscarViewProps {
   initialQuery?: string;
 }
 
-/** Gera sugestões de busca a partir do perfil de carreira */
-function buildSuggestions(profile: CareerProfile): string[] {
+/** Gera sugestões de busca a partir do perfil de carreira (apenas termos pesquisáveis) */
+function buildProfileSuggestions(profile: CareerProfile): string[] {
   const raw: string[] = [
     ...(profile.desiredAreas ?? []),
     profile.transitionTarget ?? '',
-    // careerGoals costuma ser curto ("trabalhar em T.I como analista") → pega como sugestão
-    profile.careerGoals ?? '',
-    ...(profile.hiddenSkills ?? []).slice(0, 2),
   ].filter(Boolean);
 
-  // Deduplica e limita a 6
-  return [...new Set(raw.map(s => s.trim()).filter(s => s.length > 2))].slice(0, 6);
+  return [...new Set(raw.map(s => s.trim()).filter(s => s.length > 2 && s.split(' ').length <= 4))].slice(0, 4);
 }
 
 export function BuscarView({
@@ -162,19 +158,19 @@ export function BuscarView({
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Sugestões = perfil declarado + tendências de mercado, dedup (case-insensitive), corta em 6.
-  const suggestions = (() => {
-    const declared = careerProfile ? buildSuggestions(careerProfile) : [];
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const s of [...declared, ...trendSuggestions]) {
-      const key = s.trim().toLowerCase();
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-      out.push(s);
-    }
-    return out.slice(0, 6);
+  // Sugestões: perfil declarado + tendências de mercado, dedup entre grupos, 4 + 4 máx.
+  const { profileSuggestions, trendingSuggestions } = (() => {
+    const profile = careerProfile ? buildProfileSuggestions(careerProfile) : [];
+    const seen = new Set(profile.map(s => s.trim().toLowerCase()));
+    const trending = trendSuggestions.filter(s => {
+      const k = s.trim().toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    }).slice(0, 4);
+    return { profileSuggestions: profile, trendingSuggestions: trending };
   })();
+  const hasSuggestions = profileSuggestions.length > 0 || trendingSuggestions.length > 0;
   const hasQuery = query.trim().length > 0;
 
   // Perfil sem transitionReady para buscas genéricas (transição é exclusivo de "vagas ti")
@@ -371,16 +367,33 @@ export function BuscarView({
         </div>
 
         {/* Sugestões inteligentes */}
-        {!hasSearched && !loading && suggestions.length > 0 && (
+        {!hasSearched && !loading && hasSuggestions && (
           <div className="bv-suggestions">
-            <span className="bv-suggestions-label">Sugerido para você</span>
-            <div className="bv-suggestions-chips">
-              {suggestions.map(s => (
-                <button key={s} className="bv-suggestion-chip" onClick={() => handleSuggestion(s)}>
-                  {s}
-                </button>
-              ))}
-            </div>
+            {profileSuggestions.length > 0 && (
+              <>
+                <span className="bv-suggestions-label">Do seu perfil</span>
+                <div className="bv-suggestions-chips">
+                  {profileSuggestions.map(s => (
+                    <button key={s} className="bv-suggestion-chip" onClick={() => handleSuggestion(s)}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            {trendingSuggestions.length > 0 && (
+              <>
+                <span className="bv-suggestions-label bv-suggestions-label--trend">Em alta</span>
+                <div className="bv-suggestions-chips">
+                  {trendingSuggestions.map(s => (
+                    <button key={s} className="bv-suggestion-chip bv-suggestion-chip--trend" onClick={() => handleSuggestion(s)}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
           </div>
         )}
 

@@ -9821,11 +9821,14 @@ main.kanban-view {
 }
 .bv-fp-apply:hover { background: #2f5ba8; }
 .bv-spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
-.bv-suggestions { display: flex; flex-direction: column; gap: 10px; }
+.bv-suggestions { display: flex; flex-direction: column; gap: 8px; }
 .bv-suggestions-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(232,228,220,0.3); }
+.bv-suggestions-label--trend { color: rgba(99,173,255,0.45); }
 .bv-suggestions-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.bv-suggestion-chip { padding: 8px 16px; border-radius: var(--r-pill); background: var(--glass-bg); border: 1px solid var(--glass-border); color: rgba(232,228,220,0.65); font-size: 13px; font-family: var(--font-body); cursor: pointer; transition: transform var(--t-base), background var(--t-base), border-color var(--t-base), color var(--t-base); }
+.bv-suggestion-chip { padding: 7px 14px; border-radius: var(--r-pill); background: var(--glass-bg); border: 1px solid var(--glass-border); color: rgba(232,228,220,0.65); font-size: 13px; font-family: var(--font-body); cursor: pointer; transition: transform var(--t-base), background var(--t-base), border-color var(--t-base), color var(--t-base); }
 .bv-suggestion-chip:hover { transform: translateY(-1px); background: var(--brand-dim); border-color: var(--brand-border); color: var(--brand-text); }
+.bv-suggestion-chip--trend { border-color: rgba(99,173,255,0.2); color: rgba(232,228,220,0.55); }
+.bv-suggestion-chip--trend:hover { background: rgba(99,173,255,0.08); border-color: rgba(99,173,255,0.4); color: rgba(99,173,255,0.9); }
 .bv-prefs-row { display: flex; align-items: center; gap: 16px; }
 .bv-prefs-link { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; font-size: 12px; color: rgba(232,228,220,0.35); transition: color 0.15s; padding: 0; }
 .bv-prefs-link:hover { color: rgba(232,228,220,0.65); }
