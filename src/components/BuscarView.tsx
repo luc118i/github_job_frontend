@@ -42,14 +42,66 @@ interface BuscarViewProps {
   initialQuery?: string;
 }
 
-/** Gera sugestões de busca a partir do perfil de carreira (apenas termos pesquisáveis) */
-function buildProfileSuggestions(profile: CareerProfile): string[] {
-  const raw: string[] = [
-    ...(profile.desiredAreas ?? []),
-    profile.transitionTarget ?? '',
-  ].filter(Boolean);
+const AREA_TO_TITLES: Record<string, string[]> = {
+  'ti':           ['Analista de TI', 'Analista de Sistemas'],
+  'tecnologia':   ['Analista de TI', 'Analista de Sistemas'],
+  'dados':        ['Analista de Dados', 'Analista de BI'],
+  'data':         ['Analista de Dados', 'Engenheiro de Dados'],
+  'software':     ['Desenvolvedor de Software', 'Engenheiro de Software'],
+  'dev':          ['Desenvolvedor Full Stack', 'Desenvolvedor Backend'],
+  'frontend':     ['Desenvolvedor Frontend', 'Engenheiro Frontend'],
+  'backend':      ['Desenvolvedor Backend', 'Engenheiro Backend'],
+  'fullstack':    ['Desenvolvedor Full Stack'],
+  'nodejs':       ['Desenvolvedor Node.js', 'Desenvolvedor Backend'],
+  'python':       ['Desenvolvedor Python', 'Engenheiro de Dados'],
+  'javascript':   ['Desenvolvedor JavaScript', 'Desenvolvedor Frontend'],
+  'react':        ['Desenvolvedor React', 'Desenvolvedor Frontend'],
+  'mobile':       ['Desenvolvedor Mobile', 'Desenvolvedor React Native'],
+  'devops':       ['Engenheiro DevOps', 'SRE'],
+  'cloud':        ['Engenheiro Cloud', 'Arquiteto de Nuvem'],
+  'ux':           ['UX Designer', 'Product Designer'],
+  'ui':           ['UI Designer', 'Product Designer'],
+  'produto':      ['Product Manager', 'Product Owner'],
+  'qa':           ['Analista de QA', 'Engenheiro de Testes'],
+  'ia':           ['Engenheiro de ML', 'Cientista de Dados'],
+  'marketing':    ['Analista de Marketing', 'Analista de Marketing Digital'],
+  'financeiro':   ['Analista Financeiro', 'Analista Contábil'],
+  'administrativo': ['Assistente Administrativo', 'Analista Administrativo'],
+  'rh':           ['Analista de RH', 'Analista de Recursos Humanos'],
+  'vendas':       ['Executivo de Vendas', 'Representante Comercial'],
+};
 
-  return [...new Set(raw.map(s => s.trim()).filter(s => s.length > 2 && s.split(' ').length <= 4))].slice(0, 4);
+function norm(s: string) {
+  return s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+}
+
+/** Gera sugestões de busca a partir do perfil de carreira, expandindo áreas em cargos reais */
+function buildProfileSuggestions(profile: CareerProfile): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  const areas = [...(profile.desiredAreas ?? []), profile.transitionTarget ?? ''].filter(Boolean);
+
+  for (const area of areas) {
+    const key = norm(area.trim());
+    let matched = false;
+    for (const [term, titles] of Object.entries(AREA_TO_TITLES)) {
+      if (key.includes(term) || term.includes(key)) {
+        for (const t of titles) {
+          if (!seen.has(t)) { seen.add(t); out.push(t); }
+        }
+        matched = true;
+        break;
+      }
+    }
+    // Se a área não mapeou mas é um cargo curto e direto, usa como está
+    if (!matched && area.trim().split(' ').length <= 4 && area.trim().length > 2) {
+      if (!seen.has(area.trim())) { seen.add(area.trim()); out.push(area.trim()); }
+    }
+    if (out.length >= 4) break;
+  }
+
+  return out.slice(0, 4);
 }
 
 export function BuscarView({
