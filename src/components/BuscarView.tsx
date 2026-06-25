@@ -565,9 +565,7 @@ export function BuscarView({
             </>
           ) : (
             <div className="bv-empty">
-              {bonusJobs.length > 0
-                ? 'Nenhuma vaga encontrada dentro dos seus filtros. Veja abaixo vagas compatíveis com o seu perfil.'
-                : 'Nenhuma vaga encontrada. Tente outro termo.'}
+              Nenhuma vaga encontrada.
             </div>
           )}
 
