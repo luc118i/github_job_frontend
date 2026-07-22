@@ -126,7 +126,7 @@ export function CareerInsights({ profile, onRedo, onRefine, onEdit }: Props) {
   }
 
   return (
-    <div className="ci-card">
+    <div className="ci-card glass-card">
       {/* Header */}
       <div className="ci-header">
         <div className="ci-header-left">

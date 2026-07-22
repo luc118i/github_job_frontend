@@ -1,6 +1,5 @@
 import { CareerProfile, LinkedInData, UserPreferences } from '../types';
 import { AuthUser } from '../services/auth';
-import { View } from './TabNav';
 import { CareerInsights } from './CareerInsights';
 import { PreferencesPanel } from './PreferencesPanel';
 import { AccountSettings } from './AccountSettings';
@@ -11,46 +10,12 @@ interface CareerDashboardProps {
   careerProfile: CareerProfile | null;
   linkedIn: LinkedInData | null;
   preferences: UserPreferences;
-  onNavigate: (v: View) => void;
   onUpdate: (user: AuthUser) => void;
   onLinkedInUpdate: (data: LinkedInData) => void;
   onPreferencesChange: (p: UserPreferences) => void;
   onCareerRedo: () => void;
   onCareerEdit: (p: CareerProfile) => void;
 }
-
-interface QuickAction {
-  view: View;
-  label: string;
-  desc: string;
-  accent: 'blue' | 'purple' | 'green' | 'amber';
-  icon: JSX.Element;
-}
-
-const IconSearch = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-    <circle cx="8.5" cy="8.5" r="6" stroke="currentColor" strokeWidth="1.6" />
-    <path d="M13 13l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-  </svg>
-);
-const IconAnalyze = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-    <path d="M3 17V8M8 17V4M13 17v-6M18 17V9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-  </svg>
-);
-const IconBoard = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-    <rect x="2.5" y="2.5" width="5" height="15" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
-    <rect x="10" y="2.5" width="7.5" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
-    <rect x="10" y="11.5" width="7.5" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
-  </svg>
-);
-
-const QUICK_ACTIONS: QuickAction[] = [
-  { view: 'buscar',  label: 'Buscar vagas',     desc: 'Encontre oportunidades compatíveis', accent: 'blue',   icon: <IconSearch /> },
-  { view: 'analise', label: 'Analisar uma vaga', desc: 'Cole um link e veja seu match',       accent: 'purple', icon: <IconAnalyze /> },
-  { view: 'history', label: 'Organizar',         desc: 'Acompanhe suas candidaturas',         accent: 'green',  icon: <IconBoard /> },
-];
 
 /**
  * Área única "Minha Carreira" — agrega TUDO do candidato num só lugar:
@@ -63,14 +28,13 @@ export function CareerDashboard({
   careerProfile,
   linkedIn,
   preferences,
-  onNavigate,
   onUpdate,
   onLinkedInUpdate,
   onPreferencesChange,
   onCareerRedo,
   onCareerEdit,
 }: CareerDashboardProps) {
-  const { score, dimensions, missing } = computeProfileScore(careerProfile, linkedIn, preferences);
+  const { score, dimensions } = computeProfileScore(careerProfile, linkedIn, preferences);
 
   const R = 34;
   const C = 2 * Math.PI * R;
@@ -78,7 +42,6 @@ export function CareerDashboard({
   const ringColor = scoreColor(score);
 
   const firstName = (user?.name ?? '').trim().split(/\s+/)[0] || null;
-  const topNext = missing.slice(0, 3);
 
   // ── Linha de stats (resumo de 5s, MVC) ──
   // Optional chaining no array também: profile vindo do servidor pode ter campos undefined.
@@ -138,6 +101,7 @@ export function CareerDashboard({
         <div className="cd-dims-grid">
           {dimensions.map((d) => {
             const color = scoreColor(d.pct);
+            const nextItem = d.pct < 100 ? d.items.find((it) => !it.done) : undefined;
             return (
               <div key={d.key} className="cd-dim glass-card">
                 <div className="cd-dim-head">
@@ -147,49 +111,14 @@ export function CareerDashboard({
                 <div className="cd-dim-track">
                   <div className="cd-dim-fill" style={{ width: `${d.pct}%`, background: color }} />
                 </div>
-                <span className="cd-dim-weight">peso {d.weight}%</span>
+                {nextItem ? (
+                  <span className="cd-dim-next">Falta: {nextItem.label}</span>
+                ) : (
+                  <span className="cd-dim-weight">peso {d.weight}%</span>
+                )}
               </div>
             );
           })}
-        </div>
-      </section>
-
-      {/* ── Próximos passos (só se há pendências) ── */}
-      {topNext.length > 0 && (
-        <section className="cd-next">
-          <h2 className="cd-section-title">Próximos passos</h2>
-          <div className="cd-next-list">
-            {topNext.map((m) => (
-              <button
-                key={m.label}
-                className="cd-next-item glass-card"
-                onClick={() => m.hint && onNavigate(m.hint as View)}
-              >
-                <span className="cd-next-dot" />
-                <span className="cd-next-label">{m.label}</span>
-                <span className="cd-next-gain">+{m.weight}%</span>
-                <span className="cd-next-arrow">→</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Ações rápidas ── */}
-      <section className="cd-actions">
-        <h2 className="cd-section-title">O que você quer fazer?</h2>
-        <div className="cd-actions-grid">
-          {QUICK_ACTIONS.map((a) => (
-            <button
-              key={a.view}
-              className="cd-action-card glass-card"
-              onClick={() => onNavigate(a.view)}
-            >
-              <span className={`cd-action-icon cd-action-icon--${a.accent}`}>{a.icon}</span>
-              <span className="cd-action-label">{a.label}</span>
-              <span className="cd-action-desc">{a.desc}</span>
-            </button>
-          ))}
         </div>
       </section>
 
@@ -211,23 +140,27 @@ export function CareerDashboard({
         <p className="cd-section-hint">
           Modalidade, localização, faixa salarial e nível. Usadas em todas as buscas.
         </p>
-        <PreferencesPanel
-          preferences={preferences}
-          onChange={onPreferencesChange}
-          defaultOpen
-        />
+        <div className="cd-block-card glass-card">
+          <PreferencesPanel
+            preferences={preferences}
+            onChange={onPreferencesChange}
+            defaultOpen
+          />
+        </div>
       </section>
 
       {/* ── Conta (só logado) ── */}
       {user && (
         <section className="cd-section-block">
           <h2 className="cd-section-title">Conta</h2>
-          <AccountSettings
-            user={user}
-            linkedInData={linkedIn}
-            onUpdate={onUpdate}
-            onLinkedInUpdate={onLinkedInUpdate}
-          />
+          <div className="cd-block-card glass-card">
+            <AccountSettings
+              user={user}
+              linkedInData={linkedIn}
+              onUpdate={onUpdate}
+              onLinkedInUpdate={onLinkedInUpdate}
+            />
+          </div>
         </section>
       )}
     </div>

@@ -312,7 +312,6 @@ export default function App() {
             careerProfile={careerProfile}
             linkedIn={linkedInData}
             preferences={preferences}
-            onNavigate={setView}
             onUpdate={handleProfileUpdate}
             onLinkedInUpdate={setLinkedInData}
             onPreferencesChange={setPreferences}

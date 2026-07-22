@@ -514,12 +514,20 @@
   position: relative;
 }
 
-/* CD action buttons */
-.cd-actions .cd-action-label,
-[class*="cd-action"] button,
-.cd-next {
+.user-profile-save-btn {
   border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-sm)) 0,
+    100% var(--geo-cut-sm),
+    100% 100%,
+    0 100%
+  );
+  transition: filter var(--t-base), transform var(--t-base) !important;
 }
+
+.user-profile-save-btn:hover:not(:disabled) { filter: brightness(1.1); }
+.user-profile-save-btn:active:not(:disabled) { transform: scale(0.98) translateY(1px); }
 
 /* ══════════════════════════════════════════════════════════════════════
    BUSCAR CONFIG CARDS
