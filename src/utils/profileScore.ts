@@ -83,7 +83,7 @@ export function computeProfileScore(
       label: 'Experiência',
       weight: 25,
       items: [
-        { label: 'Experiências importadas', local: 70, done: !!linkedIn?.positions?.length, hint: 'outros' },
+        { label: 'Experiências no currículo', local: 70, done: !!linkedIn?.positions?.length, hint: 'outros' },
         { label: 'Formação acadêmica',      local: 30, done: !!linkedIn?.education?.length, hint: 'outros' },
       ],
     },
@@ -111,7 +111,7 @@ export function computeProfileScore(
       label: 'Currículo',
       weight: 15,
       items: [
-        { label: 'Currículo (LinkedIn) importado', local: 60, done: !!linkedIn?.positions?.length, hint: 'outros' },
+        { label: 'Currículo completo', local: 60, done: !!linkedIn?.positions?.length, hint: 'outros' },
         { label: 'Localização preferida',          local: 20, done: !!preferences?.location?.trim(), hint: 'career' },
         { label: 'Modalidade de trabalho',         local: 20, done: !!preferences && preferences.modality !== 'any', hint: 'career' },
       ],

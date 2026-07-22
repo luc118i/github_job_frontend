@@ -16,6 +16,8 @@ import { JobList } from './components/JobList';
 import { ProfessionView } from './components/ProfessionView';
 import { PreferencesPanel } from './components/PreferencesPanel';
 import { AuthModal } from './components/AuthModal';
+import { SignupChoiceModal } from './components/SignupChoiceModal';
+import { ManualResumeWizard } from './components/ManualResumeWizard';
 import { Footer } from './components/Footer';
 
 // Heavy components — loaded on demand only
@@ -52,6 +54,8 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authReason, setAuthReason] = useState<string | undefined>(undefined);
   const [pendingLinkedIn, setPendingLinkedIn] = useState<LinkedInData | null>(null);
+  const [resumeChoiceOpen, setResumeChoiceOpen] = useState(false);
+  const [manualWizardOpen, setManualWizardOpen] = useState(false);
   // Pré-preenche a busca quando o usuário clica "buscar vagas" num projeto.
   const [projectQuery, setProjectQuery] = useState('');
 
@@ -205,9 +209,17 @@ export default function App() {
         <OnboardingView
           onComplete={(profile, liData) => {
             setCareerProfile(profile);
-            if (liData) { setLinkedInData(liData); if (currentUser) updateLinkedIn(liData); }
+            if (liData) setLinkedInData(liData);
             setOnboardingDone(true);
             setForceOnboarding(false);
+            if (currentUser) {
+              if (liData) updateLinkedIn(liData);
+            } else {
+              // Convidado terminando o perfil: pede conta para não perder os dados preenchidos.
+              setPendingLinkedIn(liData ?? null);
+              setAuthReason('Crie sua conta para salvar seu perfil e continuar de onde parou.');
+              setAuthOpen(true);
+            }
           }}
           onSkip={() => { setOnboardingDone(true); setForceOnboarding(false); }}
         />
@@ -252,7 +264,26 @@ export default function App() {
         reason={authReason}
         onSuccess={handleAuthSuccess}
         onClose={() => { setAuthOpen(false); setPendingLinkedIn(null); setAuthReason(undefined); }}
+        onNeedsResume={() => { setAuthOpen(false); setResumeChoiceOpen(true); }}
       />
+
+      <SignupChoiceModal
+        open={resumeChoiceOpen}
+        onClose={() => setResumeChoiceOpen(false)}
+        onLinkedInImported={(data) => { setResumeChoiceOpen(false); handleLinkedInImport(data); }}
+        onManualChosen={() => { setResumeChoiceOpen(false); setManualWizardOpen(true); }}
+      />
+
+      {manualWizardOpen && (
+        <div className="auth-overlay" onClick={() => setManualWizardOpen(false)}>
+          <div className="onb-container mrw-modal-container" onClick={(e) => e.stopPropagation()}>
+            <ManualResumeWizard
+              onComplete={(data) => { setManualWizardOpen(false); handleLinkedInImport(data); }}
+              onCancel={() => setManualWizardOpen(false)}
+            />
+          </div>
+        </div>
+      )}
 
       <main className={view === 'history' ? 'kanban-view' : view === 'buscar' ? 'landing-view' : undefined}>
        <ErrorBoundary area={view} onReset={() => setView('buscar')}>
@@ -283,6 +314,7 @@ export default function App() {
             preferences={preferences}
             onNavigate={setView}
             onUpdate={handleProfileUpdate}
+            onLinkedInUpdate={setLinkedInData}
             onPreferencesChange={setPreferences}
             onCareerRedo={resetCareerProfile}
             onCareerEdit={setCareerProfile}

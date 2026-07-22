@@ -242,7 +242,7 @@ export function ProjectLibrary({ githubUsername, onSearchSkills }: ProjectLibrar
         <div className="proj-head-actions">
           {stats.pending > 0 && (
             <button className="proj-ai-btn" onClick={handleEnrichAll} disabled={enrichingAll}>
-              {enrichingAll ? 'analisando…' : `✨ analisar ${stats.pending} com IA`}
+              {enrichingAll ? 'analisando…' : `analisar ${stats.pending} com IA`}
             </button>
           )}
           {githubUsername && (
@@ -385,7 +385,7 @@ function ProjectCard({
           <button className="proj-search-btn" onClick={stop(onSearch)}>Buscar vagas</button>
         ) : (
           <button className="proj-search-btn proj-search-btn--ai" onClick={stop(onEnrich)} disabled={enriching}>
-            {enriching ? 'analisando…' : '✨ analisar com IA'}
+            {enriching ? 'analisando…' : 'analisar com IA'}
           </button>
         )}
       </div>
@@ -482,7 +482,7 @@ function ProjectDrawer({
 
           {typeof score !== 'number' && (
             <button className="proj-search-btn proj-search-btn--ai" onClick={onEnrich} disabled={enriching}>
-              {enriching ? 'analisando…' : '✨ analisar com IA (score + competências)'}
+              {enriching ? 'analisando…' : 'analisar com IA (score + competências)'}
             </button>
           )}
 

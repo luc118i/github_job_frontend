@@ -37,7 +37,7 @@ function buildSteps(hasCv?: boolean, hasProfile?: boolean): string[] {
 }
 
 /**
- * Painel "🤖 IA analisando" exibido durante a busca.
+ * Painel "IA analisando" exibido durante a busca.
  * Cicla mensagens de progresso para dar sensação de trabalho em tempo real
  * (a busca real não expõe progresso granular — isto é percepção, não fake de dados).
  */

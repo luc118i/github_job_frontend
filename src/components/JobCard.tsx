@@ -315,7 +315,7 @@ export function JobCard({
             return (
               <div className={`jcp-pub-date${isOld ? ' jcp-pub-date--old' : ''}`}>
                 <IconClock />
-                {isOld ? '⚠️ ' : ''}PUBLICADA HÁ {pubAgo(job.published_at)}
+                PUBLICADA HÁ {pubAgo(job.published_at)}
               </div>
             );
           })()}

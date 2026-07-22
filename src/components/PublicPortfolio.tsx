@@ -276,7 +276,7 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
       {/* ── "Pergunte sobre mim" — chat de IA do recrutador ── */}
       {!chatOpen && (
         <button className="pf-ask-fab" onClick={() => setChatOpen(true)}>
-          💬 Pergunte sobre mim
+          Pergunte sobre mim
         </button>
       )}
       {chatOpen && (

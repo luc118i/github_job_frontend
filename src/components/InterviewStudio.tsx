@@ -148,7 +148,7 @@ export function InterviewStudio({ jobId, job, candidate, onClose }: InterviewStu
               <>
                 <div className="iv-prep-actions">
                   <button className="cv-lib-ai-btn" onClick={handleGenerate} disabled={generating}>
-                    {generating ? 'gerando preparação…' : hasPrep ? '↻ regenerar com IA' : '✨ gerar preparação com IA'}
+                    {generating ? 'gerando preparação…' : hasPrep ? '↻ regenerar com IA' : 'gerar preparação com IA'}
                   </button>
                   {hasPrep && (
                     <button className="iv-save-btn" onClick={handleSave} disabled={saving}>

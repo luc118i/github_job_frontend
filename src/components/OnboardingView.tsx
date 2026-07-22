@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CareerProfile, LinkedInData } from '../types';
 import { LinkedInImport } from './LinkedInImport';
+import { ManualResumeWizard } from './ManualResumeWizard';
 import { CareerChat } from './CareerChat';
 
 interface Props {
@@ -9,14 +10,21 @@ interface Props {
 }
 
 type Step = 'upload' | 'chat' | 'done';
+type UploadMode = 'linkedin' | 'manual';
 
 export function OnboardingView({ onComplete, onSkip }: Props) {
   const [step, setStep] = useState<Step>('upload');
+  const [uploadMode, setUploadMode] = useState<UploadMode>('linkedin');
   const [linkedIn, setLinkedIn] = useState<LinkedInData | null>(null);
   const [profile, setProfile] = useState<CareerProfile | null>(null);
 
   function handleImport(data: LinkedInData) {
     setLinkedIn(data);
+  }
+
+  function handleManualComplete(data: LinkedInData) {
+    setLinkedIn(data);
+    setStep('chat');
   }
 
   function handleChatComplete(p: CareerProfile) {
@@ -55,9 +63,20 @@ export function OnboardingView({ onComplete, onSkip }: Props) {
         </div>
 
         {/* ── Step 1: Upload ── */}
-        {step === 'upload' && (
+        {step === 'upload' && uploadMode === 'manual' && (
+          <ManualResumeWizard
+            initial={linkedIn}
+            onComplete={handleManualComplete}
+            onCancel={() => setUploadMode('linkedin')}
+          />
+        )}
+
+        {step === 'upload' && uploadMode === 'linkedin' && (
           <div className="onb-card">
-            <div className="onb-icon">📄</div>
+            <svg className="onb-icon-svg" width="36" height="36" viewBox="0 0 36 36" fill="none">
+              <rect x="8" y="4" width="20" height="28" rx="2" stroke="currentColor" strokeWidth="1.6"/>
+              <path d="M13 12h10M13 17h10M13 22h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
             <h1 className="onb-title">Vamos conhecer você</h1>
             <p className="onb-subtitle">
               Faça o upload do seu currículo ou perfil LinkedIn para começar.
@@ -83,9 +102,18 @@ export function OnboardingView({ onComplete, onSkip }: Props) {
             )}
 
             <div className="onb-actions">
-              <button className="onb-btn onb-btn--primary" onClick={() => setStep('chat')}>
-                {linkedIn ? 'Continuar com análise de IA' : 'Continuar sem currículo'}
-              </button>
+              {linkedIn ? (
+                <button className="onb-btn onb-btn--primary" onClick={() => setStep('chat')}>
+                  Continuar com análise de IA
+                </button>
+              ) : (
+                <>
+                  <div className="onb-divider"><span>ou</span></div>
+                  <button className="onb-btn onb-btn--secondary" onClick={() => setUploadMode('manual')}>
+                    Não tenho LinkedIn — criar currículo manualmente
+                  </button>
+                </>
+              )}
               <button className="onb-btn onb-btn--ghost" onClick={onSkip}>
                 Pular configuração
               </button>
@@ -110,7 +138,11 @@ export function OnboardingView({ onComplete, onSkip }: Props) {
         {/* ── Step 3: Done ── */}
         {step === 'done' && profile && (
           <div className="onb-card onb-card--done">
-            <div className="onb-done-icon">✓</div>
+            <div className="onb-done-icon">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <path d="M5 11l4 4 8-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
             <h1 className="onb-title">Perfil criado com sucesso!</h1>
             <p className="onb-subtitle">
               Agora vou buscar vagas alinhadas com o seu perfil. Você pode ajustar

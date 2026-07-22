@@ -38,7 +38,10 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="err-boundary">
           <div className="err-boundary-card">
-            <span className="err-boundary-icon">⚠️</span>
+            <svg className="err-boundary-icon" width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <path d="M14 3l12 21H2L14 3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+              <path d="M14 11v6M14 20.5v.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
             <h2 className="err-boundary-title">Algo deu errado nesta área</h2>
             <p className="err-boundary-msg">
               {this.props.area ? `Falha ao carregar "${this.props.area}". ` : ''}

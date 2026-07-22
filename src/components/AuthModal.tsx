@@ -10,9 +10,11 @@ interface AuthModalProps {
   onSuccess: (user: AuthUser, linkedInData?: LinkedInData) => void;
   onClose: () => void;
   reason?: string;
+  /** Chamado ao clicar "criar conta" sem currículo pronto — abre a tela de escolha (LinkedIn/manual). */
+  onNeedsResume?: () => void;
 }
 
-export function AuthModal({ open, linkedInData, onSuccess, onClose, reason }: AuthModalProps) {
+export function AuthModal({ open, linkedInData, onSuccess, onClose, reason, onNeedsResume }: AuthModalProps) {
   const [mode, setMode] = useState<Mode>(linkedInData ? 'register' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -76,7 +78,7 @@ export function AuthModal({ open, linkedInData, onSuccess, onClose, reason }: Au
           <div className="auth-profile-preview">
             <span className="auth-profile-name">{linkedInData.name ?? 'Seu perfil'}</span>
             <span className="auth-profile-sub">
-              {linkedInData.positions.length} experiência{linkedInData.positions.length !== 1 ? 's' : ''} importada{linkedInData.positions.length !== 1 ? 's' : ''}
+              {linkedInData.positions.length} experiência{linkedInData.positions.length !== 1 ? 's' : ''} no currículo
             </span>
           </div>
         )}
@@ -126,7 +128,14 @@ export function AuthModal({ open, linkedInData, onSuccess, onClose, reason }: Au
           ) : (
             <>
               Não tem conta?{' '}
-              <button className="auth-switch-btn" onClick={() => { setMode('register'); setError(''); }}>
+              <button
+                className="auth-switch-btn"
+                onClick={() => {
+                  if (!linkedInData && onNeedsResume) { onNeedsResume(); return; }
+                  setMode('register');
+                  setError('');
+                }}
+              >
                 criar conta
               </button>
             </>

@@ -312,10 +312,12 @@ export function CvEditor({
         githubBio: profile.user.bio,
         githubFollowers: profile.user.followers,
         githubPublicRepos: profile.user.public_repos,
-        skills: profile.skills,
+        skills: Array.from(new Set([...profile.skills, ...(linkedIn?.skills ?? [])])),
         repos: profile.repos,
         positions: linkedIn?.positions ?? [],
         education: linkedIn?.education ?? [],
+        objective: linkedIn?.objective ?? null,
+        languages: linkedIn?.languages ?? [],
       },
     };
   }
@@ -1020,7 +1022,7 @@ export function CvEditor({
               onClick={handleAiMatch}
               disabled={aiLoading || projLoading || ranked.length === 0}
             >
-              {aiLoading ? 'analisando READMEs…' : aiMatches ? '↻ recalcular match com IA' : '✨ match com IA (lê o README)'}
+              {aiLoading ? 'analisando READMEs…' : aiMatches ? '↻ recalcular match com IA' : 'match com IA (lê o README)'}
             </button>
             {aiMatches && !aiLoading && (
               <p className="cv-lib-ai-note">Relevância calculada por IA a partir do README de cada projeto.</p>
@@ -1211,7 +1213,7 @@ export function CvEditor({
               {draftContent.trim() && <span className="cv-msg-count">{draftContent.length} caracteres</span>}
               <div className="cv-msg-actions">
                 <button className="cv-adapt-btn" onClick={handleGenerateMsg} disabled={msgGenerating}>
-                  {msgGenerating ? 'gerando…' : draftContent.trim() || msgVariations.length ? '↻ gerar de novo' : '✨ gerar com IA'}
+                  {msgGenerating ? 'gerando…' : draftContent.trim() || msgVariations.length ? '↻ gerar de novo' : 'gerar com IA'}
                 </button>
                 {draftContent.trim() && (
                   <>

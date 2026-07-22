@@ -1,24 +1,34 @@
 import { useEffect, useState } from 'react';
-import { AuthUser, updateProfile } from '../services/auth';
+import { AuthUser, updateProfile, updateLinkedIn } from '../services/auth';
 import { LinkedInData } from '../types';
+import { ManualResumeWizard } from './ManualResumeWizard';
 
 interface AccountSettingsProps {
   user: AuthUser;
   linkedInData: LinkedInData | null;
   onUpdate: (user: AuthUser) => void;
+  onLinkedInUpdate: (data: LinkedInData) => void;
 }
 
 /**
  * Seção de Conta da área "Minha Carreira".
  * Edita nome e usuário do GitHub, mostra o e-mail (somente leitura) e
- * o resumo do LinkedIn importado. Extraído da antiga view "perfil".
+ * o resumo do currículo (importado do LinkedIn ou preenchido manualmente).
+ * Extraído da antiga view "perfil".
  */
-export function AccountSettings({ user, linkedInData, onUpdate }: AccountSettingsProps) {
+export function AccountSettings({ user, linkedInData, onUpdate, onLinkedInUpdate }: AccountSettingsProps) {
   const [name, setName] = useState(user.name ?? '');
   const [github, setGithub] = useState(user.github_username ?? '');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [editingResume, setEditingResume] = useState(false);
+
+  async function handleResumeSave(data: LinkedInData) {
+    setEditingResume(false);
+    onLinkedInUpdate(data);
+    await updateLinkedIn(data);
+  }
 
   useEffect(() => {
     setName(user.name ?? '');
@@ -108,21 +118,43 @@ export function AccountSettings({ user, linkedInData, onUpdate }: AccountSetting
         </button>
       </form>
 
-      {/* ── LinkedIn importado ── */}
-      {linkedInData && (() => {
+      {/* ── Currículo (LinkedIn ou manual) ── */}
+      {editingResume ? (
+        <div className="user-profile-linkedin">
+          <div className="user-profile-section-label">editar currículo</div>
+          <ManualResumeWizard
+            initial={linkedInData}
+            onComplete={handleResumeSave}
+            onCancel={() => setEditingResume(false)}
+          />
+        </div>
+      ) : (() => {
         // Arrays podem vir undefined do servidor — normaliza antes de ler length.
-        const nPos = linkedInData.positions?.length ?? 0;
-        const nEdu = linkedInData.education?.length ?? 0;
+        const nPos = linkedInData?.positions?.length ?? 0;
+        const nEdu = linkedInData?.education?.length ?? 0;
         return (
           <div className="user-profile-linkedin">
-            <div className="user-profile-section-label">linkedin importado</div>
+            <div className="user-profile-section-label">currículo</div>
             <div className="user-profile-linkedin-info">
-              <span className="user-profile-linkedin-name">{linkedInData.name ?? '—'}</span>
-              <span className="user-profile-linkedin-sub">
-                {nPos} experiência{nPos !== 1 ? 's' : ''} &middot;{' '}
-                {nEdu} formação{nEdu !== 1 ? 'es' : ''}
-              </span>
-              <span className="user-profile-hint">para atualizar, reimporte o PDF do LinkedIn</span>
+              {linkedInData ? (
+                <>
+                  <span className="user-profile-linkedin-name">{linkedInData.name ?? '—'}</span>
+                  <span className="user-profile-linkedin-sub">
+                    {nPos} experiência{nPos !== 1 ? 's' : ''} &middot;{' '}
+                    {nEdu} formação{nEdu !== 1 ? 'es' : ''}
+                  </span>
+                </>
+              ) : (
+                <span className="user-profile-hint">Nenhum currículo cadastrado ainda.</span>
+              )}
+              <button
+                type="button"
+                className="user-profile-save-btn"
+                style={{ marginTop: 10, width: 'auto' }}
+                onClick={() => setEditingResume(true)}
+              >
+                {linkedInData ? 'editar currículo' : 'criar currículo'}
+              </button>
             </div>
           </div>
         );

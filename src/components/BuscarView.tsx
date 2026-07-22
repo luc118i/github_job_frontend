@@ -377,7 +377,7 @@ export function BuscarView({
                     }
                   </div>
                   {!locationDraft && (
-                    <span className="bv-fp-hint">vazio = nacional 🇧🇷</span>
+                    <span className="bv-fp-hint">vazio = nacional</span>
                   )}
                 </div>
 

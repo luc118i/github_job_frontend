@@ -80,6 +80,13 @@ export interface LinkedInCertification {
   finishedOn: string | null;
 }
 
+export interface LinkedInLanguage {
+  name: string;
+  level: string | null;
+}
+
+// Nome mantido por compatibilidade histórica com o import do LinkedIn, mas hoje
+// é a estrutura de currículo agnóstica à origem (import ou preenchimento manual).
 export interface LinkedInData {
   name: string | null;
   email: string | null;
@@ -87,6 +94,10 @@ export interface LinkedInData {
   positions: LinkedInPosition[];
   education: LinkedInEducation[];
   certifications: LinkedInCertification[];
+  objective?: string | null;
+  skills?: string[];
+  languages?: LinkedInLanguage[];
+  additionalInfo?: string | null;
 }
 
 export type Step = 'idle' | 'profile' | 'jobs';
@@ -127,6 +138,8 @@ export interface CvRequest {
     repos: GitHubRepo[];
     positions: LinkedInPosition[];
     education: LinkedInEducation[];
+    objective?: string | null;
+    languages?: LinkedInLanguage[];
   };
 }
 
@@ -417,6 +430,9 @@ export interface PortfolioData {
   education: LinkedInEducation[];
   competencies: string[];
   certifications: LinkedInCertification[];
+  skills: string[];
+  languages: LinkedInLanguage[];
+  objective: string | null;
   recruiter: PortfolioRecruiter;
 }
 

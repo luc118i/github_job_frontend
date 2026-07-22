@@ -31,10 +31,10 @@ const PERIOD_OPTIONS: { value: number; label: string }[] = [
   { value: 90, label: '3 meses' },
 ];
 
-const RADIUS_OPTIONS: { value: number; label: string; icon: string }[] = [
-  { value: 30,  label: 'Perto de mim',  icon: '📍' },
-  { value: 150, label: 'Minha região',  icon: '🗺️' },
-  { value: 0,   label: 'Nacional',      icon: '🇧🇷' },
+const RADIUS_OPTIONS: { value: number; label: string }[] = [
+  { value: 30,  label: 'Perto de mim' },
+  { value: 150, label: 'Minha região' },
+  { value: 0,   label: 'Nacional' },
 ];
 
 const MODALITY_OPTIONS: { value: Modality; label: string }[] = [
@@ -63,7 +63,7 @@ function summaryText(p: UserPreferences): string {
   else if (p.salaryMax) parts.push(`até R$ ${p.salaryMax}`);
   if (p.level !== 'any') parts.push(p.level);
   if (p.maxAgeDays !== 90) parts.push(p.maxAgeDays === 30 ? '30 dias' : '60 dias');
-  if (p.ptBrOnly) parts.push('🇧🇷 PT-BR');
+  if (p.ptBrOnly) parts.push('PT-BR');
   return parts.join(' · ');
 }
 
@@ -183,7 +183,7 @@ export function PreferencesPanel({ preferences, onChange, defaultOpen = false, c
               )}
             </div>
             {preferences.modality !== 'remote' && !preferences.location && (
-              <span className="prefs-hint">deixe vazio para busca nacional 🇧🇷</span>
+              <span className="prefs-hint">deixe vazio para busca nacional</span>
             )}
           </div>
 
@@ -199,7 +199,7 @@ export function PreferencesPanel({ preferences, onChange, defaultOpen = false, c
                     className={`prefs-chip prefs-chip--radius ${preferences.radiusKm === o.value ? 'active' : ''}`}
                     onClick={() => set('radiusKm', o.value)}
                   >
-                    {o.icon} {o.label}
+                    {o.label}
                   </button>
                 ))}
               </div>
@@ -215,7 +215,6 @@ export function PreferencesPanel({ preferences, onChange, defaultOpen = false, c
               onClick={() => set('ptBrOnly', !preferences.ptBrOnly)}
               title={preferences.ptBrOnly ? 'Mostrando só vagas em português' : 'Mostrando vagas em qualquer idioma'}
             >
-              <span className="prefs-lang-flag">🇧🇷</span>
               <span className="prefs-lang-label">
                 {preferences.ptBrOnly ? 'Só em português' : 'Qualquer idioma'}
               </span>

@@ -130,7 +130,7 @@ export function PortfolioManager({ githubUsername }: PortfolioManagerProps) {
         <div className="pm-texts-head">
           <span className="pm-toggle-label">Headline e resumo</span>
           <button className="proj-ai-btn" onClick={generate} disabled={generating}>
-            {generating ? 'gerando…' : '✨ Gerar com IA'}
+            {generating ? 'gerando…' : 'Gerar com IA'}
           </button>
         </div>
         <span className="pm-toggle-hint">a IA monta a partir do LinkedIn, projetos e perfil de carreira</span>

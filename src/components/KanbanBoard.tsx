@@ -343,7 +343,7 @@ function PipelineAnalytics({ jobs, get }: { jobs: JobFeedItem[]; get: (id: strin
           <div className="pa-ai-head">
             <h3 className="pa-title" style={{ margin: 0 }}>IA Insights</h3>
             <button className="pa-ai-btn" onClick={handleGenerateInsights} disabled={insightsLoading}>
-              {insightsLoading ? 'analisando…' : insights ? '↻ atualizar' : '✨ gerar'}
+              {insightsLoading ? 'analisando…' : insights ? '↻ atualizar' : 'gerar'}
             </button>
           </div>
           {insightsError && <div className="cv-lib-error" onClick={() => setInsightsError('')}>{insightsError}</div>}
@@ -386,7 +386,7 @@ function PipelineAnalytics({ jobs, get }: { jobs: JobFeedItem[]; get: (id: strin
         <section className="pa-card">
           <h3 className="pa-title">Follow-up pendente</h3>
           {followUps.length === 0 ? (
-            <p className="pa-ai-hint">Nenhum follow-up pendente. 🎯</p>
+            <p className="pa-ai-hint">Nenhum follow-up pendente.</p>
           ) : (
             <div className="pa-fu-list">
               {followUps.map(({ job, fu }) => (

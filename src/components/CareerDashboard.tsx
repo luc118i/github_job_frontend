@@ -13,6 +13,7 @@ interface CareerDashboardProps {
   preferences: UserPreferences;
   onNavigate: (v: View) => void;
   onUpdate: (user: AuthUser) => void;
+  onLinkedInUpdate: (data: LinkedInData) => void;
   onPreferencesChange: (p: UserPreferences) => void;
   onCareerRedo: () => void;
   onCareerEdit: (p: CareerProfile) => void;
@@ -64,6 +65,7 @@ export function CareerDashboard({
   preferences,
   onNavigate,
   onUpdate,
+  onLinkedInUpdate,
   onPreferencesChange,
   onCareerRedo,
   onCareerEdit,
@@ -224,6 +226,7 @@ export function CareerDashboard({
             user={user}
             linkedInData={linkedIn}
             onUpdate={onUpdate}
+            onLinkedInUpdate={onLinkedInUpdate}
           />
         </section>
       )}
