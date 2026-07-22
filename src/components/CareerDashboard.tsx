@@ -1,9 +1,61 @@
+import { useEffect, useState } from 'react';
 import { CareerProfile, LinkedInData, UserPreferences } from '../types';
 import { AuthUser } from '../services/auth';
 import { CareerInsights } from './CareerInsights';
 import { PreferencesPanel } from './PreferencesPanel';
 import { AccountSettings } from './AccountSettings';
 import { computeProfileScore, scoreColor } from '../utils/profileScore';
+
+interface SectionNavItem { id: string; label: string; }
+
+/** Observa quais seções estão visíveis e retorna o id da mais próxima do topo. */
+function useActiveSection(ids: string[]): string | null {
+  const [active, setActive] = useState<string | null>(ids[0] ?? null);
+
+  useEffect(() => {
+    const elements = ids
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => !!el);
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActive(visible[0].target.id);
+      },
+      { rootMargin: '-15% 0px -70% 0px', threshold: 0 },
+    );
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ids.join(',')]);
+
+  return active;
+}
+
+function SectionNav({ items, activeId }: { items: SectionNavItem[]; activeId: string | null }) {
+  function goTo(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  if (items.length < 2) return null;
+
+  return (
+    <nav className="cd-side-nav" aria-label="Seções da página">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          className={`cd-side-nav-dot${item.id === activeId ? ' active' : ''}`}
+          onClick={() => goTo(item.id)}
+        >
+          <span className="cd-side-nav-tooltip">{item.label}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
 
 interface CareerDashboardProps {
   user: AuthUser | null;
@@ -54,8 +106,19 @@ export function CareerDashboard({
     { n: nCert,   label: nCert === 1 ? 'certificação' : 'certificações' },
   ];
 
+  // ── Guia de seções (pontos laterais) ──
+  const navItems: SectionNavItem[] = [
+    { id: 'cd-sec-score', label: 'Career Score' },
+    ...(careerProfile ? [{ id: 'cd-sec-profile', label: 'Perfil de carreira' }] : []),
+    { id: 'cd-sec-prefs', label: 'Preferências' },
+    ...(user ? [{ id: 'cd-sec-account', label: 'Conta' }] : []),
+  ];
+  const activeId = useActiveSection(navItems.map((i) => i.id));
+
   return (
     <div className="cd-root">
+      <SectionNav items={navItems} activeId={activeId} />
+
       {/* ── Cabeçalho com saudação + score ── */}
       <section className="cd-hero glass-card">
         <div className="cd-hero-text">
@@ -96,7 +159,7 @@ export function CareerDashboard({
       </section>
 
       {/* ── Career Score detalhado (5 dimensões) ── */}
-      <section className="cd-dims">
+      <section id="cd-sec-score" className="cd-dims">
         <h2 className="cd-section-title">Career Score</h2>
         <div className="cd-dims-grid">
           {dimensions.map((d) => {
@@ -124,7 +187,7 @@ export function CareerDashboard({
 
       {/* ── Perfil de carreira analisado pela IA ── */}
       {careerProfile && (
-        <section className="cd-profile">
+        <section id="cd-sec-profile" className="cd-profile">
           <h2 className="cd-section-title">Seu perfil de carreira</h2>
           <CareerInsights
             profile={careerProfile}
@@ -135,7 +198,7 @@ export function CareerDashboard({
       )}
 
       {/* ── Preferências de busca ── */}
-      <section className="cd-section-block">
+      <section id="cd-sec-prefs" className="cd-section-block">
         <h2 className="cd-section-title">Preferências de busca</h2>
         <p className="cd-section-hint">
           Modalidade, localização, faixa salarial e nível. Usadas em todas as buscas.
@@ -151,7 +214,7 @@ export function CareerDashboard({
 
       {/* ── Conta (só logado) ── */}
       {user && (
-        <section className="cd-section-block">
+        <section id="cd-sec-account" className="cd-section-block">
           <h2 className="cd-section-title">Conta</h2>
           <div className="cd-block-card glass-card">
             <AccountSettings
