@@ -2106,11 +2106,21 @@ h1 {
 }
 
 .ci-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-family: var(--font-body);
   font-size: 11px;
   padding: 3px 9px;
   border-radius: var(--r-chip);
   letter-spacing: 0.02em;
+}
+
+.ci-tag-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .ci-tag--style {
@@ -2225,6 +2235,128 @@ h1 {
   background: var(--brand);
   border-radius: var(--r-pill);
   transition: width 0.6s ease;
+}
+
+.ci-dim-fill--tech { background: var(--brand); }
+.ci-dim-fill--creativity { background: #a78bfa; }
+.ci-dim-fill--leadership { background: #4ade80; }
+
+/* Resumo do perfil — score ring */
+.ci-summary-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--r-card);
+  background: rgba(255,255,255,0.02);
+}
+
+.ci-score-ring {
+  position: relative;
+  width: 104px;
+  height: 104px;
+}
+
+.ci-score-ring svg { transform: rotate(-90deg); }
+
+.ci-score-track {
+  fill: none;
+  stroke: rgba(255,255,255,0.08);
+  stroke-width: 7;
+}
+
+.ci-score-fill {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.ci-score-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.ci-score-number {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.ci-score-label {
+  font-family: var(--font-body);
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ci-stat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  list-style: none;
+}
+
+.ci-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: rgba(232,228,220,0.7);
+}
+
+.ci-stat-icon { width: 14px; height: 14px; flex-shrink: 0; }
+
+.ci-stat-item--positive .ci-stat-icon { color: #4ade80; }
+.ci-stat-item--warning .ci-stat-icon { color: var(--warning); }
+.ci-stat-item--highlight .ci-stat-icon { color: var(--warning); }
+
+.ci-highlight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(251,191,36,0.15);
+  border-radius: var(--r-card);
+  background: rgba(251,191,36,0.04);
+}
+
+.ci-highlight-card .ci-stat-icon {
+  color: var(--warning);
+  margin-top: 2px;
+}
+
+.ci-highlight-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ci-highlight-title {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.ci-highlight-desc {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: rgba(232,228,220,0.5);
+  line-height: 1.4;
 }
 
 /* Post-insights controls — abaixo do card principal, sem gap extra */
@@ -9675,6 +9807,24 @@ main.kanban-view {
 .mrw-choice-card:disabled { opacity: 0.6; cursor: not-allowed; }
 .mrw-choice-card-title { font-size: 14px; font-weight: 600; color: #e8e4dc; }
 .mrw-choice-card-sub { font-size: 12px; color: rgba(232,228,220,0.45); line-height: 1.4; }
+
+.mrw-choice-paste { cursor: default; gap: 10px; }
+.mrw-choice-paste-input {
+  width: 100%; resize: vertical; font: inherit; color: #e8e4dc;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--r-sm);
+  padding: 10px 12px; line-height: 1.4;
+}
+.mrw-choice-paste-input:focus { outline: none; border-color: rgba(61,114,200,0.6); }
+.mrw-choice-paste-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.mrw-choice-paste-cancel, .mrw-choice-paste-submit {
+  font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: var(--r-sm); cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.mrw-choice-paste-cancel { background: transparent; color: rgba(232,228,220,0.6); }
+.mrw-choice-paste-cancel:hover:not(:disabled) { background: rgba(255,255,255,0.05); }
+.mrw-choice-paste-submit { background: #3d72c8; color: #fff; border-color: transparent; }
+.mrw-choice-paste-submit:hover:not(:disabled) { background: #3665b3; }
+.mrw-choice-paste-submit:disabled, .mrw-choice-paste-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .mrw-card { max-width: 100%; }
 .mrw-progress-label { font-size: 11px; letter-spacing: 0.05em; color: rgba(232,228,220,0.4); text-transform: uppercase; }

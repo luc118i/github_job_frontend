@@ -18,3 +18,18 @@ export async function importLinkedIn(file: File): Promise<LinkedInData> {
 
   return res.json() as Promise<LinkedInData>;
 }
+
+export async function importResumeText(text: string): Promise<LinkedInData> {
+  const res = await fetch(`${API_URL}/linkedin/import-text`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(err.error ?? 'Erro ao processar texto');
+  }
+
+  return res.json() as Promise<LinkedInData>;
+}

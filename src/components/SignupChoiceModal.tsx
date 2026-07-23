@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { LinkedInData } from '../types';
 import { importLinkedIn } from '../services/linkedin';
+import { ResumeTextPaste } from './ResumeTextPaste';
 
 interface Props {
   open: boolean;
@@ -53,7 +54,9 @@ export function SignupChoiceModal({ open, onClose, onLinkedInImported, onManualC
           </button>
           <input ref={inputRef} type="file" accept=".pdf,.zip" style={{ display: 'none' }} onChange={handleFile} />
 
-          <button className="mrw-choice-card" onClick={onManualChosen}>
+          <ResumeTextPaste onImported={onLinkedInImported} />
+
+          <button className="mrw-choice-card" onClick={onManualChosen} disabled={loading}>
             <span className="mrw-choice-card-title">Criar currículo manualmente</span>
             <span className="mrw-choice-card-sub">Não tem LinkedIn ou prefere preencher você mesmo — leva poucos minutos</span>
           </button>

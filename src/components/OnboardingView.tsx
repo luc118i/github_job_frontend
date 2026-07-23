@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CareerProfile, LinkedInData } from '../types';
 import { LinkedInImport } from './LinkedInImport';
 import { ManualResumeWizard } from './ManualResumeWizard';
+import { ResumeTextPaste } from './ResumeTextPaste';
 import { CareerChat } from './CareerChat';
 
 interface Props {
@@ -109,6 +110,10 @@ export function OnboardingView({ onComplete, onSkip }: Props) {
               ) : (
                 <>
                   <div className="onb-divider"><span>ou</span></div>
+                  <ResumeTextPaste
+                    onImported={handleImport}
+                    triggerClassName="onb-btn onb-btn--secondary"
+                  />
                   <button className="onb-btn onb-btn--secondary" onClick={() => setUploadMode('manual')}>
                     Não tenho LinkedIn — criar currículo manualmente
                   </button>
