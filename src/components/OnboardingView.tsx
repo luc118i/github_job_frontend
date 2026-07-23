@@ -8,12 +8,13 @@ import { CareerChat } from './CareerChat';
 interface Props {
   onComplete: (profile: CareerProfile, linkedIn?: LinkedInData) => void;
   onSkip: () => void;
+  githubUsername?: string | null;
 }
 
 type Step = 'upload' | 'chat' | 'done';
 type UploadMode = 'linkedin' | 'manual';
 
-export function OnboardingView({ onComplete, onSkip }: Props) {
+export function OnboardingView({ onComplete, onSkip, githubUsername }: Props) {
   const [step, setStep] = useState<Step>('upload');
   const [uploadMode, setUploadMode] = useState<UploadMode>('linkedin');
   const [linkedIn, setLinkedIn] = useState<LinkedInData | null>(null);
@@ -69,6 +70,7 @@ export function OnboardingView({ onComplete, onSkip }: Props) {
             initial={linkedIn}
             onComplete={handleManualComplete}
             onCancel={() => setUploadMode('linkedin')}
+            githubUsername={githubUsername}
           />
         )}
 

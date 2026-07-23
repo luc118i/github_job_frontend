@@ -215,7 +215,11 @@ export function PublicPortfolio({ username }: PublicPortfolioProps) {
                     <span className="pf-exp-title">{ed.school}</span>
                     <span className="pf-exp-period">{period(ed.startDate ?? '', ed.endDate)}</span>
                   </div>
-                  {ed.degree && <span className="pf-exp-company">{ed.degree}</span>}
+                  {(ed.degree || ed.fieldOfStudy) && (
+                    <span className="pf-exp-company">
+                      {[ed.degree, ed.fieldOfStudy].filter(Boolean).join(' em ')}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

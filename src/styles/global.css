@@ -9872,6 +9872,10 @@ main.kanban-view {
   cursor: pointer; margin-top: -4px;
 }
 .mrw-checkbox-row input[type="checkbox"] { accent-color: #3d72c8; width: 14px; height: 14px; cursor: pointer; }
+.mrw-skill-group-label {
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(232,228,220,0.35); margin-top: 2px;
+}
 .mrw-skill-suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
 .mrw-skill-suggestion {
   background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;

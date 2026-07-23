@@ -222,6 +222,7 @@ export default function App() {
             }
           }}
           onSkip={() => { setOnboardingDone(true); setForceOnboarding(false); }}
+          githubUsername={currentUser?.github_username ?? (username || null)}
         />
       </Suspense>
     );
@@ -280,6 +281,7 @@ export default function App() {
             <ManualResumeWizard
               onComplete={(data) => { setManualWizardOpen(false); handleLinkedInImport(data); }}
               onCancel={() => setManualWizardOpen(false)}
+              githubUsername={currentUser?.github_username ?? (username || null)}
             />
           </div>
         </div>

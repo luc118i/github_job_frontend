@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   LinkedInData,
   LinkedInPosition,
@@ -6,11 +6,14 @@ import {
   LinkedInCertification,
   LinkedInLanguage,
 } from '../types';
+import { fetchGitHubRepos, extractSkills, extractRepoContext } from '../services/github';
 
 interface Props {
   initial?: LinkedInData | null;
   onComplete: (data: LinkedInData) => void;
   onCancel: () => void;
+  /** Se informado, sugere habilidades extraídas das linguagens/tópicos dos repositórios. */
+  githubUsername?: string | null;
 }
 
 type StepKey =
@@ -41,13 +44,37 @@ function emptyPosition(): LinkedInPosition {
   return { company: '', title: '', description: null, location: null, startedOn: '', finishedOn: null };
 }
 function emptyEducation(): LinkedInEducation {
-  return { school: '', degree: null, startDate: null, endDate: '', notes: null };
+  return { school: '', degree: null, fieldOfStudy: null, startDate: null, endDate: '', notes: null };
 }
 function emptyCertification(): LinkedInCertification {
   return { name: '', authority: null, licenseNumber: null, startedOn: null, finishedOn: null };
 }
 function emptyLanguage(): LinkedInLanguage {
   return { name: '', level: null };
+}
+
+const MONTH_ABBR: Record<string, string> = {
+  jan: '01', fev: '02', feb: '02', mar: '03', abr: '04', apr: '04', mai: '05', may: '05',
+  jun: '06', jul: '07', ago: '08', aug: '08', set: '09', sep: '09', out: '10', oct: '10',
+  nov: '11', dez: '12', dec: '12',
+};
+
+/** Converte datas de currículos importados (ex: "Mar 2020", "03/2020") para o formato
+ *  aceito por <input type="month"> — sem alterar o valor original salvo no estado,
+ *  só a exibição. Se não conseguir reconhecer o formato, exibe em branco. */
+function toMonthInputValue(raw: string | null | undefined): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  if (/^\d{4}-\d{2}$/.test(trimmed)) return trimmed;
+  if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 7);
+  const monthYear = trimmed.match(/^([A-Za-zçÇãÃéÉ]{3,})\.?\s+(\d{4})$/);
+  if (monthYear) {
+    const mm = MONTH_ABBR[monthYear[1].slice(0, 3).toLowerCase()];
+    if (mm) return `${monthYear[2]}-${mm}`;
+  }
+  const slash = trimmed.match(/^(\d{1,2})\/(\d{4})$/);
+  if (slash) return `${slash[2]}-${slash[1].padStart(2, '0')}`;
+  return '';
 }
 
 function RepeatableList<T>({ items, onChange, makeEmpty, renderItem, addLabel, emptyHint }: {
@@ -78,7 +105,7 @@ function RepeatableList<T>({ items, onChange, makeEmpty, renderItem, addLabel, e
   );
 }
 
-export function ManualResumeWizard({ initial, onComplete, onCancel }: Props) {
+export function ManualResumeWizard({ initial, onComplete, onCancel, githubUsername }: Props) {
   const [stepIndex, setStepIndex] = useState(0);
   const [name, setName] = useState(initial?.name ?? '');
   const [email, setEmail] = useState(initial?.email ?? '');
@@ -89,6 +116,7 @@ export function ManualResumeWizard({ initial, onComplete, onCancel }: Props) {
   const [certifications, setCertifications] = useState<LinkedInCertification[]>(initial?.certifications ?? []);
   const [skills, setSkills] = useState<string[]>(initial?.skills ?? []);
   const [skillDraft, setSkillDraft] = useState('');
+  const [githubSkills, setGithubSkills] = useState<string[]>([]);
   const [languages, setLanguages] = useState<LinkedInLanguage[]>(initial?.languages ?? []);
   const [additionalInfo, setAdditionalInfo] = useState(initial?.additionalInfo ?? '');
 
@@ -96,6 +124,21 @@ export function ManualResumeWizard({ initial, onComplete, onCancel }: Props) {
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEPS.length - 1;
   const personalValid = name.trim().length > 0 && /\S+@\S+\.\S+/.test(email.trim());
+
+  // Sugere habilidades a partir das linguagens e tópicos dos repositórios do GitHub —
+  // best-effort: se falhar (rate limit, sem username), segue só com as sugestões genéricas.
+  useEffect(() => {
+    if (!githubUsername) return;
+    let cancelled = false;
+    fetchGitHubRepos(githubUsername).then((repos) => {
+      if (cancelled) return;
+      const languages = extractSkills(repos);
+      const topics = extractRepoContext(repos).flatMap((r) => r.topics);
+      const combined = [...new Set([...languages, ...topics])].slice(0, 12);
+      setGithubSkills(combined);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [githubUsername]);
 
   function next() {
     if (step.key === 'personal' && !personalValid) return;
@@ -184,14 +227,14 @@ export function ManualResumeWizard({ initial, onComplete, onCancel }: Props) {
                 <div className="mrw-grid-2">
                   <label className="mrw-date-field">
                     <span className="mrw-date-label">Início</span>
-                    <input className="auth-input" type="month" value={p.startedOn} onChange={(e) => update({ startedOn: e.target.value })} />
+                    <input className="auth-input" type="month" value={toMonthInputValue(p.startedOn)} onChange={(e) => update({ startedOn: e.target.value })} />
                   </label>
                   <label className="mrw-date-field">
                     <span className="mrw-date-label">Fim</span>
                     <input
                       className="auth-input"
                       type="month"
-                      value={p.finishedOn ?? ''}
+                      value={toMonthInputValue(p.finishedOn)}
                       disabled={p.finishedOn === null}
                       onChange={(e) => update({ finishedOn: e.target.value })}
                     />
@@ -223,19 +266,20 @@ export function ManualResumeWizard({ initial, onComplete, onCancel }: Props) {
             emptyHint="Nenhuma formação adicionada ainda."
             renderItem={(e, update) => (
               <div className="mrw-grid">
-                <input className="auth-input" placeholder="Curso/Grau" value={e.degree ?? ''} onChange={(ev) => update({ degree: ev.target.value || null })} />
+                <input className="auth-input" placeholder="Grau (ex: Tecnólogo, Bacharelado)" value={e.degree ?? ''} onChange={(ev) => update({ degree: ev.target.value || null })} />
+                <input className="auth-input" placeholder="Curso (ex: Análise e Desenvolvimento de Sistemas)" value={e.fieldOfStudy ?? ''} onChange={(ev) => update({ fieldOfStudy: ev.target.value || null })} />
                 <input className="auth-input" placeholder="Instituição" value={e.school} onChange={(ev) => update({ school: ev.target.value })} />
                 <div className="mrw-grid-2">
                   <label className="mrw-date-field">
                     <span className="mrw-date-label">Início</span>
-                    <input className="auth-input" type="month" value={e.startDate ?? ''} onChange={(ev) => update({ startDate: ev.target.value || null })} />
+                    <input className="auth-input" type="month" value={toMonthInputValue(e.startDate)} onChange={(ev) => update({ startDate: ev.target.value || null })} />
                   </label>
                   <label className="mrw-date-field">
                     <span className="mrw-date-label">Conclusão</span>
                     <input
                       className="auth-input"
                       type="month"
-                      value={e.endDate ?? ''}
+                      value={toMonthInputValue(e.endDate)}
                       disabled={e.endDate === null}
                       onChange={(ev) => update({ endDate: ev.target.value })}
                     />
@@ -272,11 +316,11 @@ export function ManualResumeWizard({ initial, onComplete, onCancel }: Props) {
                 <div className="mrw-grid-2">
                   <label className="mrw-date-field">
                     <span className="mrw-date-label">Início (opcional)</span>
-                    <input className="auth-input" type="month" value={c.startedOn ?? ''} onChange={(e) => update({ startedOn: e.target.value || null })} />
+                    <input className="auth-input" type="month" value={toMonthInputValue(c.startedOn)} onChange={(e) => update({ startedOn: e.target.value || null })} />
                   </label>
                   <label className="mrw-date-field">
                     <span className="mrw-date-label">Conclusão (opcional)</span>
-                    <input className="auth-input" type="month" value={c.finishedOn ?? ''} onChange={(e) => update({ finishedOn: e.target.value || null })} />
+                    <input className="auth-input" type="month" value={toMonthInputValue(c.finishedOn)} onChange={(e) => update({ finishedOn: e.target.value || null })} />
                   </label>
                 </div>
               </div>
@@ -289,6 +333,19 @@ export function ManualResumeWizard({ initial, onComplete, onCancel }: Props) {
         <div className="mrw-fields">
           <h2 className="onb-title mrw-step-title">Habilidades</h2>
           <p className="onb-subtitle">Clique nas sugestões abaixo ou digite a sua e pressione Enter.</p>
+          {githubSkills.filter((s) => !skills.includes(s)).length > 0 && (
+            <>
+              <span className="mrw-skill-group-label">Do seu GitHub</span>
+              <div className="mrw-skill-suggestions">
+                {githubSkills.filter((s) => !skills.includes(s)).map((s) => (
+                  <button key={s} type="button" className="mrw-skill-suggestion" onClick={() => setSkills([...skills, s])}>
+                    + {s}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <span className="mrw-skill-group-label">Sugestões gerais</span>
           <div className="mrw-skill-suggestions">
             {SUGGESTED_SKILLS.filter((s) => !skills.includes(s)).map((s) => (
               <button key={s} type="button" className="mrw-skill-suggestion" onClick={() => setSkills([...skills, s])}>

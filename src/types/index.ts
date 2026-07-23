@@ -67,6 +67,7 @@ export interface LinkedInPosition {
 export interface LinkedInEducation {
   school: string;
   degree: string | null;
+  fieldOfStudy: string | null;
   startDate: string | null;
   endDate: string | null;
   notes: string | null;
