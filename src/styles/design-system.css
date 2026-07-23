@@ -54,23 +54,24 @@
 /* Full card cut — both corners */
 .geo-cut-full {
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut)) 0,
-    100% var(--geo-cut),
-    100% 100%,
-    var(--geo-cut) 100%,
-    0 calc(100% - var(--geo-cut))
+    var(--geo-cut) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut)),
+    calc(100% - var(--geo-cut)) 100%,
+    0 100%,
+    0 var(--geo-cut)
   );
 }
 
 /* Button cut — top-right only */
 .geo-cut-btn {
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-sm)) 0,
-    100% var(--geo-cut-sm),
-    100% 100%,
-    0 100%
+    var(--geo-cut-sm) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-sm)),
+    calc(100% - var(--geo-cut-sm)) 100%,
+    0 100%,
+    0 var(--geo-cut-sm)
   );
 }
 
@@ -84,12 +85,12 @@
   box-shadow: none;
   border-radius: 0;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut)) 0,
-    100% var(--geo-cut),
-    100% 100%,
-    var(--geo-cut) 100%,
-    0 calc(100% - var(--geo-cut))
+    var(--geo-cut) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut)),
+    calc(100% - var(--geo-cut)) 100%,
+    0 100%,
+    0 var(--geo-cut)
   );
   filter: drop-shadow(0 2px 8px rgba(0,0,0,0.22));
   transition: filter var(--t-smooth), border-color var(--t-smooth), background var(--t-smooth);
@@ -107,11 +108,11 @@
   content: '';
   position: absolute;
   top: 0;
-  right: 0;
+  left: 0;
   width: var(--geo-cut);
   height: var(--geo-cut);
   background: var(--brand);
-  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
   opacity: 0.22;
   pointer-events: none;
 }
@@ -129,11 +130,12 @@
   background: var(--brand);
   box-shadow: 0 1px 3px rgba(0,0,0,0.28);
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-sm)) 0,
-    100% var(--geo-cut-sm),
-    100% 100%,
-    0 100%
+    var(--geo-cut-sm) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-sm)),
+    calc(100% - var(--geo-cut-sm)) 100%,
+    0 100%,
+    0 var(--geo-cut-sm)
   );
   transition: filter var(--t-base), transform var(--t-base), box-shadow var(--t-base);
 }
@@ -157,11 +159,12 @@
 .hdr-logout-btn {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-xs)) 0,
-    100% var(--geo-cut-xs),
-    100% 100%,
-    0 100%
+    var(--geo-cut-xs) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-xs)),
+    calc(100% - var(--geo-cut-xs)) 100%,
+    0 100%,
+    0 var(--geo-cut-xs)
   );
   transition: filter var(--t-base), border-color var(--t-base), background var(--t-base) !important;
 }
@@ -178,12 +181,12 @@
   position: relative;
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut)) 0,
-    100% var(--geo-cut),
-    100% 100%,
-    var(--geo-cut) 100%,
-    0 calc(100% - var(--geo-cut))
+    var(--geo-cut) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut)),
+    calc(100% - var(--geo-cut)) 100%,
+    0 100%,
+    0 var(--geo-cut)
   );
   filter: drop-shadow(0 2px 8px rgba(0,0,0,0.22));
   transition: filter var(--t-smooth), border-color var(--t-smooth), background var(--t-smooth);
@@ -199,11 +202,11 @@
   content: '';
   position: absolute;
   top: 0;
-  right: 0;
+  left: 0;
   width: var(--geo-cut);
   height: var(--geo-cut);
   background: var(--brand);
-  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
   opacity: 0.22;
   pointer-events: none;
   z-index: 1;
@@ -213,11 +216,12 @@
 .bv-search-input-wrap {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-sm)) 0,
-    100% var(--geo-cut-sm),
-    100% 100%,
-    0 100%
+    var(--geo-cut-sm) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-sm)),
+    calc(100% - var(--geo-cut-sm)) 100%,
+    0 100%,
+    0 var(--geo-cut-sm)
   );
   transition: border-color var(--t-base) !important;
 }
@@ -226,11 +230,12 @@
 .bv-search-btn {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-sm)) 0,
-    100% var(--geo-cut-sm),
-    100% 100%,
-    0 100%
+    var(--geo-cut-sm) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-sm)),
+    calc(100% - var(--geo-cut-sm)) 100%,
+    0 100%,
+    0 var(--geo-cut-sm)
   );
   transition: filter var(--t-base), transform var(--t-base) !important;
 }
@@ -248,11 +253,12 @@
 .bv-filter-btn {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-xs)) 0,
-    100% var(--geo-cut-xs),
-    100% 100%,
-    0 100%
+    var(--geo-cut-xs) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-xs)),
+    calc(100% - var(--geo-cut-xs)) 100%,
+    0 100%,
+    0 var(--geo-cut-xs)
   );
   transition: filter var(--t-base), background var(--t-base) !important;
 }
@@ -268,11 +274,12 @@
 .bv-filter-popover {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-sm)) 0,
-    100% var(--geo-cut-sm),
-    100% 100%,
-    0 100%
+    var(--geo-cut-sm) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-sm)),
+    calc(100% - var(--geo-cut-sm)) 100%,
+    0 100%,
+    0 var(--geo-cut-sm)
   );
 }
 
@@ -280,11 +287,12 @@
 .bv-suggestion-chip {
   border-radius: var(--r-chip) !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-xs)) 0,
-    100% var(--geo-cut-xs),
-    100% 100%,
-    0 100%
+    var(--geo-cut-xs) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-xs)),
+    calc(100% - var(--geo-cut-xs)) 100%,
+    0 100%,
+    0 var(--geo-cut-xs)
   );
   transition: filter var(--t-base), background var(--t-base) !important;
 }
@@ -298,12 +306,12 @@
   position: relative;
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut)) 0,
-    100% var(--geo-cut),
-    100% 100%,
-    var(--geo-cut) 100%,
-    0 calc(100% - var(--geo-cut))
+    var(--geo-cut) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut)),
+    calc(100% - var(--geo-cut)) 100%,
+    0 100%,
+    0 var(--geo-cut)
   );
   filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
   transition: filter var(--t-smooth), border-color var(--t-smooth);
@@ -318,11 +326,11 @@
   content: '';
   position: absolute;
   top: 0;
-  right: 0;
+  left: 0;
   width: var(--geo-cut);
   height: var(--geo-cut);
   background: var(--brand);
-  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
   opacity: 0.18;
   pointer-events: none;
   z-index: 1;
@@ -332,11 +340,12 @@
 .jcp-apply-btn {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-xs)) 0,
-    100% var(--geo-cut-xs),
-    100% 100%,
-    0 100%
+    var(--geo-cut-xs) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-xs)),
+    calc(100% - var(--geo-cut-xs)) 100%,
+    0 100%,
+    0 var(--geo-cut-xs)
   );
   transition: filter var(--t-base), transform var(--t-base) !important;
 }
@@ -361,22 +370,24 @@
   border-radius: 0 !important;
   box-shadow: var(--shadow-modal) !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut)) 0,
-    100% var(--geo-cut),
-    100% 100%,
-    0 100%
+    var(--geo-cut) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut)),
+    calc(100% - var(--geo-cut)) 100%,
+    0 100%,
+    0 var(--geo-cut)
   );
 }
 
 .auth-submit {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-sm)) 0,
-    100% var(--geo-cut-sm),
-    100% 100%,
-    0 100%
+    var(--geo-cut-sm) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-sm)),
+    calc(100% - var(--geo-cut-sm)) 100%,
+    0 100%,
+    0 var(--geo-cut-sm)
   );
   transition: filter var(--t-base), transform var(--t-base) !important;
 }
@@ -403,12 +414,12 @@
   position: relative;
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut)) 0,
-    100% var(--geo-cut),
-    100% 100%,
-    var(--geo-cut) 100%,
-    0 calc(100% - var(--geo-cut))
+    var(--geo-cut) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut)),
+    calc(100% - var(--geo-cut)) 100%,
+    0 100%,
+    0 var(--geo-cut)
   ) !important;
   filter: drop-shadow(0 4px 20px rgba(0,0,0,0.35));
 }
@@ -417,17 +428,43 @@
   content: '';
   position: absolute;
   top: 0;
-  right: 0;
+  left: 0;
   width: var(--geo-cut);
   height: var(--geo-cut);
   background: var(--brand);
-  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
   opacity: 0.22;
   pointer-events: none;
 }
 
 .onb-tag {
   border-radius: var(--r-chip) !important;
+}
+
+/* Botões secundários (outline) — mesmo corte + sombra dos demais CTAs */
+.onb-btn--secondary,
+.mrw-choice-paste-cancel {
+  position: relative;
+  isolation: isolate;
+  border-radius: 0 !important;
+  clip-path: polygon(
+    var(--geo-cut-xs) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-xs)),
+    calc(100% - var(--geo-cut-xs)) 100%,
+    0 100%,
+    0 var(--geo-cut-xs)
+  ) !important;
+}
+.onb-btn--secondary::after,
+.mrw-choice-paste-cancel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: inherit;
+  background: rgba(0, 0, 0, 0.4);
+  transform: translate(-4px, 4px);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -437,12 +474,12 @@
   position: relative;
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-sm)) 0,
-    100% var(--geo-cut-sm),
-    100% 100%,
-    var(--geo-cut-sm) 100%,
-    0 calc(100% - var(--geo-cut-sm))
+    var(--geo-cut-sm) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-sm)),
+    calc(100% - var(--geo-cut-sm)) 100%,
+    0 100%,
+    0 var(--geo-cut-sm)
   ) !important;
   filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
   transition: filter var(--t-smooth) !important;
@@ -456,11 +493,11 @@
   content: '';
   position: absolute;
   top: 0;
-  right: 0;
+  left: 0;
   width: var(--geo-cut-sm);
   height: var(--geo-cut-sm);
   background: var(--brand);
-  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
   opacity: 0.2;
   pointer-events: none;
   z-index: 1;
@@ -469,11 +506,12 @@
 .kb-action-btn {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-xs)) 0,
-    100% var(--geo-cut-xs),
-    100% 100%,
-    0 100%
+    var(--geo-cut-xs) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-xs)),
+    calc(100% - var(--geo-cut-xs)) 100%,
+    0 100%,
+    0 var(--geo-cut-xs)
   );
   transition: filter var(--t-base) !important;
 }
@@ -487,11 +525,12 @@
 .kb-summary-chip {
   border-radius: var(--r-chip) !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-xs)) 0,
-    100% var(--geo-cut-xs),
-    100% 100%,
-    0 100%
+    var(--geo-cut-xs) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-xs)),
+    calc(100% - var(--geo-cut-xs)) 100%,
+    0 100%,
+    0 var(--geo-cut-xs)
   );
 }
 
@@ -517,11 +556,12 @@
 .user-profile-save-btn {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-sm)) 0,
-    100% var(--geo-cut-sm),
-    100% 100%,
-    0 100%
+    var(--geo-cut-sm) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-sm)),
+    calc(100% - var(--geo-cut-sm)) 100%,
+    0 100%,
+    0 var(--geo-cut-sm)
   );
   transition: filter var(--t-base), transform var(--t-base) !important;
 }
@@ -536,23 +576,24 @@
   position: relative;
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut)) 0,
-    100% var(--geo-cut),
-    100% 100%,
-    var(--geo-cut) 100%,
-    0 calc(100% - var(--geo-cut))
+    var(--geo-cut) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut)),
+    calc(100% - var(--geo-cut)) 100%,
+    0 100%,
+    0 var(--geo-cut)
   );
 }
 
 .buscar-config-btn {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-sm)) 0,
-    100% var(--geo-cut-sm),
-    100% 100%,
-    0 100%
+    var(--geo-cut-sm) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-sm)),
+    calc(100% - var(--geo-cut-sm)) 100%,
+    0 100%,
+    0 var(--geo-cut-sm)
   );
   transition: filter var(--t-base), transform var(--t-base) !important;
 }
@@ -566,11 +607,12 @@
 .tfb-tag {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-xs)) 0,
-    100% var(--geo-cut-xs),
-    100% 100%,
-    0 100%
+    var(--geo-cut-xs) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-xs)),
+    calc(100% - var(--geo-cut-xs)) 100%,
+    0 100%,
+    0 var(--geo-cut-xs)
   );
   transition: filter var(--t-base), background var(--t-base) !important;
 }
@@ -584,11 +626,12 @@
 .crc-chip {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-xs)) 0,
-    100% var(--geo-cut-xs),
-    100% 100%,
-    0 100%
+    var(--geo-cut-xs) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-xs)),
+    calc(100% - var(--geo-cut-xs)) 100%,
+    0 100%,
+    0 var(--geo-cut-xs)
   );
   transition: filter var(--t-base), background var(--t-base) !important;
 }
@@ -602,11 +645,12 @@
 .search-card-btn {
   border-radius: 0 !important;
   clip-path: polygon(
-    0 0,
-    calc(100% - var(--geo-cut-sm)) 0,
-    100% var(--geo-cut-sm),
-    100% 100%,
-    0 100%
+    var(--geo-cut-sm) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-sm)),
+    calc(100% - var(--geo-cut-sm)) 100%,
+    0 100%,
+    0 var(--geo-cut-sm)
   );
 }
 
@@ -624,7 +668,15 @@ input[type="text"]:not([class]),
 input[type="email"]:not([class]),
 input[type="password"]:not([class]),
 textarea:not([class]) {
-  border-radius: var(--r-md) !important;
+  border-radius: 0 !important;
+  clip-path: polygon(
+    var(--geo-cut-xs) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-xs)),
+    calc(100% - var(--geo-cut-xs)) 100%,
+    0 100%,
+    0 var(--geo-cut-xs)
+  );
   transition: border-color var(--t-base), box-shadow var(--t-base) !important;
 }
 
@@ -658,6 +710,51 @@ textarea:focus {
   border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   SOMBRA REVELADA — mesma camada de profundidade do .btn-tag, aplicada
+   aos botões secundários e chips já convertidos pro corte sup-esq/inf-dir
+   acima. Cards, painéis e inputs ficam só com o corte, sem sombra.
+══════════════════════════════════════════════════════════════════════ */
+.hdr-login-btn, .hdr-logout-btn,
+.bv-filter-btn, .bv-suggestion-chip,
+.jcp-apply-btn,
+.kb-action-btn, .kb-summary-chip,
+.tfb-tag,
+.cc-chip, .crc-chip {
+  position: relative;
+  isolation: isolate;
+}
+.hdr-login-btn::after, .hdr-logout-btn::after,
+.bv-filter-btn::after, .bv-suggestion-chip::after,
+.jcp-apply-btn::after,
+.kb-action-btn::after, .kb-summary-chip::after,
+.tfb-tag::after,
+.cc-chip::after, .crc-chip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: inherit;
+  background: rgba(0, 0, 0, 0.4);
+  transform: translate(-4px, 4px);
+}
+
+.buscar-config-btn,
+.search-card-btn {
+  position: relative;
+  isolation: isolate;
+}
+.buscar-config-btn::after,
+.search-card-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: inherit;
+  background: rgba(0, 0, 0, 0.4);
+  transform: translate(-5px, 5px);
+}
 
 /* ══════════════════════════════════════════════════════════════════════
    FOCUS RING — accessible, not aggressive
