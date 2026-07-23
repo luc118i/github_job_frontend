@@ -353,16 +353,6 @@
 .jcp-apply-btn:hover { filter: brightness(1.1); }
 .jcp-apply-btn:active { transform: scale(0.98) translateY(1px); }
 
-/* Skill tags */
-.jcp-skill-tag {
-  border-radius: var(--r-chip) !important;
-}
-
-/* Level badge */
-.jcp-level-badge {
-  border-radius: var(--r-chip) !important;
-}
-
 /* ══════════════════════════════════════════════════════════════════════
    AUTH MODAL
 ══════════════════════════════════════════════════════════════════════ */

@@ -994,8 +994,16 @@ h1 {
   color: #60a5fa;
   background: rgba(61,114,200,0.1);
   border: 1px solid rgba(61,114,200,0.22);
-  border-radius: 20px;
-  padding: 3px 9px 3px 7px;
+  border-radius: 0;
+  padding: 3px 9px 3px 10px;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    var(--geo-cut-xs) 100%,
+    0 calc(100% - var(--geo-cut-xs))
+  );
 }
 
 .jcp-badge-new::before {
@@ -1018,14 +1026,21 @@ h1 {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  border-radius: var(--r-pill);
-  padding: 4px 11px;
+  border-radius: 0;
+  padding: 4px 11px 4px 12px;
   /* default — sobrescrito pelos modificadores abaixo */
   color: rgba(232,228,220,0.45);
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.08);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    var(--geo-cut-xs) 100%,
+    0 calc(100% - var(--geo-cut-xs))
+  );
 }
-
 /* Alta compatibilidade — verde */
 .jcp-badge-match--high {
   color: var(--match);
@@ -1054,8 +1069,16 @@ h1 {
   color: rgba(232,228,220,0.25);
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 20px;
-  padding: 3px 9px;
+  border-radius: 0;
+  padding: 3px 9px 3px 10px;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    var(--geo-cut-xs) 100%,
+    0 calc(100% - var(--geo-cut-xs))
+  );
 }
 
 /* ── Title ── */
@@ -1135,7 +1158,7 @@ h1 {
   width: 44px;
   height: 44px;
   flex-shrink: 0;
-  border-radius: 11px;
+  border-radius: 0;
   background: rgba(61,114,200,0.1);
   border: 1px solid rgba(61,114,200,0.15);
   display: flex;
@@ -1146,8 +1169,15 @@ h1 {
   font-weight: 700;
   color: #7aa3d8;
   overflow: hidden;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    var(--geo-cut-xs) 100%,
+    0 calc(100% - var(--geo-cut-xs))
+  );
 }
-
 .jcp-company-favicon {
   width: 28px;
   height: 28px;
@@ -1234,10 +1264,17 @@ h1 {
   color: #d8b4fe;
   background: rgba(109,40,217,0.18);
   border: 1px solid rgba(109,40,217,0.28);
-  border-radius: 7px;
-  padding: 5px 11px;
+  border-radius: 0;
+  padding: 5px 11px 5px 12px;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    var(--geo-cut-xs) 100%,
+    0 calc(100% - var(--geo-cut-xs))
+  );
 }
-
 .jcp-level-badge svg {
   flex-shrink: 0;
   opacity: 0.85;
@@ -1313,10 +1350,17 @@ h1 {
   color: rgba(232,228,220,0.45);
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 6px;
-  padding: 4px 10px;
+  border-radius: 0;
+  padding: 4px 10px 4px 11px;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    var(--geo-cut-xs) 100%,
+    0 calc(100% - var(--geo-cut-xs))
+  );
 }
-
 /* Main stack pills use a tint of the tech brand colour */
 .jcp-skill-main {
   color: color-mix(in srgb, var(--tc, #7aa3d8) 90%, white 10%);
@@ -1341,12 +1385,19 @@ h1 {
   justify-content: center;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 9px;
+  border-radius: 0;
   color: rgba(232,228,220,0.3);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    var(--geo-cut-xs) 100%,
+    0 calc(100% - var(--geo-cut-xs))
+  );
 }
-
 .jcp-icon-btn:hover {
   background: rgba(255,255,255,0.08);
   border-color: rgba(255,255,255,0.15);
@@ -1362,6 +1413,8 @@ h1 {
 /* ── Shared base for both action buttons ── */
 .jcp-apply-btn,
 .jcp-cv-action {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1369,20 +1422,32 @@ h1 {
   font-size: 13px;
   font-weight: 600;
   height: 36px;
-  padding: 0 16px;
+  padding: 0 18px 0 16px;
   border-radius: 0;
   clip-path: polygon(
-    0 0,
-    calc(100% - 7px) 0,
-    100% 7px,
-    100% 100%,
-    0 100%
+    var(--geo-cut-xs) 0,
+    100% 0,
+    100% calc(100% - var(--geo-cut-xs)),
+    calc(100% - var(--geo-cut-xs)) 100%,
+    0 100%,
+    0 var(--geo-cut-xs)
   );
   white-space: nowrap;
   flex-shrink: 0;
   cursor: pointer;
   text-decoration: none;
   transition: filter 0.15s ease-out, transform 0.1s ease-out;
+}
+
+.jcp-apply-btn::after,
+.jcp-cv-action::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: inherit;
+  background: rgba(0, 0, 0, 0.4);
+  transform: translate(-4px, 4px);
 }
 
 .jcp-apply-btn:active,
@@ -1544,13 +1609,20 @@ h1 {
   color: rgba(232,228,220,0.28);
   font-family: var(--font-body);
   font-size: 10px;
-  padding: 3px 9px;
-  border-radius: var(--r-chip);
+  padding: 3px 9px 3px 10px;
+  border-radius: 0;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
   white-space: nowrap;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--geo-cut-xs)) 0,
+    100% var(--geo-cut-xs),
+    100% 100%,
+    var(--geo-cut-xs) 100%,
+    0 calc(100% - var(--geo-cut-xs))
+  );
 }
-
 .jcp-fb-btn:hover {
   border-color: rgba(255,255,255,0.18);
   color: rgba(232,228,220,0.6);
