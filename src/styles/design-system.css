@@ -681,3 +681,36 @@ button:not(:disabled),
 [role="button"]:not([aria-disabled="true"]) {
   transition: filter var(--t-base), transform var(--t-base), opacity var(--t-base);
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   BTN TAG — retângulo com canto superior-esquerdo e inferior-direito
+   chanfrados, sombra revelada embaixo e à esquerda. Reservado aos CTAs
+   primários. Precisa vir por último no arquivo para vencer os clip-paths
+   por-componente definidos acima (ex: .bv-search-btn).
+══════════════════════════════════════════════════════════════════════ */
+.btn-tag {
+  --tag-chamfer: 14px;
+  --tag-shadow: 6px;
+  position: relative;
+  isolation: isolate;
+  border-radius: 0 !important;
+  padding-left: calc(1em + var(--tag-chamfer) + var(--tag-shadow)) !important;
+  padding-right: calc(1em + var(--tag-chamfer)) !important;
+  clip-path: polygon(
+    var(--tag-chamfer) 0,
+    100% 0,
+    100% calc(100% - var(--tag-chamfer)),
+    calc(100% - var(--tag-chamfer)) 100%,
+    0 100%,
+    0 var(--tag-chamfer)
+  ) !important;
+}
+.btn-tag::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: inherit;
+  background: rgba(0, 0, 0, 0.4);
+  transform: translate(calc(-1 * var(--tag-shadow)), var(--tag-shadow));
+}

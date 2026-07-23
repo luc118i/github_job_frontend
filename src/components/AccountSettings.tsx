@@ -117,7 +117,7 @@ export function AccountSettings({ user, linkedInData, onUpdate, onLinkedInUpdate
         {error && <span className="user-profile-error">{error}</span>}
         {success && <span className="user-profile-success">salvo com sucesso</span>}
 
-        <button className="user-profile-save-btn" type="submit" disabled={saving}>
+        <button className="user-profile-save-btn btn-tag" type="submit" disabled={saving}>
           {saving ? 'salvando...' : 'salvar alterações'}
         </button>
       </form>
@@ -154,7 +154,7 @@ export function AccountSettings({ user, linkedInData, onUpdate, onLinkedInUpdate
               )}
               <button
                 type="button"
-                className="user-profile-save-btn"
+                className="user-profile-save-btn btn-tag"
                 style={{ marginTop: 10, width: 'auto' }}
                 onClick={() => setEditingResume(true)}
               >

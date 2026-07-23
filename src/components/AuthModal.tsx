@@ -136,7 +136,7 @@ export function AuthModal({ open, linkedInData, onSuccess, onClose, reason, onNe
 
           {error && <span className="auth-error">{error}</span>}
 
-          <button className="auth-submit" type="submit" disabled={loading}>
+          <button className="auth-submit btn-tag" type="submit" disabled={loading}>
             {loading ? 'aguarde...' : mode === 'register' ? 'criar conta' : 'entrar'}
           </button>
         </form>

@@ -58,7 +58,7 @@ export function ResumeTextPaste({ onImported, cardClassName = 'mrw-choice-card',
           Cancelar
         </button>
         <button
-          className="mrw-choice-paste-submit"
+          className="mrw-choice-paste-submit btn-tag"
           onClick={handleSubmit}
           disabled={loading || !text.trim()}
         >

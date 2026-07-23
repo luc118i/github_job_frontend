@@ -442,7 +442,7 @@ export function ManualResumeWizard({ initial, onComplete, onCancel, githubUserna
       )}
 
       <div className="onb-actions mrw-actions">
-        <button className="onb-btn onb-btn--primary" onClick={next} disabled={step.key === 'personal' && !personalValid}>
+        <button className="onb-btn onb-btn--primary btn-tag" onClick={next} disabled={step.key === 'personal' && !personalValid}>
           {isLast ? 'Concluir currículo' : 'Continuar'}
         </button>
         <button className="onb-btn onb-btn--ghost" onClick={back}>

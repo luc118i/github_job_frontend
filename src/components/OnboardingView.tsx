@@ -106,7 +106,7 @@ export function OnboardingView({ onComplete, onSkip, githubUsername }: Props) {
 
             <div className="onb-actions">
               {linkedIn ? (
-                <button className="onb-btn onb-btn--primary" onClick={() => setStep('chat')}>
+                <button className="onb-btn onb-btn--primary btn-tag" onClick={() => setStep('chat')}>
                   Continuar com análise de IA
                 </button>
               ) : (
@@ -183,7 +183,7 @@ export function OnboardingView({ onComplete, onSkip, githubUsername }: Props) {
               )}
             </div>
 
-            <button className="onb-btn onb-btn--primary onb-btn--large" onClick={handleFinish}>
+            <button className="onb-btn onb-btn--primary onb-btn--large btn-tag" onClick={handleFinish}>
               Ver vagas para mim →
             </button>
           </div>

@@ -321,7 +321,7 @@ export function BuscarView({
           </div>
 
           <button
-            className={`bv-search-btn${hasQuery ? ' bv-search-btn--text' : ' bv-search-btn--discover'}`}
+            className={`bv-search-btn btn-tag${hasQuery ? ' bv-search-btn--text' : ' bv-search-btn--discover'}`}
             onClick={() => handleSearch()}
             disabled={loading || blockedToday}
           >
