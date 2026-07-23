@@ -86,11 +86,15 @@ export async function updateProfile(data: {
 export async function updateLinkedIn(linkedInData: LinkedInData): Promise<void> {
   const token = getToken();
   if (!token) return;
-  await fetch(`${API_URL}/auth/linkedin`, {
+  const res = await fetch(`${API_URL}/auth/linkedin`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ linkedInData }),
   });
+  if (!res.ok) {
+    const result = await res.json().catch(() => ({}));
+    throw new Error(result.error ?? 'Erro ao salvar currículo');
+  }
 }
 
 export interface ServerPreferences {

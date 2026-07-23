@@ -25,9 +25,13 @@ export function AccountSettings({ user, linkedInData, onUpdate, onLinkedInUpdate
   const [editingResume, setEditingResume] = useState(false);
 
   async function handleResumeSave(data: LinkedInData) {
-    setEditingResume(false);
-    onLinkedInUpdate(data);
-    await updateLinkedIn(data);
+    try {
+      await updateLinkedIn(data);
+      onLinkedInUpdate(data);
+      setEditingResume(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar currículo');
+    }
   }
 
   useEffect(() => {
@@ -126,6 +130,7 @@ export function AccountSettings({ user, linkedInData, onUpdate, onLinkedInUpdate
             initial={linkedInData}
             onComplete={handleResumeSave}
             onCancel={() => setEditingResume(false)}
+            githubUsername={user.github_username ?? null}
           />
         </div>
       ) : (() => {
