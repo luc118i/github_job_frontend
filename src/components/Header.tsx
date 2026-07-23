@@ -90,9 +90,11 @@ export const NAV_TABS: NavTab[] = [
   { view: 'portfolio', label: 'portfólio',   Icon: IconGlobe,   authOnly: true },
 ];
 
-/** Abas visíveis conforme login: visitante só vê as públicas. */
+/** Abas visíveis conforme login: visitante só vê as públicas.
+ *  Portfólio ainda não está pronto — oculto em produção, visível em dev. */
 export function visibleNavTabs(currentUser: AuthUser | null): NavTab[] {
-  return currentUser ? NAV_TABS : NAV_TABS.filter(t => !t.authOnly);
+  const tabs = import.meta.env.PROD ? NAV_TABS.filter(t => t.view !== 'portfolio') : NAV_TABS;
+  return currentUser ? tabs : tabs.filter(t => !t.authOnly);
 }
 
 export function Header({ currentUser, view, onViewChange, onLogout, onLoginClick, onProfileClick }: HeaderProps) {
