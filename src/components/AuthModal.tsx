@@ -18,6 +18,7 @@ export function AuthModal({ open, linkedInData, onSuccess, onClose, reason, onNe
   const [mode, setMode] = useState<Mode>(linkedInData ? 'register' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -26,6 +27,7 @@ export function AuthModal({ open, linkedInData, onSuccess, onClose, reason, onNe
     setMode(linkedInData ? 'register' : 'login');
     setEmail(linkedInData?.email ?? '');
     setPassword('');
+    setShowPassword(false);
     setError('');
   }, [open, linkedInData]);
 
@@ -99,15 +101,37 @@ export function AuthModal({ open, linkedInData, onSuccess, onClose, reason, onNe
 
           <div className="auth-field">
             <label className="auth-label">senha</label>
-            <input
-              className="auth-input"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder={mode === 'register' ? 'mínimo 6 caracteres' : '••••••••'}
-              required
-              autoFocus={!!email}
-            />
+            <div className="auth-password-wrap">
+              <input
+                className="auth-input"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder={mode === 'register' ? 'mínimo 6 caracteres' : '••••••••'}
+                required
+                autoFocus={!!email}
+              />
+              <button
+                type="button"
+                className="auth-password-toggle"
+                onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M2 9c1.5-3 4.2-5 7-5s5.5 2 7 5c-1.5 3-4.2 5-7 5s-5.5-2-7-5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="9" cy="9" r="2.2" stroke="currentColor" strokeWidth="1.4"/>
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M2 9c1.5-3 4.2-5 7-5s5.5 2 7 5c-1.5 3-4.2 5-7 5s-5.5-2-7-5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="9" cy="9" r="2.2" stroke="currentColor" strokeWidth="1.4"/>
+                    <path d="M2.5 15.5L15.5 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           {error && <span className="auth-error">{error}</span>}
