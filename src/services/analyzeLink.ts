@@ -9,7 +9,8 @@ function authHeaders(): Record<string, string> {
 }
 
 export async function analyzeLink(params: {
-  url: string;
+  url?: string;
+  text?: string;
   githubUsername?: string;
   githubBio?: string | null;
   skills?: string[];

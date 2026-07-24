@@ -519,4 +519,5 @@ export interface LinkAnalysisResponse {
   atsKeywords: string[];
   requirements: string[];
   language: string | null;
+  contactEmail: string | null;
 }

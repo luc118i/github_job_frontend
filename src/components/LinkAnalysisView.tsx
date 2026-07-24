@@ -18,6 +18,7 @@ interface AnalysisState {
   atsKeywords: string[];
   requirements: string[];
   language: string | null;
+  contactEmail: string | null;
 }
 
 function ScoreRing({ score }: { score: number }) {
@@ -47,6 +48,8 @@ function Pill({ text, variant }: { text: string; variant: 'strength' | 'gap' | '
 
 export function LinkAnalysisView({ profile, linkedIn, onGenerateCv }: LinkAnalysisViewProps) {
   const [url, setUrl] = useState('');
+  const [pasteMode, setPasteMode] = useState(false);
+  const [pastedText, setPastedText] = useState('');
   const [step, setStep] = useState<Step>('idle');
   const [error, setError] = useState('');
   const [result, setResult] = useState<AnalysisState | null>(null);
@@ -72,18 +75,27 @@ export function LinkAnalysisView({ profile, linkedIn, onGenerateCv }: LinkAnalys
   }, [result]);
 
   async function handleAnalyze() {
-    const trimmed = url.trim();
-    if (!trimmed.startsWith('http')) {
+    const trimmedUrl = url.trim();
+    const trimmedText = pastedText.trim();
+
+    if (pasteMode) {
+      if (!trimmedText) {
+        setError('Cole a descrição da vaga');
+        return;
+      }
+    } else if (!trimmedUrl.startsWith('http')) {
       setError('Cole uma URL válida da vaga (começando com https://)');
       return;
     }
+
     setStep('loading');
     setError('');
     setResult(null);
 
     try {
       const data = await analyzeLink({
-        url: trimmed,
+        url: pasteMode ? undefined : trimmedUrl,
+        text: pasteMode ? trimmedText : undefined,
         githubUsername: profile?.user.login,
         githubBio: profile?.user.bio,
         skills: profile?.skills,
@@ -99,8 +111,22 @@ export function LinkAnalysisView({ profile, linkedIn, onGenerateCv }: LinkAnalys
   }
 
   function handleGenerateCv() {
-    if (!result || !profile) return;
-    onGenerateCv(result.job, profile);
+    if (!result) return;
+    // Sem perfil do GitHub (usuário só importou LinkedIn ou preencheu manualmente) —
+    // monta um perfil sintético pra não bloquear a geração de CV.
+    const cvProfile: Profile = profile ?? {
+      user: {
+        login: '',
+        name: linkedIn?.name ?? null,
+        bio: null,
+        avatar_url: '',
+        followers: 0,
+        public_repos: 0,
+      },
+      repos: [],
+      skills: linkedIn?.skills ?? result.job.skills,
+    };
+    onGenerateCv(result.job, cvProfile);
   }
 
   return (
@@ -120,26 +146,65 @@ export function LinkAnalysisView({ profile, linkedIn, onGenerateCv }: LinkAnalys
         </div>
       )}
 
-      <div className="la-input-row">
-        <div className="search-bar la-url-bar">
-          <span className="prefix">url</span>
-          <input
-            type="url"
-            placeholder="https://gupy.io/companies/empresa/jobs/..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && step !== 'loading' && handleAnalyze()}
+      {pasteMode ? (
+        <div className="la-input-row la-input-row--paste">
+          <textarea
+            className="auth-input la-paste-textarea"
+            placeholder="Cole aqui a descrição da vaga (copiada da página)"
+            value={pastedText}
+            onChange={(e) => setPastedText(e.target.value)}
+            rows={6}
             disabled={step === 'loading'}
           />
+          <div className="la-input-row">
+            <button
+              className="la-mode-toggle"
+              onClick={() => { setPasteMode(false); setPastedText(''); setError(''); }}
+              disabled={step === 'loading'}
+            >
+              usar link em vez disso
+            </button>
+            <button
+              className="search-btn la-analyze-btn"
+              onClick={handleAnalyze}
+              disabled={step === 'loading' || !pastedText.trim()}
+            >
+              {step === 'loading' ? 'analisando...' : 'analisar'}
+            </button>
+          </div>
         </div>
+      ) : (
+        <div className="la-input-row">
+          <div className="search-bar la-url-bar">
+            <span className="prefix">url</span>
+            <input
+              type="url"
+              placeholder="https://gupy.io/companies/empresa/jobs/..."
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && step !== 'loading' && handleAnalyze()}
+              disabled={step === 'loading'}
+            />
+          </div>
+          <button
+            className="search-btn la-analyze-btn"
+            onClick={handleAnalyze}
+            disabled={step === 'loading' || !url.trim()}
+          >
+            {step === 'loading' ? 'analisando...' : 'analisar'}
+          </button>
+        </div>
+      )}
+
+      {!pasteMode && (
         <button
-          className="search-btn la-analyze-btn"
-          onClick={handleAnalyze}
-          disabled={step === 'loading' || !url.trim()}
+          className="la-mode-toggle"
+          onClick={() => { setPasteMode(true); setUrl(''); setError(''); }}
+          disabled={step === 'loading'}
         >
-          {step === 'loading' ? 'analisando...' : 'analisar'}
+          o site bloqueou o acesso? cole a descrição da vaga
         </button>
-      </div>
+      )}
 
       {step === 'loading' && (
         <div className="loading-bar" style={{ marginTop: 32 }}>
@@ -177,14 +242,23 @@ export function LinkAnalysisView({ profile, linkedIn, onGenerateCv }: LinkAnalys
               {result.job.skills.map((s) => <Pill key={s} text={s} variant="tag" />)}
             </div>
 
-            <a
-              href={result.job.link ?? url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="la-view-job-link"
-            >
-              Ver vaga original
-            </a>
+            <div className="la-job-links">
+              {(result.job.link ?? url) && (
+                <a
+                  href={result.job.link ?? url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="la-view-job-link"
+                >
+                  Ver vaga original
+                </a>
+              )}
+              {result.contactEmail && (
+                <a href={`mailto:${result.contactEmail}`} className="la-contact-email">
+                  Candidatura por e-mail: {result.contactEmail}
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Match breakdown */}
@@ -287,13 +361,13 @@ export function LinkAnalysisView({ profile, linkedIn, onGenerateCv }: LinkAnalys
           )}
 
           <div className="la-actions">
-            {profile ? (
+            {hasProfile ? (
               <button className="search-btn" onClick={handleGenerateCv}>
                 gerar CV otimizado para esta vaga
               </button>
             ) : (
               <p className="la-profile-warn">
-                Conecte seu GitHub para gerar o CV otimizado.
+                Importe seu LinkedIn ou conecte seu GitHub para gerar o CV otimizado.
               </p>
             )}
             <button
