@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { JobFeedItem, KanbanJobData, KanbanStatus, LinkedInData, Profile, PipelineInsights } from '../types';
 import { fetchJobFeed } from '../services/searches';
 import { fetchPipelineInsights } from '../services/pipeline';
@@ -28,6 +29,14 @@ const COLUMNS: Column[] = [
   { id: 'proposta',   label: 'Proposta',   accent: '#22C55E' },
   { id: 'contratado', label: 'Contratado', accent: '#4ADE80' },
 ];
+
+/** Próxima etapa do funil, relativa à coluna atual — usada pro swipe-esquerda
+ *  adaptar o destino (não faz sentido "mover pra Preparar" quem já tá lá). */
+function nextColumn(status: KanbanStatus): Column | null {
+  const idx = COLUMNS.findIndex(c => c.id === status);
+  if (idx === -1 || idx === COLUMNS.length - 1) return null;
+  return COLUMNS[idx + 1];
+}
 
 // Record vazio das 7 etapas (helper p/ agrupamentos).
 function emptyByColumn<T>(): Record<KanbanStatus, T[]> {
@@ -479,8 +488,10 @@ interface KanbanCardProps {
   onDragEnd: () => void;
   onClick: () => void;
   onToggleFavorite: (e: React.MouseEvent) => void;
-  /** Swipe ← : mover para Preparar (mobile). */
+  /** Swipe ← : mover pra próxima etapa do funil (mobile). Ausente = já é a última etapa. */
   onSwipeLeft?: () => void;
+  /** Rótulo da próxima etapa, exibido na revelação do swipe (ex.: "Aplicadas"). */
+  swipeLeftLabel?: string;
   /** Swipe → : arquivar/descartar (mobile). */
   onSwipeRight?: () => void;
   /** Roda o "balanço" inicial (estilo Tinder) ensinando o swipe — 1ª vez só. */
@@ -496,13 +507,17 @@ function vibrate(ms: number) {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
 }
 
-function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onToggleFavorite, onSwipeLeft, onSwipeRight, hint }: KanbanCardProps) {
+function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onToggleFavorite, onSwipeLeft, swipeLeftLabel, onSwipeRight, hint }: KanbanCardProps) {
   const topSkills = job.skills.slice(0, 3);
   const followUp = getFollowUp(kd.status, kd.movedAt);
   const levelClass = job.level.toLowerCase();
   const initials = companyInitials(job.company);
   const bgColor  = avatarColor(job.company);
   const source   = job.github_username ? 'GitHub' : 'LinkedIn';
+
+  // O drag-and-drop nativo (HTML5, "draggable") é só pro desktop — no mobile
+  // ele compete com os handlers de toque abaixo e trava o gesto de swipe.
+  const isTouchLayout = typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches;
 
   // ── Swipe (toque): ← Preparar, → Arquivar ──
   const [dx, setDx] = useState(0);
@@ -558,11 +573,11 @@ function KanbanCard({ job, kd, isDragging, onDragStart, onDragEnd, onClick, onTo
   return (
     <div className={`kb-card-swipe${playHint ? ' kb-card-swipe--hint' : ''}`}>
       {/* Revelações por baixo do card */}
-      <div className="kb-swipe-reveal kb-swipe-reveal--prep" style={{ opacity: dx < 0 ? Math.min(1, -dx / SWIPE_THRESHOLD) : 0 }}>Preparar</div>
+      <div className="kb-swipe-reveal kb-swipe-reveal--prep" style={{ opacity: dx < 0 ? Math.min(1, -dx / SWIPE_THRESHOLD) : 0 }}>{swipeLeftLabel ?? 'Preparar'}</div>
       <div className="kb-swipe-reveal kb-swipe-reveal--archive" style={{ opacity: dx > 0 ? Math.min(1, dx / SWIPE_THRESHOLD) : 0 }}>Arquivar</div>
     <div
       className={`kb-card${isDragging ? ' kb-card--dragging' : ''}${animating ? ' kb-card--snap' : ''}`}
-      draggable
+      draggable={!isTouchLayout}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onClick={handleClick}
@@ -651,7 +666,10 @@ interface KanbanColumnProps {
   onCardDragEnd: () => void;
   onCardClick: (job: JobFeedItem) => void;
   onToggleFavorite: (e: React.MouseEvent, id: string) => void;
-  onCardSwipeLeft: (id: string) => void;
+  /** Ausente = esta coluna já é a última etapa do funil (nada pra onde avançar). */
+  onCardSwipeLeft?: (id: string) => void;
+  /** Rótulo da próxima etapa, pra revelação do swipe (ex.: "Aplicadas"). */
+  swipeLeftLabel?: string;
   onCardSwipeRight: (id: string) => void;
   /** Dispara o hint de swipe no 1º card desta coluna. */
   hintFirst?: boolean;
@@ -663,7 +681,7 @@ function KanbanColumn({
   column, jobs, isOver, isActiveMobile, get, draggingId,
   onDragOver, onDragLeave, onDrop,
   onCardDragStart, onCardDragEnd, onCardClick, onToggleFavorite,
-  onCardSwipeLeft, onCardSwipeRight, hintFirst, footer,
+  onCardSwipeLeft, swipeLeftLabel, onCardSwipeRight, hintFirst, footer,
 }: KanbanColumnProps) {
   return (
     <div
@@ -692,7 +710,8 @@ function KanbanColumn({
             onDragEnd={onCardDragEnd}
             onClick={() => onCardClick(job)}
             onToggleFavorite={e => onToggleFavorite(e, job.id)}
-            onSwipeLeft={() => onCardSwipeLeft(job.id)}
+            onSwipeLeft={onCardSwipeLeft ? () => onCardSwipeLeft(job.id) : undefined}
+            swipeLeftLabel={swipeLeftLabel}
             onSwipeRight={() => onCardSwipeRight(job.id)}
             hint={hintFirst && idx === 0}
           />
@@ -936,7 +955,7 @@ function JobDetailPanel({
 
   const locationLabel = job.remote ? 'Remoto' : (job.location ?? 'Presencial');
 
-  return (
+  return createPortal(
     <>
       <div className="kb-backdrop" onClick={onClose} />
       <div className="kb-panel" ref={panelRef}>
@@ -946,6 +965,11 @@ function JobDetailPanel({
             <button className="kb-panel-close" onClick={onClose}>×</button>
           </div>
           <p className="kb-panel-sub">{job.company} · {job.level} · {locationLabel}</p>
+          {job.link && (
+            <a className="kb-panel-apply-link" href={job.link} target="_blank" rel="noopener noreferrer">
+              Ver vaga / link de inscrição ↗
+            </a>
+          )}
         </div>
 
         <div className="kb-panel-body">
@@ -1143,7 +1167,8 @@ function JobDetailPanel({
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -1170,6 +1195,14 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
   const [boardView, setBoardView] = useState<'board' | 'analytics'>('board');
 
   const { get, setStatus, setNotes, toggleFavorite, setNextStep } = useKanban();
+
+  // Enquanto o painel de detalhe está aberto, o resto da interface (conteúdo
+  // + navbar) recua visualmente — sinaliza via classe no body pra não precisar
+  // repassar esse estado pra App.tsx/Header via props.
+  useEffect(() => {
+    document.body.classList.toggle('kb-panel-open', !!selectedJob);
+    return () => { document.body.classList.remove('kb-panel-open'); };
+  }, [selectedJob]);
 
   useEffect(() => {
     // Carrega o feed completo: as outras etapas precisam das vagas em andamento
@@ -1398,28 +1431,32 @@ export function KanbanBoard({ linkedInData, githubUsername, onGenerateCv, onView
       </div>
 
       <div className="kb-board">
-        {COLUMNS.map(col => (
-          <KanbanColumn
-            key={col.id}
-            column={col}
-            jobs={col.id === 'salvas' ? salvasView.visibleSalvas : byColumn[col.id]}
-            isOver={dragOverCol === col.id}
-            isActiveMobile={activeMobileCol === col.id}
-            get={get}
-            draggingId={draggingId}
-            onDragOver={e => handleDragOver(e, col.id)}
-            onDragLeave={e => handleDragLeave(e, col.id)}
-            onDrop={e => handleDrop(e, col.id)}
-            onCardDragStart={handleDragStart}
-            onCardDragEnd={handleDragEnd}
-            onCardClick={setSelectedJob}
-            onToggleFavorite={(e, id) => { e.stopPropagation(); toggleFavorite(id); }}
-            onCardSwipeLeft={(id) => setStatus(id, 'preparar')}
-            onCardSwipeRight={(id) => { dismissJob(id).catch(console.error); handleDelete(id); }}
-            hintFirst={activeMobileCol === col.id}
-            footer={col.id === 'salvas' ? renderSalvasLoadMore() : undefined}
-          />
-        ))}
+        {COLUMNS.map(col => {
+          const next = nextColumn(col.id);
+          return (
+            <KanbanColumn
+              key={col.id}
+              column={col}
+              jobs={col.id === 'salvas' ? salvasView.visibleSalvas : byColumn[col.id]}
+              isOver={dragOverCol === col.id}
+              isActiveMobile={activeMobileCol === col.id}
+              get={get}
+              draggingId={draggingId}
+              onDragOver={e => handleDragOver(e, col.id)}
+              onDragLeave={e => handleDragLeave(e, col.id)}
+              onDrop={e => handleDrop(e, col.id)}
+              onCardDragStart={handleDragStart}
+              onCardDragEnd={handleDragEnd}
+              onCardClick={setSelectedJob}
+              onToggleFavorite={(e, id) => { e.stopPropagation(); toggleFavorite(id); }}
+              onCardSwipeLeft={next ? (id) => setStatus(id, next.id) : undefined}
+              swipeLeftLabel={next?.label}
+              onCardSwipeRight={(id) => { dismissJob(id).catch(console.error); handleDelete(id); }}
+              hintFirst={activeMobileCol === col.id}
+              footer={col.id === 'salvas' ? renderSalvasLoadMore() : undefined}
+            />
+          );
+        })}
       </div>
       </>
       )}

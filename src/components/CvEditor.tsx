@@ -191,6 +191,9 @@ export function CvEditor({
   // M3 — ATS Center
   const [atsOpen, setAtsOpen] = useState(false);
 
+  // Menu "mais" da topbar — colapsa ações secundárias no mobile
+  const [moreOpen, setMoreOpen] = useState(false);
+
   // M4 — adaptar para vaga
   const [adapting, setAdapting] = useState(false);
   const [adaptedBlocks, setAdaptedBlocks] = useState<CvBlock[] | null>(null);
@@ -836,45 +839,51 @@ export function CvEditor({
         </span>
         <div className="cv-topbar-actions">
           {blocks && !loading && (
-            <button className="cv-ats-badge" onClick={() => setAtsOpen(true)} title="ATS Center">
-              <AtsRing score={ats.score} color={tier.color} size={34} stroke={4} />
-              <span className="cv-ats-badge-label">ATS</span>
-            </button>
-          )}
-          {blocks && !loading && cvId && (
-            <button className="cv-adapt-btn" onClick={handleAdapt} disabled={adapting} title="Reescrever o CV mirando esta vaga">
-              {adapting ? 'adaptando...' : 'adaptar p/ vaga'}
-            </button>
-          )}
-          {blocks && !loading && cvId && (
-            <button className="cv-save-btn" onClick={handleSave} disabled={saving}>
-              {saving ? 'salvando...' : saveMsg || 'salvar'}
-            </button>
-          )}
-          {blocks && !loading && (
-            <button className="cv-versions-btn" onClick={openLibrary} title="Biblioteca de Projetos">
-              projetos
-            </button>
-          )}
-          {blocks && !loading && (
-            <button className="cv-versions-btn" onClick={openMessages} title="Cartas e mensagens">
-              mensagens
-            </button>
-          )}
-          {blocks && !loading && (
-            <button className="cv-versions-btn" onClick={() => setIvOpen(true)} title="Interview Studio">
-              entrevista
-            </button>
-          )}
-          {blocks && !loading && cvId && (
-            <button className="cv-versions-btn" onClick={openVersions}>
-              versões
-            </button>
-          )}
-          {blocks && !loading && (
             <button className="cv-download-btn" disabled={pdfLoading} onClick={handleDownload}>
               {pdfLoading ? 'gerando...' : 'baixar PDF'}
             </button>
+          )}
+          {blocks && !loading && (
+            <button
+              className="cv-more-toggle"
+              onClick={() => setMoreOpen((v) => !v)}
+              title="Mais opções"
+              aria-expanded={moreOpen}
+            >
+              ⋯
+            </button>
+          )}
+          {blocks && !loading && (
+            <div className={`cv-topbar-more${moreOpen ? ' open' : ''}`} onClick={() => setMoreOpen(false)}>
+              <button className="cv-ats-badge" onClick={() => setAtsOpen(true)} title="ATS Center">
+                <AtsRing score={ats.score} color={tier.color} size={34} stroke={4} />
+                <span className="cv-ats-badge-label">ATS</span>
+              </button>
+              {cvId && (
+                <button className="cv-adapt-btn" onClick={handleAdapt} disabled={adapting} title="Reescrever o CV mirando esta vaga">
+                  {adapting ? 'adaptando...' : 'adaptar p/ vaga'}
+                </button>
+              )}
+              {cvId && (
+                <button className="cv-save-btn" onClick={handleSave} disabled={saving}>
+                  {saving ? 'salvando...' : saveMsg || 'salvar'}
+                </button>
+              )}
+              <button className="cv-versions-btn" onClick={openLibrary} title="Biblioteca de Projetos">
+                projetos
+              </button>
+              <button className="cv-versions-btn" onClick={openMessages} title="Cartas e mensagens">
+                mensagens
+              </button>
+              <button className="cv-versions-btn" onClick={() => setIvOpen(true)} title="Interview Studio">
+                entrevista
+              </button>
+              {cvId && (
+                <button className="cv-versions-btn" onClick={openVersions}>
+                  versões
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>

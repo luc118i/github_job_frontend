@@ -5435,6 +5435,10 @@ h1 {
   align-items: center;
 }
 
+/* Desktop: ações secundárias ficam inline na própria topbar */
+.cv-more-toggle { display: none; }
+.cv-topbar-more { display: flex; gap: 8px; align-items: center; }
+
 .cv-save-btn {
   background: transparent;
   border: 1px solid rgba(232,228,220,0.2);
@@ -6198,6 +6202,7 @@ h1 {
 
   .cv-topbar-title {
     font-size: 12px;
+    min-width: 60px;
   }
 
   .cv-topbar-company {
@@ -6208,6 +6213,50 @@ h1 {
     font-size: 11px;
     padding: 5px 10px;
     min-height: 36px;
+  }
+
+  /* Ações secundárias colapsam num menu "⋯" — evita fileira apertada/rolável */
+  .cv-more-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--r-md);
+    color: rgba(232,228,220,0.6);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .cv-topbar-more {
+    display: none;
+  }
+
+  .cv-topbar-more.open {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    position: absolute;
+    top: 52px;
+    right: 12px;
+    background: #14141a;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--r-md);
+    padding: 8px;
+    min-width: 170px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    z-index: 50;
+  }
+
+  .cv-topbar-more.open button {
+    width: 100%;
+    justify-content: flex-start;
+    white-space: nowrap;
   }
 
   /* Mobile tab switcher — visible on mobile */
@@ -8055,9 +8104,13 @@ main.kanban-view {
 .kb-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 100;
-  animation: fadeIn 0.18s ease;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  /* Renderizado via portal direto em document.body (ver KanbanBoard.tsx) —
+     z-index mais alto do app, garantindo que nada fique na frente. */
+  z-index: 2000;
+  animation: fadeIn 0.28s ease-out both;
 }
 
 @keyframes fadeIn {
@@ -8070,22 +8123,38 @@ main.kanban-view {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 400px;
-  max-width: 90vw;
+  width: 480px;
+  max-width: 92vw;
   background: #0e0e16;
   border-left: 1px solid rgba(255,255,255,0.08);
   border-left-width: 2px;
   border-left-color: rgba(61,114,200,0.4);
-  z-index: 101;
+  box-shadow: -32px 0 80px rgba(0,0,0,0.5), -6px 0 20px rgba(0,0,0,0.4);
+  z-index: 2001;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: slideInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideInRight 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes slideInRight {
   from { transform: translateX(100%); opacity: 0.5; }
   to   { transform: translateX(0); opacity: 1; }
+}
+
+/* Enquanto o painel está aberto, o resto da interface recua sutilmente —
+   reforça a hierarquia visual sem prejudicar a legibilidade. */
+body.kb-panel-open .app > main,
+body.kb-panel-open .hdr {
+  transform: scale(0.99) translateX(-8px);
+  filter: brightness(0.88);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), filter 0.32s ease-out;
+}
+
+/* Trava o scroll da página atrás do painel — evita a sensação de dois
+   elementos competindo pela rolagem ao mesmo tempo. */
+body.kb-panel-open {
+  overflow: hidden;
 }
 
 .kb-panel-head {
@@ -8128,6 +8197,16 @@ main.kanban-view {
   color: rgba(232,228,220,0.38);
   letter-spacing: 0.02em;
 }
+
+.kb-panel-apply-link {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7aa3d8;
+  text-decoration: none;
+}
+.kb-panel-apply-link:hover { color: #93b4e8; text-decoration: underline; }
 
 .kb-panel-body {
   flex: 1;
@@ -8421,7 +8500,12 @@ main.kanban-view {
     border-left: none;
     border-top: 2px solid rgba(139,92,246,0.5);
     border-radius: 16px 16px 0 0;
-    animation: slideUpSheet 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Cancela a animação "slideInRight" herdada da regra desktop (translateX,
+       eixo errado pro bottom sheet) — sem animação de entrada aqui de
+       propósito: a posição precisa estar correta (bottom:0) desde o primeiro
+       frame; se a animação travar em algum dispositivo/navegador, o painel
+       fica preso fora da tela. */
+    animation: none;
   }
   /* Alça de arraste no topo do sheet */
   .kb-panel-head::before {
@@ -10797,7 +10881,12 @@ select.auth-input { cursor: pointer; }
     border-left: none;
     border-top: 2px solid rgba(139,92,246,0.5);
     border-radius: 16px 16px 0 0;
-    animation: slideUpSheet 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Cancela a animação "slideInRight" herdada da regra desktop (translateX,
+       eixo errado pro bottom sheet) — sem animação de entrada aqui de
+       propósito: a posição precisa estar correta (bottom:0) desde o primeiro
+       frame; se a animação travar em algum dispositivo/navegador, o painel
+       fica preso fora da tela. */
+    animation: none;
   }
   .kb-panel-head::before {
     content: '';
