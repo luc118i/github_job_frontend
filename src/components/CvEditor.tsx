@@ -290,6 +290,18 @@ export function CvEditor({
     onDismiss(job.id);
   }
 
+  // Os 5 painéis auxiliares (ATS, versões, projetos, mensagens, entrevista)
+  // usam o mesmo overlay fixo — sem isso, abrir um segundo enquanto outro já
+  // está aberto deixa os dois sobrepostos (o de baixo "reaparece" fantasma
+  // quando o de cima é fechado).
+  function closeAllOverlays() {
+    setAtsOpen(false);
+    setVersionsOpen(false);
+    setLibOpen(false);
+    setMsgOpen(false);
+    setIvOpen(false);
+  }
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onBack(); };
     document.addEventListener('keydown', handler);
@@ -436,6 +448,7 @@ export function CvEditor({
 
   // ── Versionamento (M2) ───────────────────────────────────────────
   async function openVersions() {
+    closeAllOverlays();
     setVersionsOpen(true);
     if (!cvId) return;
     setVersionsLoading(true);
@@ -476,6 +489,7 @@ export function CvEditor({
   // ── Adaptar para vaga (M4) ───────────────────────────────────────
   async function handleAdapt() {
     if (!blocks || !cvId || adapting) return;
+    closeAllOverlays();
     setAdapting(true);
     setAdaptError('');
     try {
@@ -536,6 +550,7 @@ export function CvEditor({
   }, [projects, job.title, job.skills, job.description, aiMatches]);
 
   async function openLibrary() {
+    closeAllOverlays();
     setLibOpen(true);
     setProjLoading(true);
     setProjError('');
@@ -688,6 +703,7 @@ export function CvEditor({
   const currentTypeHint = MSG_TYPES.find((t) => t.type === msgType)?.hint ?? '';
 
   async function openMessages() {
+    closeAllOverlays();
     setMsgOpen(true);
     setMsgLoading(true);
     setMsgError('');
@@ -855,7 +871,7 @@ export function CvEditor({
           )}
           {blocks && !loading && (
             <div className={`cv-topbar-more${moreOpen ? ' open' : ''}`} onClick={() => setMoreOpen(false)}>
-              <button className="cv-ats-badge" onClick={() => setAtsOpen(true)} title="ATS Center">
+              <button className="cv-ats-badge" onClick={() => { closeAllOverlays(); setAtsOpen(true); }} title="ATS Center">
                 <AtsRing score={ats.score} color={tier.color} size={34} stroke={4} />
                 <span className="cv-ats-badge-label">ATS</span>
               </button>
@@ -875,7 +891,7 @@ export function CvEditor({
               <button className="cv-versions-btn" onClick={openMessages} title="Cartas e mensagens">
                 mensagens
               </button>
-              <button className="cv-versions-btn" onClick={() => setIvOpen(true)} title="Interview Studio">
+              <button className="cv-versions-btn" onClick={() => { closeAllOverlays(); setIvOpen(true); }} title="Interview Studio">
                 entrevista
               </button>
               {cvId && (
