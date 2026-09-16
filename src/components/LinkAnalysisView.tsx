@@ -372,7 +372,14 @@ export function LinkAnalysisView({ profile, linkedIn, onGenerateCv }: LinkAnalys
             )}
             <button
               className="la-reanalyze-btn"
-              onClick={() => { setStep('idle'); setResult(null); setUrl(''); }}
+              onClick={() => {
+                setStep('idle');
+                setResult(null);
+                setUrl('');
+                setPastedText('');
+                setPasteMode(false);
+                setError('');
+              }}
             >
               analisar outra vaga
             </button>
