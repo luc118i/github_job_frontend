@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { LinkedInData, ProfessionJobRecord, UserPreferences, CareerProfile } from '../types';
 import { LinkedInImport } from './LinkedInImport';
 import { PreferencesPanel } from './PreferencesPanel';
-import { TagFilterBar } from './TagFilterBar';
-import { JobCard } from './JobCard';
+import { JobResultsSection } from './JobResultsSection';
 import { CareerChat } from './CareerChat';
 import { CareerInsights } from './CareerInsights';
 import { CareerRefineChat } from './CareerRefineChat';
@@ -51,8 +50,6 @@ export function ProfessionView({
   const countdown = useCountdown(blockedToday);
   const [showRefine, setShowRefine] = useState(false);
 
-  const allTags = [...new Set(jobs.flatMap((j) => j.skills))];
-  const filtered = tagFilter === 'all' ? jobs : jobs.filter((j) => j.skills.includes(tagFilter));
   const locationReady = preferences.modality === 'remote' || !!preferences.location;
 
   const showChat = !careerProfile && !hasSearched && !loading;
@@ -219,34 +216,18 @@ export function ProfessionView({
           {error && <div className="error-msg" style={{ marginBottom: 16 }}>{error}</div>}
 
           <div className="jobs-section">
-            <TagFilterBar
-              tags={allTags}
-              active={tagFilter}
-              count={filtered.length}
-              onChange={setTagFilter}
+            <JobResultsSection
+              jobs={jobs}
+              tagFilter={tagFilter}
+              onTagFilterChange={setTagFilter}
+              emptyMessage="Nenhuma vaga encontrada com esses filtros."
+              onGenerateCv={onGenerateCv}
+              onViewCv={onViewCv}
+              onLike={(_job, category) => likeKeyword(category)}
+              onBlock={(job, category) => { blockKeyword(category); removeJob(job.id); }}
+              onLikeSource={(_job, src) => likeSource(src)}
+              onBlockSource={(_job, src) => blockSource(src)}
             />
-            <div className="jobs-grid">
-              {filtered.length === 0 ? (
-                <div className="empty">
-                  <p>Nenhuma vaga encontrada com esses filtros.</p>
-                </div>
-              ) : (
-                filtered.map((job, i) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    index={i}
-                    match={job.match}
-                    onGenerateCv={() => onGenerateCv(job)}
-                    onViewCv={() => onViewCv(job)}
-                    onLike={(_j, category) => likeKeyword(category)}
-                    onBlock={(_j, category) => { blockKeyword(category); removeJob(job.id); }}
-                    onLikeSource={(_j, src) => likeSource(src)}
-                    onBlockSource={(_j, src) => blockSource(src)}
-                  />
-                ))
-              )}
-            </div>
           </div>
 
           <div className="profession-actions-bar">

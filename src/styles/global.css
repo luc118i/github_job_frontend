@@ -10268,6 +10268,9 @@ select.auth-input { cursor: pointer; }
 .bv-jobs-grid { margin-top: 8px; }
 .bv-empty { text-align: center; color: rgba(232,228,220,0.35); font-size: 14px; padding: 40px 0; }
 
+/* Estado vazio compartilhado por JobResultsSection (BuscarView + ProfessionView) */
+.jrs-empty { text-align: center; color: rgba(232,228,220,0.35); font-size: 14px; padding: 40px 0; }
+
 /* ── Profile score card ─────────────────────────────────── */
 .psc-card {
   display: flex;

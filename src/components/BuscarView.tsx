@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { CareerProfile, LinkedInData, ProfessionJobRecord, UserPreferences } from '../types';
 import { View } from './TabNav';
-import { JobCard } from './JobCard';
-import { TagFilterBar } from './TagFilterBar';
+import { JobResultsSection } from './JobResultsSection';
+import { JobCardList } from './JobCardList';
 import { ProfileScoreCard } from './ProfileScoreCard';
 import { AiAnalysisPanel } from './AiAnalysisPanel';
 import { useProfessionSearch } from '../hooks/useProfessionSearch';
@@ -262,9 +262,6 @@ export function BuscarView({
     if (!careerProfile) { onStartOnboarding(); return; }
     onNavigate(v);
   }
-
-  const allTags = [...new Set(jobs.flatMap(j => j.skills))];
-  const filtered = tagFilter === 'all' ? jobs : jobs.filter(j => j.skills.includes(tagFilter));
 
   return (
     <div className="bv-root">
@@ -543,31 +540,19 @@ export function BuscarView({
 
           {error && <div className="error-msg" style={{ marginBottom: 16 }}>{error}</div>}
 
-          {filtered.length > 0 ? (
-            <>
-              <TagFilterBar tags={allTags} active={tagFilter} count={filtered.length} onChange={setTagFilter} />
-              <div className="jobs-grid bv-jobs-grid">
-                {filtered.map((job, i) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    index={i}
-                    match={job.match}
-                    onGenerateCv={() => onGenerateCv(job)}
-                    onViewCv={() => onViewCv(job)}
-                    onLike={(_j, cat) => likeKeyword(cat)}
-                    onBlock={(_j, cat) => { blockKeyword(cat); removeJob(job.id); }}
-                    onLikeSource={(_j, src) => likeSource(src)}
-                    onBlockSource={(_j, src) => blockSource(src)}
-                  />
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="bv-empty">
-              Nenhuma vaga encontrada.
-            </div>
-          )}
+          <JobResultsSection
+            jobs={jobs}
+            tagFilter={tagFilter}
+            onTagFilterChange={setTagFilter}
+            emptyMessage="Nenhuma vaga encontrada."
+            gridClassName="bv-jobs-grid"
+            onGenerateCv={onGenerateCv}
+            onViewCv={onViewCv}
+            onLike={(_job, cat) => likeKeyword(cat)}
+            onBlock={(job, cat) => { blockKeyword(cat); removeJob(job.id); }}
+            onLikeSource={(_job, src) => likeSource(src)}
+            onBlockSource={(_job, src) => blockSource(src)}
+          />
 
           {bonusJobs.length > 0 && (
             <div className="bv-bonus-section">
@@ -582,22 +567,16 @@ export function BuscarView({
                   <div className="bv-bonus-subtitle">Estas vagas não atendem a todos os seus critérios, mas apresentam alta compatibilidade com a sua experiência e habilidades.</div>
                 </div>
               </div>
-              <div className="jobs-grid bv-jobs-grid">
-                {bonusJobs.map((job, i) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    index={i}
-                    match={job.match}
-                    onGenerateCv={() => onGenerateCv(job)}
-                    onViewCv={() => onViewCv(job)}
-                    onLike={(_j, cat) => likeKeyword(cat)}
-                    onBlock={(_j, cat) => { blockKeyword(cat); removeJob(job.id); }}
-                    onLikeSource={(_j, src) => likeSource(src)}
-                    onBlockSource={(_j, src) => blockSource(src)}
-                  />
-                ))}
-              </div>
+              <JobCardList
+                jobs={bonusJobs}
+                className="bv-jobs-grid"
+                onGenerateCv={onGenerateCv}
+                onViewCv={onViewCv}
+                onLike={(_job, cat) => likeKeyword(cat)}
+                onBlock={(job, cat) => { blockKeyword(cat); removeJob(job.id); }}
+                onLikeSource={(_job, src) => likeSource(src)}
+                onBlockSource={(_job, src) => blockSource(src)}
+              />
             </div>
           )}
         </div>
