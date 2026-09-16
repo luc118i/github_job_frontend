@@ -53,6 +53,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [authReason, setAuthReason] = useState<string | undefined>(undefined);
+  const [resetToken, setResetToken] = useState<string | null>(null);
   const [pendingLinkedIn, setPendingLinkedIn] = useState<LinkedInData | null>(null);
   const [resumeChoiceOpen, setResumeChoiceOpen] = useState(false);
   const [manualWizardOpen, setManualWizardOpen] = useState(false);
@@ -62,6 +63,19 @@ export default function App() {
   const { profile, jobs, loading, step, error, filter, blockedToday: githubBlocked, remaining: githubRemaining, setFilter, search, removeJob } = useJobSearch();
   const { preferences, setPreferences } = usePreferences();
   const { profile: careerProfile, setProfile: setCareerProfile, resetProfile: resetCareerProfile } = useCareerProfile();
+
+  // Link de redefinição de senha (?reset=token) — abre o modal direto na tela de nova senha.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('reset');
+    if (token) {
+      setResetToken(token);
+      setAuthOpen(true);
+      params.delete('reset');
+      const newSearch = params.toString();
+      window.history.replaceState({}, '', window.location.pathname + (newSearch ? `?${newSearch}` : ''));
+    }
+  }, []);
 
   useEffect(() => {
     fetchMe().then(result => {
@@ -105,6 +119,7 @@ export default function App() {
     setCurrentUser(user);
     setAuthOpen(false);
     setPendingLinkedIn(null);
+    setResetToken(null);
     if (liData) setLinkedInData(liData);
     // Hydrate feedback preferences after login
     fetchServerPreferences().then(prefs => {
@@ -263,8 +278,9 @@ export default function App() {
         open={authOpen}
         linkedInData={pendingLinkedIn}
         reason={authReason}
+        resetToken={resetToken}
         onSuccess={handleAuthSuccess}
-        onClose={() => { setAuthOpen(false); setPendingLinkedIn(null); setAuthReason(undefined); }}
+        onClose={() => { setAuthOpen(false); setPendingLinkedIn(null); setAuthReason(undefined); setResetToken(null); }}
         onNeedsResume={() => { setAuthOpen(false); setResumeChoiceOpen(true); }}
       />
 

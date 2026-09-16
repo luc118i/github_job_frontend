@@ -54,6 +54,39 @@ export async function login(email: string, password: string): Promise<AuthResult
   return data;
 }
 
+export async function checkEmailExists(email: string): Promise<boolean> {
+  const res = await fetch(`${API_URL}/auth/check-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) return false;
+  const data = (await res.json()) as { exists: boolean };
+  return data.exists;
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const res = await fetch(`${API_URL}/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error ?? 'Erro ao solicitar redefinição de senha');
+  }
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  const res = await fetch(`${API_URL}/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, newPassword }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? 'Erro ao redefinir senha');
+}
+
 export async function fetchMe(): Promise<{ user: AuthUser; linkedInData: LinkedInData } | null> {
   const token = getToken();
   if (!token) return null;
