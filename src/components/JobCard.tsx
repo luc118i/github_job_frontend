@@ -4,20 +4,7 @@ import { markJobSeen } from '../services/jobs';
 import { isCvGenerated } from '../utils/dailyLimit';
 import { inferCategory, inferSource } from '../utils/jobPreferences';
 import { getTechIconUrl, getSourceFaviconUrl } from '../utils/techIcons';
-
-// ── Date helper (only used when published_at exists) ──────────
-
-function pubAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const days = Math.floor(diff / 86400000);
-  if (days === 0) return 'HOJE';
-  if (days === 1) return '1 DIA';
-  if (days < 7)  return `${days} DIAS`;
-  const w = Math.floor(days / 7);
-  if (w < 5)     return `${w} SEMANA${w > 1 ? 'S' : ''}`;
-  const m = Math.floor(days / 30);
-  return `${m} ${m === 1 ? 'MÊS' : 'MESES'}`;
-}
+import { formatRelativeDate } from '../utils/relativeDate';
 
 // ── Tech brand colours ────────────────────────────────────────
 
@@ -315,7 +302,7 @@ export function JobCard({
             return (
               <div className={`jcp-pub-date${isOld ? ' jcp-pub-date--old' : ''}`}>
                 <IconClock />
-                PUBLICADA HÁ {pubAgo(job.published_at)}
+                PUBLICADA HÁ {formatRelativeDate(job.published_at, 'badge')}
               </div>
             );
           })()}

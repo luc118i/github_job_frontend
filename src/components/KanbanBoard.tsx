@@ -10,6 +10,7 @@ import { analyzeAts, atsTier, AtsResult } from '../utils/atsScore';
 import { useKanban } from '../hooks/useKanban';
 import { fetchGitHubUser, fetchGitHubRepos, extractSkills } from '../services/github';
 import { getToken } from '../services/auth';
+import { formatRelativeDate } from '../utils/relativeDate';
 
 // ── Column definitions ───────────────────────────────────────
 
@@ -85,13 +86,7 @@ function hasActiveFilters(f: BoardFilters): boolean {
 // ── Helpers ──────────────────────────────────────────────────
 
 function relDate(iso: string): string {
-  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-  if (d === 0) return 'hoje';
-  if (d === 1) return 'há 1 dia';
-  if (d < 7) return `há ${d} dias`;
-  const w = Math.floor(d / 7);
-  if (w < 5) return w === 1 ? 'há 1 sem.' : `há ${w} sem.`;
-  return `há ${Math.floor(d / 30)} meses`;
+  return formatRelativeDate(iso, 'phrase');
 }
 
 // Follow-up por cor (F4 do MVC): etapas que aguardam retorno disparam alerta
