@@ -42,7 +42,10 @@ export function useProfessionSearch(): UseProfessionSearchReturn {
       setProfileSummary(result.profileSummary);
       setHasSearched(true);
     } catch (e) {
+      // hasSearched precisa ir true mesmo no erro — senão a tela de erro
+      // nunca aparece e o usuário só vê a home reaparecer sem feedback.
       setError(e instanceof Error ? e.message : 'Erro ao buscar vagas');
+      setHasSearched(true);
     } finally {
       setLoading(false);
     }

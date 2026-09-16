@@ -64,7 +64,9 @@ describe('useProfessionSearch', () => {
     expect(result.current.error).toBe('');
   });
 
-  it('search() guarda a mensagem de erro quando o servico falha', async () => {
+  it('search() guarda a mensagem de erro e marca hasSearched quando o servico falha', async () => {
+    // hasSearched precisa ir true mesmo no erro — senão a tela de erro nunca
+    // aparece e o usuário só vê a home reaparecer sem feedback (bug corrigido).
     vi.spyOn(professionJobsService, 'fetchProfessionJobs').mockRejectedValue(new Error('Erro ao buscar vagas'));
     const { result } = renderHook(() => useProfessionSearch());
 
@@ -73,10 +75,11 @@ describe('useProfessionSearch', () => {
     });
 
     expect(result.current.error).toBe('Erro ao buscar vagas');
+    expect(result.current.hasSearched).toBe(true);
     expect(result.current.loading).toBe(false);
   });
 
-  it('searchByQuery() tambem marca hasSearched quando o servico falha (diferente de search())', async () => {
+  it('searchByQuery() tambem marca hasSearched quando o servico falha', async () => {
     vi.spyOn(professionJobsService, 'fetchJobsByQuery').mockRejectedValue(new Error('falhou'));
     const { result } = renderHook(() => useProfessionSearch());
 
