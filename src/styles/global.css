@@ -10021,8 +10021,10 @@ body.kb-panel-open {
 }
 .mrw-choice-card:hover:not(:disabled) { border-color: rgba(61,114,200,0.5); background: rgba(61,114,200,0.06); }
 .mrw-choice-card:disabled { opacity: 0.6; cursor: not-allowed; }
-.mrw-choice-card-title { font-size: 14px; font-weight: 600; color: #e8e4dc; }
-.mrw-choice-card-sub { font-size: 12px; color: rgba(232,228,220,0.45); line-height: 1.4; }
+/* display:block garante a quebra título/subtítulo mesmo quando este trigger é
+   usado dentro de um container sem flex-column (ex.: .onb-btn no onboarding) */
+.mrw-choice-card-title { display: block; font-size: 14px; font-weight: 600; color: #e8e4dc; }
+.mrw-choice-card-sub { display: block; font-size: 12px; color: rgba(232,228,220,0.45); line-height: 1.4; }
 
 .mrw-choice-paste { cursor: default; gap: 10px; }
 .mrw-choice-paste-input {
@@ -10269,7 +10271,10 @@ select.auth-input { cursor: pointer; }
 /* ── Profile score card ─────────────────────────────────── */
 .psc-card {
   display: flex;
-  align-items: center;
+  /* flex-start (não center): quando os chips de "faltando" quebram linha no
+     mobile, o corpo fica bem mais alto que o anel de 72px — centralizar o
+     deixava flutuando fora de linha com o título. */
+  align-items: flex-start;
   gap: 18px;
   padding: 18px 20px;
 }

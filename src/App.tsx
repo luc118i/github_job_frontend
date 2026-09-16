@@ -8,13 +8,7 @@ import { BottomNav } from './components/BottomNav';
 import { View } from './components/TabNav';
 import { BuscarView } from './components/BuscarView';
 import { CareerDashboard } from './components/CareerDashboard';
-import { LinkedInImport } from './components/LinkedInImport';
-import { SearchForm } from './components/SearchForm';
-import { LoadingSteps } from './components/LoadingSteps';
-import { ProfileCard } from './components/ProfileCard';
-import { JobList } from './components/JobList';
 import { ProfessionView } from './components/ProfessionView';
-import { PreferencesPanel } from './components/PreferencesPanel';
 import { AuthModal } from './components/AuthModal';
 import { SignupChoiceModal } from './components/SignupChoiceModal';
 import { ManualResumeWizard } from './components/ManualResumeWizard';
@@ -27,12 +21,11 @@ const LinkAnalysisView = lazy(() => import('./components/LinkAnalysisView').then
 const OnboardingView   = lazy(() => import('./components/OnboardingView').then(m => ({ default: m.OnboardingView })));
 const ProjectLibrary   = lazy(() => import('./components/ProjectLibrary').then(m => ({ default: m.ProjectLibrary })));
 const PortfolioManager = lazy(() => import('./components/PortfolioManager').then(m => ({ default: m.PortfolioManager })));
-import { useJobSearch } from './hooks/useJobSearch';
 import { usePreferences } from './hooks/usePreferences';
 import { useCareerProfile } from './hooks/useCareerProfile';
 import { fetchCareerProfile } from './services/career';
 import { AuthUser, fetchMe, clearToken, updateLinkedIn, fetchServerPreferences, updateProfile } from './services/auth';
-import { blockKeyword, likeKeyword, blockSource, likeSource, syncPreferencesFromServer } from './utils/jobPreferences';
+import { syncPreferencesFromServer } from './utils/jobPreferences';
 import { fetchCvByJobId } from './services/cv';
 
 interface CvState {
@@ -60,7 +53,6 @@ export default function App() {
   // Pré-preenche a busca quando o usuário clica "buscar vagas" num projeto.
   const [projectQuery, setProjectQuery] = useState('');
 
-  const { profile, jobs, loading, step, error, filter, blockedToday: githubBlocked, remaining: githubRemaining, setFilter, search, removeJob } = useJobSearch();
   const { preferences, setPreferences } = usePreferences();
   const { profile: careerProfile, setProfile: setCareerProfile, resetProfile: resetCareerProfile } = useCareerProfile();
 
@@ -171,7 +163,7 @@ export default function App() {
   async function openExistingCv(job: JobRecord) {
     try {
       const cv = await fetchCvByJobId(job.id);
-      const fallback: Profile = profile ?? {
+      const fallback: Profile = {
         user: { login: currentUser?.github_username ?? '', name: currentUser?.name ?? '', bio: null, avatar_url: '', followers: 0, public_repos: 0 },
         repos: [],
         skills: job.skills,
@@ -187,8 +179,8 @@ export default function App() {
     let repos: GitHubRepo[] = [];
     let skills: string[] = job.skills;
 
-    // O fluxo da busca não carrega o perfil GitHub (só o useJobSearch carrega),
-    // então o CV vinha sem a seção de projetos. Aqui buscamos os repos reais.
+    // Esse fluxo de busca não carrega o perfil GitHub, então o CV vinha sem
+    // a seção de projetos. Aqui buscamos os repos reais.
     // Best-effort: se falhar (rate limit, sem username), segue sem repos.
     if (username) {
       try {
@@ -253,7 +245,7 @@ export default function App() {
           accountName={currentUser?.name ?? null}
           onBack={() => setCvState(null)}
           onGoToHistory={() => { setCvState(null); setView('history'); }}
-          onDismiss={(jobId) => { removeJob(jobId); setCvState(null); }}
+          onDismiss={() => setCvState(null)}
           initialCvId={cvState.existingCvId}
           initialContent={cvState.existingContent}
           initialBlocks={cvState.existingBlocks}
@@ -357,75 +349,10 @@ export default function App() {
           />
         )}
 
-        {view === 'search' && (
-          <>
-            <div className="hero">
-              <h1>
-                Vagas feitas<br />
-                para o seu <span className="accent">código</span>
-              </h1>
-              <p className="subtitle">
-                Conecte seu LinkedIn e GitHub. A IA cruza seus projetos e histórico
-                profissional para encontrar vagas que combinam com você.
-              </p>
-
-              <div className="search-wrapper">
-                <div className="linkedin-section">
-                  <LinkedInImport
-                    data={linkedInData}
-                    onImport={handleLinkedInImport}
-                    onClear={handleLinkedInClear}
-                  />
-                </div>
-                <PreferencesPanel
-                  preferences={preferences}
-                  onChange={setPreferences}
-                  defaultOpen
-                />
-                <SearchForm
-                  username={username}
-                  loading={loading}
-                  error={error}
-                  blocked={githubBlocked}
-                  remaining={githubRemaining}
-                  locationReady={preferences.modality === 'remote' || !!preferences.location}
-                  onChange={setUsername}
-                  onSearch={() => search(username, preferences)}
-                  onGoToHistory={() => setView('history')}
-                />
-              </div>
-
-              {loading && <LoadingSteps step={step} />}
-            </div>
-
-            {profile && <ProfileCard profile={profile} />}
-            {jobs.length > 0 && (
-              <>
-                <JobList
-                  jobs={jobs}
-                  filter={filter}
-                  onFilterChange={setFilter}
-                  onGenerateCv={(job) => profile && openCv(job, profile)}
-                  onViewCv={(job) => openExistingCv(job)}
-                  onLike={(_job, category) => likeKeyword(category)}
-                  onBlock={(job, category) => { blockKeyword(category); removeJob(job.id); }}
-                  onLikeSource={(_job, src) => likeSource(src)}
-                  onBlockSource={(_job, src) => blockSource(src)}
-                />
-                <div className="results-history-bar">
-                  <button className="history-link-btn" onClick={() => setView('history')}>
-                    Ver historico de todas as buscas
-                  </button>
-                </div>
-              </>
-            )}
-          </>
-        )}
-
         <Suspense fallback={<div className="loading-bar" style={{ marginTop: 48 }}><div className="loading-step"><div className="dot" />carregando...</div></div>}>
           {view === 'analise' && (
             <LinkAnalysisView
-              profile={profile}
+              profile={null}
               linkedIn={linkedInData}
               onGenerateCv={(job, cvProfile) => setCvState({ job, profile: cvProfile })}
             />
