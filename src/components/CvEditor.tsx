@@ -402,10 +402,13 @@ export function CvEditor({
     setBlocks((prev) => prev && prev.filter((b) => b.id !== id));
   }
   function addBlock(type: CvBlockType) {
+    const id = uid();
     setBlocks((prev) => [
       ...(prev ?? []),
-      { id: uid(), type, title: BLOCK_META[type].title, content: '- [PREENCHER]', visible: true },
+      { id, type, title: BLOCK_META[type].title, content: '', visible: true },
     ]);
+    // Abre direto em edição: conteúdo vazio nunca deve virar texto real no PDF.
+    setEditingIds((prev) => new Set(prev).add(id));
     setAddOpen(false);
   }
 
@@ -1505,12 +1508,12 @@ function SortableBlock({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const accent = BLOCK_META[block.type]?.color ?? '#8B5CF6';
 
-  const style: React.CSSProperties = {
+  const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    borderLeftColor: accent,
+    '--accent': accent,
     opacity: isDragging ? 0.6 : block.visible ? 1 : 0.5,
-  };
+  } as React.CSSProperties;
 
   return (
     <div

@@ -1,4 +1,4 @@
-import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { pdf, Document, Page, Text, View, Link, StyleSheet } from '@react-pdf/renderer';
 import type { Style } from '@react-pdf/types';
 
 const S = StyleSheet.create({
@@ -49,39 +49,66 @@ const S = StyleSheet.create({
     color: '#333',
     lineHeight: 1.5,
   },
-  spacer: {
-    height: 5,
+  entryGroup: {
+    marginBottom: 8,
   },
 });
 
+const LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
+const BOLD_RE = /\*\*([^*]+)\*\*/g;
+
+/** Quebra uma linha em segmentos texto / **negrito** / [rótulo](link). */
+function splitInline(text: string): { text: string; bold?: boolean; href?: string }[] {
+  const segments: { text: string; bold?: boolean; href?: string }[] = [];
+  let lastIndex = 0;
+  const combined = new RegExp(`${LINK_RE.source}|${BOLD_RE.source}`, 'g');
+  let m: RegExpExecArray | null;
+  while ((m = combined.exec(text))) {
+    if (m.index > lastIndex) segments.push({ text: text.slice(lastIndex, m.index) });
+    if (m[1] !== undefined) segments.push({ text: m[1], href: m[2] });
+    else segments.push({ text: m[3], bold: true });
+    lastIndex = combined.lastIndex;
+  }
+  if (lastIndex < text.length) segments.push({ text: text.slice(lastIndex) });
+  return segments;
+}
+
 function InlineText({ text, style }: { text: string; style: Style }) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  const segments = splitInline(text);
   return (
     <Text style={style}>
-      {parts.map((p, i) =>
-        p.startsWith('**') && p.endsWith('**') ? (
+      {segments.map((s, i) =>
+        s.href ? (
+          <Link key={i} src={s.href} style={{ color: '#3d72c8' }}>
+            {s.text}
+          </Link>
+        ) : s.bold ? (
           <Text key={i} style={{ fontFamily: 'Helvetica-Bold' }}>
-            {p.slice(2, -2)}
+            {s.text}
           </Text>
         ) : (
-          p
+          s.text
         )
       )}
     </Text>
   );
 }
 
+// Agrupa cada entrada (parágrafo + seus bullets, delimitada por linha em
+// branco) num View não-quebrável — evita título/empresa separado de suas
+// bullets por uma quebra de página, sem travar a seção inteira numa página só.
 function buildContent(markdown: string) {
   const nodes: React.ReactNode[] = [];
+  let group: React.ReactNode[] = [];
   let bullets: string[] = [];
   let key = 0;
 
-  function flushBullets() {
+  function flushBulletsIntoGroup() {
     if (!bullets.length) return;
-    nodes.push(
+    group.push(
       <View key={key++}>
         {bullets.map((b, i) => (
-          <View key={i} style={S.bulletRow}>
+          <View key={i} style={S.bulletRow} wrap={false}>
             <Text style={S.dash}>–</Text>
             <InlineText text={b} style={S.bulletContent} />
           </View>
@@ -91,25 +118,32 @@ function buildContent(markdown: string) {
     bullets = [];
   }
 
+  function flushGroup() {
+    flushBulletsIntoGroup();
+    if (!group.length) return;
+    nodes.push(<View key={key++} style={S.entryGroup} wrap={false}>{group}</View>);
+    group = [];
+  }
+
   for (const line of markdown.split('\n')) {
     if (line.startsWith('# ')) {
-      flushBullets();
+      flushGroup();
       nodes.push(<Text key={key++} style={S.name}>{line.slice(2)}</Text>);
     } else if (line.startsWith('## ')) {
-      flushBullets();
-      nodes.push(<Text key={key++} style={S.section}>{line.slice(3)}</Text>);
+      flushGroup();
+      // minPresenceAhead: nunca deixa o título de seção sozinho no fim da página.
+      nodes.push(<Text key={key++} style={S.section} minPresenceAhead={50}>{line.slice(3)}</Text>);
     } else if (line.startsWith('- ')) {
       bullets.push(line.slice(2));
     } else if (line.trim() === '') {
-      flushBullets();
-      nodes.push(<View key={key++} style={S.spacer} />);
+      flushGroup();
     } else {
-      flushBullets();
-      nodes.push(<InlineText key={key++} text={line} style={S.paragraph} />);
+      flushBulletsIntoGroup();
+      group.push(<InlineText key={key++} text={line} style={S.paragraph} />);
     }
   }
 
-  flushBullets();
+  flushGroup();
   return nodes;
 }
 

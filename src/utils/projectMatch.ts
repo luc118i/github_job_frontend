@@ -179,7 +179,9 @@ export function matchTier(score: number): { label: string; color: string } {
 export function projectsToMarkdown(projects: Project[]): string {
   return projects
     .map((p) => {
-      const head = p.link ? `**${p.title}** (${p.link})` : `**${p.title}**`;
+      // Link como rótulo amigável ("Ver projeto"), nunca a URL crua — mantém
+      // o clique funcionando no preview e no PDF sem poluir o documento.
+      const head = p.link ? `**${p.title}** ([Ver projeto](${p.link}))` : `**${p.title}**`;
       const lines = [p.description ? `${head} — ${p.description}` : head];
       for (const h of p.highlights) if (h.trim()) lines.push(`- ${h.trim()}`);
       return lines.join('\n');
