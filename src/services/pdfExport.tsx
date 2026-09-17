@@ -134,7 +134,8 @@ function buildContent(markdown: string) {
       // minPresenceAhead: nunca deixa o título de seção sozinho no fim da página.
       nodes.push(<Text key={key++} style={S.section} minPresenceAhead={50}>{line.slice(3)}</Text>);
     } else if (line.startsWith('- ')) {
-      bullets.push(line.slice(2));
+      const item = line.slice(2).trim();
+      if (item) bullets.push(item); // ignora bullets vazios ("- " sem texto)
     } else if (line.trim() === '') {
       flushGroup();
     } else {

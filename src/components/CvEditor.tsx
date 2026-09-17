@@ -27,6 +27,7 @@ import { dismissJob } from '../services/jobs';
 import { markCvGenerated } from '../utils/dailyLimit';
 import { analyzeAts, atsTier, analyzeKeywords, type AtsAction } from '../utils/atsScore';
 import { rankProjects, matchTier, projectsToMarkdown, reposToProjectInputs } from '../utils/projectMatch';
+import { stripEmptyBullets } from '../utils/markdown';
 import { AtsRing } from './AtsRing';
 import { InterviewStudio } from './InterviewStudio';
 
@@ -153,6 +154,23 @@ function parseCvHeader(md: string): { name: string; contact: string } {
   return { name, contact };
 }
 
+const CONTACT_EMAIL_RE = /[\w.+-]+@[\w-]+\.[a-z]{2,}/i;
+const CONTACT_PHONE_RE = /(\+?\d[\d\s().-]{7,}\d)/;
+
+/** Separa a linha "a | b | c" salva em Markdown nos campos estruturados do formulário. */
+function parseContactFields(contact: string): { email: string; phone: string; linkedin: string; github: string; other: string } {
+  const parts = contact.split('|').map((s) => s.trim()).filter(Boolean);
+  let email = '', phone = '', linkedin = '', github = '', other = '';
+  for (const p of parts) {
+    if (!email && CONTACT_EMAIL_RE.test(p)) { email = p; continue; }
+    if (!linkedin && /linkedin\.com/i.test(p)) { linkedin = p; continue; }
+    if (!github && /github\.com/i.test(p)) { github = p; continue; }
+    if (!phone && CONTACT_PHONE_RE.test(p) && !/https?:\/\//i.test(p)) { phone = p; continue; }
+    if (!other) { other = p; continue; }
+  }
+  return { email, phone, linkedin, github, other };
+}
+
 export function CvEditor({
   job,
   profile,
@@ -258,11 +276,25 @@ export function CvEditor({
   }, []);
 
   const [cvName, setCvName] = useState(headerInit.name);
-  const [cvContact, setCvContact] = useState(headerInit.contact);
+  // Contato = campos estruturados (e-mail, telefone, LinkedIn, GitHub,
+  // portfólio) recompostos numa única linha "a | b | c" — mesmo formato que
+  // já era salvo no Markdown, então preview/PDF/ATS não precisam mudar.
+  const initialContactFields = useMemo(() => parseContactFields(headerInit.contact), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [contactEmail, setContactEmail] = useState(initialContactFields.email);
+  const [contactPhone, setContactPhone] = useState(initialContactFields.phone);
+  const [contactLinkedin, setContactLinkedin] = useState(initialContactFields.linkedin);
+  const [contactGithub, setContactGithub] = useState(initialContactFields.github);
+  const [contactOther, setContactOther] = useState(initialContactFields.other);
+  const cvContact = useMemo(
+    () => [contactEmail, contactPhone, contactLinkedin, contactGithub, contactOther].map((s) => s.trim()).filter(Boolean).join(' | '),
+    [contactEmail, contactPhone, contactLinkedin, contactGithub, contactOther],
+  );
   // Alias p/ o restante do editor (geração de CV, mensagens, entrevista).
   const candidateName = cvName.trim() || profile.user.login;
 
   // Deriva o Markdown (cabeçalho + blocos visíveis) de qualquer lista de blocos.
+  // stripEmptyBullets remove bullets "- " sem texto (a IA às vezes gera) —
+  // ponto único, então preview/PDF/save/ATS ficam limpos automaticamente.
   const buildMarkdown = useMemo(() => {
     const header = `# ${candidateName.toUpperCase()}${cvContact.trim() ? `\n${cvContact.trim()}` : ''}`;
     return (bl: CvBlock[]) => {
@@ -270,7 +302,7 @@ export function CvEditor({
         .filter((b) => b.visible)
         .map((b) => `## ${b.title}\n${b.content.trim()}`)
         .join('\n\n');
-      return `${header}\n\n${body}`.trim();
+      return stripEmptyBullets(`${header}\n\n${body}`.trim());
     };
   }, [candidateName, cvContact]);
 
@@ -296,7 +328,10 @@ export function CvEditor({
     closeAllOverlays();
     if (action.type === 'focus-contact') {
       setMobileTab('editor');
-      requestAnimationFrame(() => contactInputRef.current?.focus());
+      requestAnimationFrame(() => {
+        contactInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        contactInputRef.current?.focus();
+      });
       return;
     }
     if (action.type === 'adapt-job') {
@@ -1485,16 +1520,54 @@ export function CvEditor({
                     placeholder="Seu nome completo"
                   />
                 </label>
-                <label className="cv-header-field">
-                  <span>Contato</span>
-                  <input
-                    ref={contactInputRef}
-                    className="cv-header-input"
-                    value={cvContact}
-                    onChange={(e) => setCvContact(e.target.value)}
-                    placeholder="email | telefone | github.com/usuario"
-                  />
-                </label>
+                <div className="cv-header-contact-grid">
+                  <label className="cv-header-field">
+                    <span>E-mail</span>
+                    <input
+                      ref={contactInputRef}
+                      className="cv-header-input"
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      placeholder="voce@email.com"
+                    />
+                  </label>
+                  <label className="cv-header-field">
+                    <span>Telefone</span>
+                    <input
+                      className="cv-header-input"
+                      value={contactPhone}
+                      onChange={(e) => setContactPhone(e.target.value)}
+                      placeholder="(11) 91234-5678"
+                    />
+                  </label>
+                  <label className="cv-header-field">
+                    <span>LinkedIn</span>
+                    <input
+                      className="cv-header-input"
+                      value={contactLinkedin}
+                      onChange={(e) => setContactLinkedin(e.target.value)}
+                      placeholder="linkedin.com/in/usuario"
+                    />
+                  </label>
+                  <label className="cv-header-field">
+                    <span>GitHub</span>
+                    <input
+                      className="cv-header-input"
+                      value={contactGithub}
+                      onChange={(e) => setContactGithub(e.target.value)}
+                      placeholder="github.com/usuario"
+                    />
+                  </label>
+                  <label className="cv-header-field cv-header-field--wide">
+                    <span>Portfólio / outro link</span>
+                    <input
+                      className="cv-header-input"
+                      value={contactOther}
+                      onChange={(e) => setContactOther(e.target.value)}
+                      placeholder="seuportfolio.com"
+                    />
+                  </label>
+                </div>
               </div>
 
               <div className="cv-pane-label">blocos do currículo</div>
@@ -1599,7 +1672,7 @@ function AdaptCard({ title, content }: { title: string; content: string }) {
             ),
           }}
         >
-          {content || '_(vazio)_'}
+          {stripEmptyBullets(content) || '_(vazio)_'}
         </ReactMarkdown>
       </div>
     </div>
@@ -1691,7 +1764,7 @@ function SortableBlock({
               ),
             }}
           >
-            {block.content || '_(vazio)_'}
+            {stripEmptyBullets(block.content) || '_(vazio)_'}
           </ReactMarkdown>
         </div>
       )}
