@@ -1596,6 +1596,7 @@ export function CvEditor({
                         onRemove={() => removeBlock(block.id)}
                         onChangeContent={(content) => patchBlock(block.id, { content })}
                         onChangeTitle={(title) => patchBlock(block.id, { title })}
+                        onOpenLibrary={block.type === 'projetos' ? openLibrary : undefined}
                       />
                     ))}
                   </div>
@@ -1699,6 +1700,8 @@ interface SortableBlockProps {
   onRemove: () => void;
   onChangeContent: (content: string) => void;
   onChangeTitle: (title: string) => void;
+  /** Só para o bloco "projetos": abre a Biblioteca de Projetos já ranqueada pela vaga. */
+  onOpenLibrary?: () => void;
 }
 
 function SortableBlock({
@@ -1710,6 +1713,7 @@ function SortableBlock({
   onRemove,
   onChangeContent,
   onChangeTitle,
+  onOpenLibrary,
 }: SortableBlockProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const accent = BLOCK_META[block.type]?.color ?? '#8B5CF6';
@@ -1752,6 +1756,16 @@ function SortableBlock({
           <button className="cv-block-action cv-block-action--danger" onClick={onRemove} title="Excluir">excluir</button>
         </div>
       </div>
+
+      {onOpenLibrary && !editing && (
+        <button
+          className="cv-block-library-cta"
+          onClick={onOpenLibrary}
+          title="Abre a Biblioteca de Projetos, já ordenada pela relevância para esta vaga"
+        >
+          + escolher da biblioteca de projetos
+        </button>
+      )}
 
       {editing ? (
         <textarea
