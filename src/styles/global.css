@@ -4644,10 +4644,140 @@ h1 {
   color: rgba(232,228,220,0.45);
 }
 
-.cv-ats-subscores {
+.cv-ats-body {
   flex: 1;
   overflow-y: auto;
   padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Barra "faltam N pontos" logo abaixo do ring */
+.cv-ats-progress { display: flex; flex-direction: column; gap: 6px; }
+.cv-ats-progress-track {
+  height: 8px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.07);
+  overflow: hidden;
+}
+.cv-ats-progress-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cv-ats-progress-label {
+  font-size: 11px;
+  color: rgba(232,228,220,0.5);
+}
+
+.cv-ats-complete {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(74,222,128,0.08);
+  border: 1px solid rgba(74,222,128,0.25);
+  color: rgba(232,228,220,0.85);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.cv-ats-recos-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: rgba(232,228,220,0.4);
+}
+
+.cv-ats-recos { display: flex; flex-direction: column; gap: 8px; }
+.cv-ats-reco {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.cv-ats-reco-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #F97316;
+  flex-shrink: 0;
+}
+.cv-ats-reco-label {
+  font-size: 12px;
+  color: rgba(232,228,220,0.8);
+  line-height: 1.4;
+}
+.cv-ats-reco-points {
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #4ADE80;
+  white-space: nowrap;
+}
+.cv-ats-reco-action {
+  background: rgba(139,92,246,0.12);
+  border: 1px solid rgba(139,92,246,0.35);
+  border-radius: 6px;
+  color: #A78BFA;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 4px 9px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.cv-ats-reco-action:hover { background: rgba(139,92,246,0.22); }
+
+.cv-ats-keywords {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.cv-ats-kw-group { display: flex; flex-direction: column; gap: 6px; }
+.cv-ats-kw-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.cv-ats-kw-label--ok { color: #4ADE80; }
+.cv-ats-kw-label--miss { color: #F97316; }
+.cv-ats-kw-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cv-ats-kw-chip {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.cv-ats-kw-chip--ok {
+  color: #4ADE80;
+  border-color: rgba(74,222,128,0.35);
+  background: rgba(74,222,128,0.08);
+}
+.cv-ats-kw-chip--miss {
+  color: #F97316;
+  border-color: rgba(249,115,22,0.35);
+  background: rgba(249,115,22,0.08);
+}
+.cv-ats-kw-note {
+  margin: 0;
+  font-size: 10.5px;
+  color: rgba(232,228,220,0.4);
+  line-height: 1.4;
+}
+
+.cv-ats-subscores {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -4659,10 +4789,21 @@ h1 {
   justify-content: space-between;
 }
 .cv-ats-sub-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12.5px;
   font-weight: 600;
   color: rgba(232,228,220,0.85);
 }
+.cv-ats-sub-flag {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cv-ats-sub-flag--ok { background: #4ADE80; }
+.cv-ats-sub-flag--warn { background: #F97316; }
 .cv-ats-sub-score {
   font-family: var(--font-display);
   font-size: 14px;
@@ -4683,6 +4824,29 @@ h1 {
   font-size: 11px;
   color: rgba(232,228,220,0.45);
   line-height: 1.4;
+}
+.cv-ats-criteria {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.cv-ats-criteria li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+.cv-ats-criterion--met { color: rgba(232,228,220,0.4); }
+.cv-ats-criterion--pending { color: rgba(232,228,220,0.65); }
+.cv-ats-criterion-points {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: rgba(232,228,220,0.35);
 }
 .cv-ats-foot {
   padding: 0 18px 20px;

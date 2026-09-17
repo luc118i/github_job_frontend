@@ -6,7 +6,7 @@ import { fetchPipelineInsights } from '../services/pipeline';
 import { dismissJob } from '../services/jobs';
 import { fetchCvByJobId } from '../services/cv';
 import { fetchMessages } from '../services/messages';
-import { analyzeAts, atsTier, AtsResult } from '../utils/atsScore';
+import { analyzeAts, atsTier, extractContactFromMarkdown, AtsResult } from '../utils/atsScore';
 import { useKanban } from '../hooks/useKanban';
 import { fetchGitHubUser, fetchGitHubRepos, extractSkills } from '../services/github';
 import { getToken } from '../services/auth';
@@ -878,7 +878,8 @@ function JobDetailPanel({
         const blocks = cv.content_blocks ?? [];
         setHasCv(true);
         if (blocks.length) {
-          setAts(analyzeAts(blocks, cv.content ?? '', { title: job.title, skills: job.skills, description: job.description }));
+          const content = cv.content ?? '';
+          setAts(analyzeAts(blocks, content, extractContactFromMarkdown(content), { title: job.title, skills: job.skills, description: job.description }));
         }
       })
       .catch(() => { if (alive) setHasCv(false); }); // 404 = sem CV ainda

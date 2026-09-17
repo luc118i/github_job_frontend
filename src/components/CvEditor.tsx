@@ -25,7 +25,7 @@ import { generateMessage, fetchMessages, saveMessage, updateMessage, deleteMessa
 import { downloadCvPdf } from '../services/pdfExport';
 import { dismissJob } from '../services/jobs';
 import { markCvGenerated } from '../utils/dailyLimit';
-import { analyzeAts, atsTier } from '../utils/atsScore';
+import { analyzeAts, atsTier, analyzeKeywords, type AtsAction } from '../utils/atsScore';
 import { rankProjects, matchTier, projectsToMarkdown, reposToProjectInputs } from '../utils/projectMatch';
 import { AtsRing } from './AtsRing';
 import { InterviewStudio } from './InterviewStudio';
@@ -277,12 +277,55 @@ export function CvEditor({
   // Markdown derivado dos blocos visíveis — fonte para preview, PDF e save.
   const markdown = useMemo(() => (blocks ? buildMarkdown(blocks) : ''), [blocks, buildMarkdown]);
 
-  // ATS ao vivo: recalcula a cada edição de bloco/markdown (M3).
+  // ATS ao vivo: recalcula a cada edição de bloco/markdown/contato (M3).
   const ats = useMemo(
-    () => analyzeAts(blocks ?? [], markdown, { title: job.title, skills: job.skills, description: job.description }),
-    [blocks, markdown, job.title, job.skills, job.description],
+    () => analyzeAts(blocks ?? [], markdown, cvContact, { title: job.title, skills: job.skills, description: job.description }),
+    [blocks, markdown, cvContact, job.title, job.skills, job.description],
   );
   const tier = atsTier(ats.score);
+  const keywordAnalysis = useMemo(
+    () => analyzeKeywords(markdown.toLowerCase(), { title: job.title, skills: job.skills, description: job.description }),
+    [markdown, job.title, job.skills, job.description],
+  );
+
+  const contactInputRef = useRef<HTMLInputElement>(null);
+  const pendingScrollBlockId = useRef<string | null>(null);
+
+  // Some o painel de ATS e leva o usuário direto ao ponto indicado pela recomendação.
+  function runAtsAction(action: AtsAction) {
+    closeAllOverlays();
+    if (action.type === 'focus-contact') {
+      setMobileTab('editor');
+      requestAnimationFrame(() => contactInputRef.current?.focus());
+      return;
+    }
+    if (action.type === 'adapt-job') {
+      setMobileTab('editor');
+      setMoreOpen(true);
+      return;
+    }
+    // edit-block: se a seção já existe, abre em edição e rola até ela; senão cria (addBlock já abre em edição).
+    setMobileTab('editor');
+    const existing = blocks?.find((b) => b.type === action.blockType);
+    if (existing) {
+      setEditingIds((prev) => new Set(prev).add(existing.id));
+      pendingScrollBlockId.current = existing.id;
+    } else {
+      addBlock(action.blockType);
+      // addBlock gera um id novo internamente — pega o mais recente após o próximo render.
+      pendingScrollBlockId.current = 'last';
+    }
+  }
+
+  useEffect(() => {
+    if (!pendingScrollBlockId.current || !blocks) return;
+    const id = pendingScrollBlockId.current === 'last' ? blocks[blocks.length - 1]?.id : pendingScrollBlockId.current;
+    pendingScrollBlockId.current = null;
+    if (!id) return;
+    requestAnimationFrame(() => {
+      document.getElementById(`cv-block-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, [blocks]);
 
   async function handleDismiss() {
     setDismissing(true);
@@ -533,8 +576,8 @@ export function CvEditor({
 
   // ATS dos blocos otimizados, para o delta no split view.
   const adaptedAts = useMemo(
-    () => (adaptedBlocks ? analyzeAts(adaptedBlocks, buildMarkdown(adaptedBlocks), { title: job.title, skills: job.skills, description: job.description }) : null),
-    [adaptedBlocks, buildMarkdown, job.title, job.skills, job.description],
+    () => (adaptedBlocks ? analyzeAts(adaptedBlocks, buildMarkdown(adaptedBlocks), cvContact, { title: job.title, skills: job.skills, description: job.description }) : null),
+    [adaptedBlocks, buildMarkdown, cvContact, job.title, job.skills, job.description],
   );
 
   // ── Biblioteca de Projetos (M5) ──────────────────────────────────
@@ -919,29 +962,108 @@ export function CvEditor({
               <AtsRing score={ats.score} color={tier.color} size={104} stroke={9} />
               <div className="cv-ats-overview-info">
                 <span className="cv-ats-tier" style={{ color: tier.color }}>{tier.label}</span>
-                <span className="cv-ats-overview-sub">compatibilidade com a vaga</span>
+                <span className="cv-ats-overview-sub">
+                  {ats.score >= 100
+                    ? 'currículo completo segundo os critérios ATS do Studio'
+                    : `seu currículo está ${ats.score}% otimizado`}
+                </span>
               </div>
             </div>
 
+            <div className="cv-ats-body">
+            <div className="cv-ats-progress">
+              <div className="cv-ats-progress-track">
+                <div className="cv-ats-progress-fill" style={{ width: `${ats.score}%`, background: tier.color }} />
+              </div>
+              <span className="cv-ats-progress-label">
+                {ats.score >= 100 ? '100/100' : `faltam ${100 - ats.score} pontos para atingir 100%`}
+              </span>
+            </div>
+
+            {ats.score >= 100 ? (
+              <p className="cv-ats-complete">
+                Seu currículo está completamente otimizado de acordo com os critérios ATS do Studio.
+                Isso não garante aprovação em processos seletivos — apenas que a estrutura e o conteúdo
+                estão completos para leitura por sistemas ATS.
+              </p>
+            ) : (
+              <div className="cv-ats-recos">
+                <span className="cv-ats-recos-title">O que fazer para melhorar</span>
+                {ats.recommendations.slice(0, 6).map((r) => (
+                  <div key={r.key} className="cv-ats-reco">
+                    <span className="cv-ats-reco-dot" />
+                    <span className="cv-ats-reco-label">{r.label}</span>
+                    <span className="cv-ats-reco-points">+{r.points}</span>
+                    <button className="cv-ats-reco-action" onClick={() => runAtsAction(r.action)}>
+                      {r.action.type === 'adapt-job' ? 'adaptar p/ vaga' : r.action.type === 'focus-contact' ? 'editar contato' : 'editar seção'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {job.skills.length > 0 && (
+              <div className="cv-ats-keywords">
+                <div className="cv-ats-sub-head">
+                  <span className="cv-ats-sub-label">Compatibilidade com a vaga</span>
+                  <span className="cv-ats-sub-score" style={{ color: atsTier(keywordAnalysis.percent).color }}>{keywordAnalysis.percent}%</span>
+                </div>
+                {keywordAnalysis.found.length > 0 && (
+                  <div className="cv-ats-kw-group">
+                    <span className="cv-ats-kw-label cv-ats-kw-label--ok">Palavras encontradas</span>
+                    <div className="cv-ats-kw-chips">
+                      {keywordAnalysis.found.map((k) => <span key={k} className="cv-ats-kw-chip cv-ats-kw-chip--ok">{k}</span>)}
+                    </div>
+                  </div>
+                )}
+                {keywordAnalysis.missing.length > 0 && (
+                  <div className="cv-ats-kw-group">
+                    <span className="cv-ats-kw-label cv-ats-kw-label--miss">Palavras relevantes ainda não identificadas</span>
+                    <div className="cv-ats-kw-chips">
+                      {keywordAnalysis.missing.map((k) => <span key={k} className="cv-ats-kw-chip cv-ats-kw-chip--miss">{k}</span>)}
+                    </div>
+                    <p className="cv-ats-kw-note">
+                      São sugestões para você revisar — nunca inserimos competências automaticamente.
+                      Use "adaptar p/ vaga" para incorporá-las onde fizer sentido.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="cv-ats-subscores">
-              {ats.subscores.map((s) => {
-                const t = atsTier(s.score);
+              <span className="cv-ats-recos-title">Seu currículo</span>
+              {ats.categories.map((cat) => {
+                const t = atsTier((cat.score / cat.max) * 100);
+                const full = cat.score >= cat.max;
                 return (
-                  <div key={s.key} className="cv-ats-sub">
+                  <div key={cat.key} className="cv-ats-sub">
                     <div className="cv-ats-sub-head">
-                      <span className="cv-ats-sub-label">{s.label}</span>
-                      <span className="cv-ats-sub-score" style={{ color: t.color }}>{s.score}</span>
+                      <span className="cv-ats-sub-label">
+                        <span className={`cv-ats-sub-flag ${full ? 'cv-ats-sub-flag--ok' : 'cv-ats-sub-flag--warn'}`} />
+                        {cat.label}
+                      </span>
+                      <span className="cv-ats-sub-score" style={{ color: t.color }}>{cat.score}/{cat.max}</span>
                     </div>
                     <div className="cv-ats-bar">
-                      <div className="cv-ats-bar-fill" style={{ width: `${s.score}%`, background: t.color }} />
+                      <div className="cv-ats-bar-fill" style={{ width: `${(cat.score / cat.max) * 100}%`, background: t.color }} />
                     </div>
-                    <span className="cv-ats-sub-hint">{s.hint}</span>
+                    <ul className="cv-ats-criteria">
+                      {cat.criteria.map((cr) => (
+                        <li key={cr.key} className={cr.met ? 'cv-ats-criterion--met' : 'cv-ats-criterion--pending'}>
+                          {cr.label} <span className="cv-ats-criterion-points">{cr.points}/{cr.maxPoints}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 );
               })}
             </div>
+            </div>
 
-            <p className="cv-ats-foot">O score atualiza ao vivo conforme você edita os blocos.</p>
+            <p className="cv-ats-foot">
+              O score é uma avaliação interna de completude e estrutura — atualiza ao vivo conforme você edita os blocos.
+            </p>
           </aside>
         </div>
       )}
@@ -1366,6 +1488,7 @@ export function CvEditor({
                 <label className="cv-header-field">
                   <span>Contato</span>
                   <input
+                    ref={contactInputRef}
                     className="cv-header-input"
                     value={cvContact}
                     onChange={(e) => setCvContact(e.target.value)}
@@ -1517,6 +1640,7 @@ function SortableBlock({
 
   return (
     <div
+      id={`cv-block-${block.id}`}
       ref={setNodeRef}
       style={style}
       className={`cv-block ${isDragging ? 'cv-block--dragging' : ''} ${!block.visible ? 'cv-block--hidden' : ''}`}
