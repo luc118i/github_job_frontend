@@ -258,20 +258,30 @@ export function CvEditor({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  // Cabeçalho (nome + contato) — EDITÁVEL. Padrão: nome da conta > LinkedIn >
-  // GitHub. Em modo visualização, recupera o que foi salvo no Markdown.
+  // Cabeçalho (nome + contato) — EDITÁVEL. Cada campo cai individualmente
+  // para o dado já disponível na conta (LinkedIn importado / GitHub
+  // conectado) quando não há nada salvo para ele — nunca um "tudo ou nada"
+  // a nível da linha inteira, senão um CV salvo só com e-mail nunca
+  // ganhava de volta o GitHub que a conta já tem.
   const headerInit = useMemo(() => {
     const defaultName = (accountName ?? linkedIn?.name ?? profile.user.name ?? profile.user.login ?? '').trim();
-    const defaultContact = [
-      linkedIn?.email,
-      linkedIn?.phone,
-      profile.user.login ? `github.com/${profile.user.login}` : null,
-    ].filter(Boolean).join(' | ');
-    if (isViewMode && initialContent) {
-      const h = parseCvHeader(initialContent);
-      return { name: h.name || defaultName, contact: h.contact || defaultContact };
-    }
-    return { name: defaultName, contact: defaultContact };
+    const liveContact = {
+      email: linkedIn?.email ?? '',
+      phone: linkedIn?.phone ?? '',
+      linkedin: '',
+      github: profile.user.login ? `github.com/${profile.user.login}` : '',
+      other: '',
+    };
+    const saved = isViewMode && initialContent ? parseCvHeader(initialContent) : null;
+    const savedFields = saved ? parseContactFields(saved.contact) : null;
+    const contactFields = {
+      email: savedFields?.email || liveContact.email,
+      phone: savedFields?.phone || liveContact.phone,
+      linkedin: savedFields?.linkedin || liveContact.linkedin,
+      github: savedFields?.github || liveContact.github,
+      other: savedFields?.other || liveContact.other,
+    };
+    return { name: (saved?.name || defaultName), contactFields };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -279,7 +289,7 @@ export function CvEditor({
   // Contato = campos estruturados (e-mail, telefone, LinkedIn, GitHub,
   // portfólio) recompostos numa única linha "a | b | c" — mesmo formato que
   // já era salvo no Markdown, então preview/PDF/ATS não precisam mudar.
-  const initialContactFields = useMemo(() => parseContactFields(headerInit.contact), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const initialContactFields = headerInit.contactFields;
   const [contactEmail, setContactEmail] = useState(initialContactFields.email);
   const [contactPhone, setContactPhone] = useState(initialContactFields.phone);
   const [contactLinkedin, setContactLinkedin] = useState(initialContactFields.linkedin);
