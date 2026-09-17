@@ -1726,7 +1726,7 @@ function SortableBlock({
       id={`cv-block-${block.id}`}
       ref={setNodeRef}
       style={style}
-      className={`cv-block ${isDragging ? 'cv-block--dragging' : ''} ${!block.visible ? 'cv-block--hidden' : ''}`}
+      className={`cv-block ${isDragging ? 'cv-block--dragging' : ''} ${!block.visible ? 'cv-block--hidden' : ''} ${editing ? 'cv-block--editing' : ''}`}
     >
       <div className="cv-block-head">
         <button className="cv-block-handle" {...attributes} {...listeners} title="Mover" aria-label="Mover bloco">
