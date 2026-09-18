@@ -10371,8 +10371,8 @@ select.auth-input { cursor: pointer; }
 .bv-filter-popover {
   position: absolute; top: calc(100% + 8px); right: 0;
   width: 280px;
-  background: #1a1f2e;
-  border: 1px solid rgba(var(--overlay-rgb),0.1);
+  background: var(--surface-modal);
+  border: 1px solid var(--border-mid);
   border-radius: 14px;
   padding: 18px;
   z-index: 200;
@@ -10441,7 +10441,7 @@ select.auth-input { cursor: pointer; }
   cursor: pointer; transition: all 0.12s;
 }
 .bv-fp-mod-btn:hover { background: rgba(var(--overlay-rgb),0.08); color: rgba(var(--ink-rgb),0.85); }
-.bv-fp-mod-btn--active { background: rgba(61,114,200,0.15); border-color: rgba(61,114,200,0.4); color: #6fa3ef; }
+.bv-fp-mod-btn--active { background: rgba(61,114,200,0.15); border-color: rgba(61,114,200,0.4); color: var(--brand-text); }
 
 .bv-fp-apply {
   padding: 9px; border: none; border-radius: 8px;
