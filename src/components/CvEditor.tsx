@@ -1725,12 +1725,12 @@ function AdaptCard({ title, content }: { title: string; content: string }) {
       <div className="cv-block-body">
         <ReactMarkdown
           components={{
-            ul: ({ children }) => <ul className="cvp-list">{children}</ul>,
-            li: ({ children }) => <li className="cvp-bullet">{children}</li>,
-            p: ({ children }) => <p className="cvp-line">{children}</p>,
-            strong: ({ children }) => <strong className="cvp-bold">{children}</strong>,
+            ul: ({ children }) => <ul className="cv-md-list">{children}</ul>,
+            li: ({ children }) => <li className="cv-md-bullet">{children}</li>,
+            p: ({ children }) => <p className="cv-md-line">{children}</p>,
+            strong: ({ children }) => <strong className="cv-md-bold">{children}</strong>,
             a: ({ href, children }) => (
-              <a href={href} className="cvp-link" target="_blank" rel="noopener noreferrer">{children}</a>
+              <a href={href} className="cv-md-link" target="_blank" rel="noopener noreferrer">{children}</a>
             ),
           }}
         >
@@ -1830,12 +1830,12 @@ function SortableBlock({
         <div className="cv-block-body">
           <ReactMarkdown
             components={{
-              ul: ({ children }) => <ul className="cvp-list">{children}</ul>,
-              li: ({ children }) => <li className="cvp-bullet">{children}</li>,
-              p: ({ children }) => <p className="cvp-line">{children}</p>,
-              strong: ({ children }) => <strong className="cvp-bold">{children}</strong>,
+              ul: ({ children }) => <ul className="cv-md-list">{children}</ul>,
+              li: ({ children }) => <li className="cv-md-bullet">{children}</li>,
+              p: ({ children }) => <p className="cv-md-line">{children}</p>,
+              strong: ({ children }) => <strong className="cv-md-bold">{children}</strong>,
               a: ({ href, children }) => (
-                <a href={href} className="cvp-link" target="_blank" rel="noopener noreferrer">{children}</a>
+                <a href={href} className="cv-md-link" target="_blank" rel="noopener noreferrer">{children}</a>
               ),
             }}
           >
