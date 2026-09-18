@@ -11,13 +11,12 @@
   --geo-cut-sm:  8px;
   --geo-cut-xs:  5px;
 
-  --surface-card:        rgba(255,255,255,0.038);
-  --surface-card-hover:  rgba(255,255,255,0.058);
-  --surface-modal:       #111118;
+  --surface-card:        rgba(var(--overlay-rgb),0.038);
+  --surface-card-hover:  rgba(var(--overlay-rgb),0.058);
 
-  --border-card:         rgba(255,255,255,0.07);
+  --border-card:         rgba(var(--overlay-rgb),0.07);
   --border-card-hover:   rgba(61,114,200,0.28);
-  --border-input:        rgba(255,255,255,0.08);
+  --border-input:        rgba(var(--overlay-rgb),0.08);
   --border-input-focus:  rgba(61,114,200,0.5);
 
   --shadow-xs:          0 1px 3px rgba(0,0,0,0.2);
@@ -25,6 +24,10 @@
   --shadow-md:          0 4px 16px rgba(0,0,0,0.28), 0 2px 4px rgba(0,0,0,0.18);
   --shadow-btn-hover:   0 4px 14px rgba(61,114,200,0.28);
   --shadow-modal:       0 24px 64px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4);
+  /* "Sombra revelada" (duplicata sólida deslocada) do .btn-tag e afins —
+     no escuro quase se funde ao fundo; no claro vira override mais suave
+     em [data-theme="light"] logo abaixo, senão fica um bloco duro. */
+  --tag-shadow:         rgba(0,0,0,0.4);
 
   /* Kill heavy effects from global */
   --glass-bg:           var(--surface-card);
@@ -44,6 +47,10 @@
   --t-fast:   0.1s ease-out;
   --t-base:   0.15s ease-out;
   --t-smooth: 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root[data-theme="light"] {
+  --tag-shadow: rgba(var(--ink-rgb),0.16);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -453,7 +460,7 @@
   inset: 0;
   z-index: -1;
   clip-path: inherit;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--tag-shadow);
   transform: translate(-4px, 4px);
 }
 
@@ -696,10 +703,10 @@ textarea:focus {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.08);
+  background: rgba(var(--overlay-rgb),0.08);
   border-radius: 2px;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+::-webkit-scrollbar-thumb:hover { background: rgba(var(--overlay-rgb),0.14); }
 
 /* ══════════════════════════════════════════════════════════════════════
    SOMBRA REVELADA — mesma camada de profundidade do .btn-tag, aplicada
@@ -726,7 +733,7 @@ textarea:focus {
   inset: 0;
   z-index: -1;
   clip-path: inherit;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--tag-shadow);
   transform: translate(-4px, 4px);
 }
 
@@ -742,7 +749,7 @@ textarea:focus {
   inset: 0;
   z-index: -1;
   clip-path: inherit;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--tag-shadow);
   transform: translate(-5px, 5px);
 }
 
@@ -798,6 +805,6 @@ button:not(:disabled),
   inset: 0;
   z-index: -1;
   clip-path: inherit;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--tag-shadow);
   transform: translate(calc(-1 * var(--tag-shadow)), var(--tag-shadow));
 }
