@@ -23,6 +23,11 @@ const LEVEL_LABEL: Record<'baixo' | 'medio' | 'bom' | 'alto', string> = {
 export function ProfileScoreCard({ careerProfile, linkedIn, preferences, onNavigate }: ProfileScoreCardProps) {
   const { score, missing, level } = computeProfileScore(careerProfile, linkedIn, preferences);
 
+  // Sem nenhum dado de perfil (visitante ou conta recém-criada), o card só
+  // mostra "0% — Perfil incompleto" sem nada acionável de verdade — melhor
+  // não mostrar do que constranger quem ainda nem começou.
+  if (score === 0) return null;
+
   // Anel SVG — circunferência de um raio 26
   const R = 26;
   const C = 2 * Math.PI * R;
