@@ -388,8 +388,8 @@ function buildRecommendations(categories: AtsCategory[]): AtsRecommendation[] {
 
 /** Faixa qualitativa para cor/rótulo do ring. */
 export function atsTier(score: number): { label: string; color: string } {
-  if (score >= 80) return { label: 'Excelente', color: '#4ADE80' };
-  if (score >= 60) return { label: 'Bom', color: '#14B8A6' };
-  if (score >= 40) return { label: 'Regular', color: '#F97316' };
-  return { label: 'Fraco', color: '#EF4444' };
+  if (score >= 80) return { label: 'Excelente', color: 'var(--match-text)' };
+  if (score >= 60) return { label: 'Bom', color: 'var(--teal-text)' };
+  if (score >= 40) return { label: 'Regular', color: 'var(--orange-text)' };
+  return { label: 'Fraco', color: 'var(--red-strong)' };
 }

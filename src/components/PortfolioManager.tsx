@@ -191,8 +191,8 @@ export function PortfolioManager({ githubUsername }: PortfolioManagerProps) {
 }
 
 const TEMPLATES: { value: PortfolioTemplate; label: string; for: string; color: string }[] = [
-  { value: 'executivo', label: 'Executivo', for: 'Gestão, liderança', color: '#8B5CF6' },
-  { value: 'especialista', label: 'Especialista', for: 'Dados, jurídico, RH', color: '#3B82F6' },
-  { value: 'criativo', label: 'Criativo', for: 'Marketing, design', color: '#EC4899' },
-  { value: 'tech', label: 'Tech', for: 'Dev, cloud, devops', color: '#22C55E' },
+  { value: 'executivo', label: 'Executivo', for: 'Gestão, liderança', color: 'var(--ia-strong)' },
+  { value: 'especialista', label: 'Especialista', for: 'Dados, jurídico, RH', color: 'var(--brand)' },
+  { value: 'criativo', label: 'Criativo', for: 'Marketing, design', color: 'var(--pink-text)' },
+  { value: 'tech', label: 'Tech', for: 'Dev, cloud, devops', color: 'var(--match-text)' },
 ];

@@ -21,9 +21,9 @@ interface ProjectLibraryProps {
 
 /** Cor do Portfolio Score: verde ≥85, amarelo ≥60, cinza abaixo. */
 function scoreColor(score: number): string {
-  if (score >= 85) return '#4ADE80';
-  if (score >= 60) return '#F59E0B';
-  return '#64748B';
+  if (score >= 85) return 'var(--match-text)';
+  if (score >= 60) return 'var(--warning)';
+  return 'var(--neutral-text)';
 }
 
 /** Termos de busca do projeto: tecnologias (stack) + metodologias (competências), sem duplicar. */
@@ -411,9 +411,9 @@ const ROLES_BY_CATEGORY: Record<ProjectCategory, string[]> = {
 };
 
 function marketValue(score: number): { label: string; color: string } {
-  if (score >= 85) return { label: 'Alto', color: '#4ADE80' };
-  if (score >= 60) return { label: 'Médio', color: '#F59E0B' };
-  return { label: 'Inicial', color: '#64748B' };
+  if (score >= 85) return { label: 'Alto', color: 'var(--match-text)' };
+  if (score >= 60) return { label: 'Médio', color: 'var(--warning)' };
+  return { label: 'Inicial', color: 'var(--neutral-text)' };
 }
 
 /** Descrição estilo ATS gerada deterministicamente para colar no currículo. */
