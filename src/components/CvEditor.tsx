@@ -141,7 +141,7 @@ function relativeTime(iso: string): string {
 function atsActionLabel(action: AtsAction): string {
   switch (action.type) {
     case 'adapt-job': return 'automatizar';
-    case 'auto-add-projects': return 'adicionar automaticamente';
+    case 'auto-add-projects': return 'escolher projeto';
     case 'focus-contact': return 'editar contato';
     default: return 'editar seção';
   }
@@ -232,8 +232,8 @@ export function CvEditor({
   const [projects, setProjects] = useState<Project[]>([]);
   const [projLoading, setProjLoading] = useState(false);
   const [projImporting, setProjImporting] = useState(false);
-  // Match por IA (lê o README): id → {score, reason}. null = ainda não rodou.
-  const [aiMatches, setAiMatches] = useState<Map<string, { score: number; reason: string }> | null>(null);
+  // Match por IA (lê o README): id → {score, reason, summary}. null = ainda não rodou.
+  const [aiMatches, setAiMatches] = useState<Map<string, { score: number; reason: string; summary: string }> | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [projError, setProjError] = useState('');
   const [savingProj, setSavingProj] = useState(false);
@@ -646,11 +646,11 @@ export function CvEditor({
   // (que lê o README) e mostra a justificativa.
   const ranked = useMemo(() => {
     const base = rankProjects(projects, { title: job.title, skills: job.skills, description: job.description });
-    if (!aiMatches) return base.map((r) => ({ ...r, reason: '' }));
+    if (!aiMatches) return base.map((r) => ({ ...r, reason: '', summary: '' }));
     return base
       .map((r) => {
         const ai = aiMatches.get(r.project.id);
-        return { ...r, score: ai ? ai.score : r.score, reason: ai?.reason ?? '' };
+        return { ...r, score: ai ? ai.score : r.score, reason: ai?.reason ?? '', summary: ai?.summary ?? '' };
       })
       .sort((a, b) => b.score - a.score);
   }, [projects, job.title, job.skills, job.description, aiMatches]);
@@ -698,7 +698,7 @@ export function CvEditor({
         skills: job.skills,
         description: job.description,
       });
-      setAiMatches(new Map(matches.map((m) => [m.id, { score: m.score, reason: m.reason }])));
+      setAiMatches(new Map(matches.map((m) => [m.id, { score: m.score, reason: m.reason, summary: m.summary }])));
     } catch (e) {
       setProjError((e as Error).message);
     } finally {
@@ -783,8 +783,9 @@ export function CvEditor({
   }
 
   // Injeta projetos reais (dados já existentes — repo/lib, nunca inventados)
-  // no bloco "projetos" (cria se não existir). Reaproveitado pela inserção
-  // manual (biblioteca) e pelo auto-preenchimento do ATS Center.
+  // no bloco "projetos" (cria se não existir). Se o bloco só tem o placeholder
+  // "[PREENCHER]", substitui em vez de anexar — é exatamente o vazio que a
+  // recomendação do ATS aponta.
   function insertProjectsIntoBlock(chosen: Project[]) {
     if (chosen.length === 0) return;
     const md = projectsToMarkdown(chosen);
@@ -794,15 +795,24 @@ export function CvEditor({
       if (i === -1) {
         return [...prev, { id: uid(), type: 'projetos', title: BLOCK_META.projetos.title, content: md, visible: true }];
       }
-      const existing = prev[i];
-      const merged = existing.content.trim() ? `${existing.content.trim()}\n\n${md}` : md;
+      const existing = prev[i].content.trim();
+      const isEmpty = !existing || existing === '[PREENCHER]';
+      const merged = isEmpty ? md : `${existing}\n\n${md}`;
       return prev.map((b, idx) => (idx === i ? { ...b, content: merged, visible: true } : b));
     });
   }
 
+  // Se o match por IA já rodou pra esse projeto, usa o resumo de ~2 linhas
+  // do README (mais substancial que a descrição curta salva) como conteúdo
+  // que vai pro currículo — sem alterar o projeto salvo na biblioteca.
+  function projectForInsert(p: Project): Project {
+    const summary = aiMatches?.get(p.id)?.summary;
+    return summary ? { ...p, description: summary } : p;
+  }
+
   // Insere os projetos marcados no bloco "projetos" (cria se não existir).
   function insertSelectedProjects() {
-    const chosen = projects.filter((p) => selectedProj.has(p.id));
+    const chosen = projects.filter((p) => selectedProj.has(p.id)).map(projectForInsert);
     if (chosen.length === 0) return;
     insertProjectsIntoBlock(chosen);
     setSelectedProj(new Set());
@@ -811,40 +821,20 @@ export function CvEditor({
     setTimeout(() => setSaveMsg(''), 3000);
   }
 
-  // Recomendação "Adicione projetos relevantes" do ATS Center: sincroniza a
-  // biblioteca com o GitHub e insere direto os 2 projetos mais relevantes
-  // pra vaga, sem exigir que o usuário abra a biblioteca manualmente.
+  // Adiciona 1 projeto direto da lista ranqueada (sem precisar marcar checkbox).
+  function addSingleProject(p: Project) {
+    insertProjectsIntoBlock([projectForInsert(p)]);
+    setLibOpen(false);
+    setSaveMsg('projeto adicionado — salve para confirmar');
+    setTimeout(() => setSaveMsg(''), 3000);
+  }
+
+  // Recomendação "Adicione projetos relevantes" do ATS Center: abre a
+  // biblioteca já sincronizada com o GitHub e com o match por IA rodado, pra
+  // mostrar de cara a lista ordenada por relevância com resumo do README.
   async function autoAddTopProjects() {
-    setAdapting(true);
-    setAdaptError('');
-    try {
-      let all = await fetchProjects();
-      const ghUser = profile.user.login;
-      if (ghUser) {
-        try {
-          const repos = await fetchGitHubRepos(ghUser);
-          const created = await importProjects(reposToProjectInputs(repos));
-          if (created.length) all = [...created, ...all];
-        } catch (e) {
-          console.warn('Sync de projetos do GitHub falhou:', e);
-        }
-      }
-      setProjects(all);
-      const top = rankProjects(all, { title: job.title, skills: job.skills, description: job.description })
-        .slice(0, 2)
-        .map((r) => r.project);
-      if (top.length === 0) {
-        setAdaptError('Nenhum projeto encontrado — adicione manualmente na biblioteca de projetos.');
-        return;
-      }
-      insertProjectsIntoBlock(top);
-      setSaveMsg('projetos inseridos automaticamente — salve para confirmar');
-      setTimeout(() => setSaveMsg(''), 3000);
-    } catch (e) {
-      setAdaptError((e as Error).message);
-    } finally {
-      setAdapting(false);
-    }
+    await openLibrary();
+    void handleAiMatch();
   }
 
   // ── Cartas/Mensagens (M6) ────────────────────────────────────────
@@ -1267,7 +1257,7 @@ export function CvEditor({
             </div>
 
             <p className="cv-lib-sub">
-              Ordenados por relevância para <strong>{job.title}</strong>. Marque e insira no bloco de projetos.
+              Ordenados por relevância para <strong>{job.title}</strong>. Clique em "adicionar ao CV" ou marque vários e insira de uma vez.
             </p>
 
             {/* Match por IA: lê o README e reordena por relevância semântica */}
@@ -1337,7 +1327,7 @@ export function CvEditor({
               {!projLoading && !projImporting && ranked.length === 0 && (
                 <div className="cv-versions-empty">nenhum projeto na biblioteca ainda</div>
               )}
-              {!projLoading && ranked.map(({ project: p, score, matched, reason }) => {
+              {!projLoading && ranked.map(({ project: p, score, matched, reason, summary }) => {
                 const mt = matchTier(score);
                 const checked = selectedProj.has(p.id);
                 return (
@@ -1354,7 +1344,8 @@ export function CvEditor({
                       </div>
                       {/* Justificativa da IA (só aparece quando o match por IA rodou) */}
                       {reason && <span className="cv-lib-reason">{reason}</span>}
-                      {p.description && <span className="cv-lib-item-desc">{p.description}</span>}
+                      {/* Resumo do README (IA) tem prioridade — é o que vai pro currículo; sem IA, cai na descrição salva. */}
+                      {(summary || p.description) && <span className="cv-lib-item-desc">{summary || p.description}</span>}
                       {p.tech.length > 0 && (
                         <div className="cv-lib-tags">
                           {p.tech.map((t) => (
@@ -1363,6 +1354,7 @@ export function CvEditor({
                         </div>
                       )}
                       <div className="cv-lib-item-actions">
+                        <button className="cv-lib-add-btn" onClick={() => addSingleProject(p)}>adicionar ao CV</button>
                         <button className="cv-block-action" onClick={() => startEditProject(p)}>editar</button>
                         <button className="cv-block-action cv-block-action--danger" onClick={() => handleDeleteProject(p.id)}>excluir</button>
                       </div>
