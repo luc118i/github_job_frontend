@@ -346,7 +346,7 @@ export function CvEditor({
     }
     if (action.type === 'adapt-job') {
       setMobileTab('editor');
-      setMoreOpen(true);
+      void handleAdapt();
       return;
     }
     // edit-block: se a seção já existe, abre em edição e rola até ela; senão cria (addBlock já abre em edição).
