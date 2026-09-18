@@ -23,6 +23,7 @@ const ProjectLibrary   = lazy(() => import('./components/ProjectLibrary').then(m
 const PortfolioManager = lazy(() => import('./components/PortfolioManager').then(m => ({ default: m.PortfolioManager })));
 import { usePreferences } from './hooks/usePreferences';
 import { useCareerProfile } from './hooks/useCareerProfile';
+import { useTheme } from './hooks/useTheme';
 import { fetchCareerProfile } from './services/career';
 import { AuthUser, fetchMe, clearToken, updateLinkedIn, fetchServerPreferences, updateProfile } from './services/auth';
 import { syncPreferencesFromServer } from './utils/jobPreferences';
@@ -37,6 +38,7 @@ interface CvState {
 }
 
 export default function App() {
+  const [theme, toggleTheme] = useTheme();
   const [username, setUsername] = useState('');
   const [view, setView] = useState<View>('buscar');
   const [, setOnboardingDone] = useState(false);
@@ -264,6 +266,8 @@ export default function App() {
         onLogout={handleLogout}
         onLoginClick={() => setAuthOpen(true)}
         onProfileClick={() => setView('career')}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       <AuthModal

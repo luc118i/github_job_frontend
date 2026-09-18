@@ -1,5 +1,6 @@
 import { AuthUser } from '../services/auth';
 import { View } from './TabNav';
+import { Theme } from '../hooks/useTheme';
 
 interface HeaderProps {
   currentUser: AuthUser | null;
@@ -8,6 +9,8 @@ interface HeaderProps {
   onLogout: () => void;
   onLoginClick: () => void;
   onProfileClick: () => void;
+  theme: Theme;
+  onToggleTheme: () => void;
 }
 
 const IconGrid = () => (
@@ -69,6 +72,21 @@ const IconCompass = () => (
   </svg>
 );
 
+const IconSun = () => (
+  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+    <circle cx="7.5" cy="7.5" r="3.2" stroke="currentColor" strokeOpacity="0.8"/>
+    <path d="M7.5 0.8v2M7.5 12.2v2M14.2 7.5h-2M2.8 7.5h-2M12.3 2.7l-1.4 1.4M4.1 10.9l-1.4 1.4M12.3 12.3l-1.4-1.4M4.1 4.1L2.7 2.7"
+      stroke="currentColor" strokeOpacity="0.8" strokeLinecap="round"/>
+  </svg>
+);
+
+const IconMoon = () => (
+  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+    <path d="M12.8 9.3A5.6 5.6 0 016.2 2.2a5.8 5.8 0 105.4 8c.4 0 .8 0 1.2-.1z"
+      stroke="currentColor" strokeOpacity="0.8" strokeLinejoin="round"/>
+  </svg>
+);
+
 /** Item de navegação. Fonte única de verdade — reusado no header (desktop) e na BottomNav (mobile). */
 export interface NavTab {
   view: View;
@@ -97,7 +115,7 @@ export function visibleNavTabs(currentUser: AuthUser | null): NavTab[] {
   return currentUser ? tabs : tabs.filter(t => !t.authOnly);
 }
 
-export function Header({ currentUser, view, onViewChange, onLogout, onLoginClick, onProfileClick }: HeaderProps) {
+export function Header({ currentUser, view, onViewChange, onLogout, onLoginClick, onProfileClick, theme, onToggleTheme }: HeaderProps) {
   const displayName = currentUser?.name
     ?? currentUser?.email?.split('@')[0]?.toUpperCase()
     ?? '';
@@ -129,6 +147,14 @@ export function Header({ currentUser, view, onViewChange, onLogout, onLoginClick
 
         {/* Auth (compacto no mobile) */}
         <div className="hdr-auth">
+          <button
+            className="hdr-theme-btn"
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+            aria-label={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+          >
+            {theme === 'dark' ? <IconSun /> : <IconMoon />}
+          </button>
           {currentUser ? (
             <>
               <button className="hdr-user-btn" onClick={onProfileClick}>
