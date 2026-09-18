@@ -36,12 +36,14 @@
   --glass-hover-shadow: var(--shadow-md);
   --glow-blue:          0 4px 14px rgba(61,114,200,0.28);
 
-  /* Border radius */
-  --r-card: 10px;
-  --r-btn:   8px;
-  --r-chip:  6px;
-  --r-md:    8px;
-  --r-pill:  8px; /* remove pill shape */
+  /* Border radius — zero em tudo (linguagem visual é reto/chanfrado, nunca
+     arredondado). --r-full (50%) fica de fora: avatares, dots de status,
+     anel de progresso e spinner continuam círculos de verdade. */
+  --r-card: 0;
+  --r-btn:  0;
+  --r-chip: 0;
+  --r-md:   0;
+  --r-pill: 0;
 
   /* Motion */
   --t-fast:   0.1s ease-out;
@@ -164,7 +166,7 @@
 ══════════════════════════════════════════════════════════════════════ */
 .hdr-login-btn,
 .hdr-logout-btn {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-xs) 0,
     100% 0,
@@ -186,7 +188,7 @@
 /* Feature cards (Universal / Inteligente / Atualizado) */
 .bv-feature-card {
   position: relative;
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut) 0,
     100% 0,
@@ -221,7 +223,7 @@
 
 /* Search input wrapper */
 .bv-search-input-wrap {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-sm) 0,
     100% 0,
@@ -235,7 +237,7 @@
 
 /* Discover / Search button */
 .bv-search-btn {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-sm) 0,
     100% 0,
@@ -258,7 +260,7 @@
 
 /* Filter button */
 .bv-filter-btn {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-xs) 0,
     100% 0,
@@ -279,7 +281,7 @@
 
 /* Filter popover */
 .bv-filter-popover {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-sm) 0,
     100% 0,
@@ -292,7 +294,7 @@
 
 /* Suggestion chips */
 .bv-suggestion-chip {
-  border-radius: var(--r-chip) !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-xs) 0,
     100% 0,
@@ -311,7 +313,7 @@
 ══════════════════════════════════════════════════════════════════════ */
 .jcp-card {
   position: relative;
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut) 0,
     100% 0,
@@ -345,7 +347,7 @@
 
 /* Apply button inside job card */
 .jcp-apply-btn {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-xs) 0,
     100% 0,
@@ -364,7 +366,7 @@
    AUTH MODAL
 ══════════════════════════════════════════════════════════════════════ */
 .auth-modal {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   box-shadow: var(--shadow-modal) !important;
   clip-path: polygon(
     var(--geo-cut) 0,
@@ -377,7 +379,7 @@
 }
 
 .auth-submit {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-sm) 0,
     100% 0,
@@ -394,7 +396,7 @@
 
 /* Auth input fields */
 .auth-input {
-  border-radius: var(--r-md) !important;
+  border-radius: 0!important;
   transition: border-color var(--t-base), box-shadow var(--t-base) !important;
 }
 
@@ -409,7 +411,7 @@
 ══════════════════════════════════════════════════════════════════════ */
 .onb-card {
   position: relative;
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut) 0,
     100% 0,
@@ -435,7 +437,7 @@
 }
 
 .onb-tag {
-  border-radius: var(--r-chip) !important;
+  border-radius: 0!important;
 }
 
 /* Botões secundários (outline) — mesmo corte + sombra dos demais CTAs */
@@ -443,7 +445,7 @@
 .mrw-choice-paste-cancel {
   position: relative;
   isolation: isolate;
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-xs) 0,
     100% 0,
@@ -469,7 +471,7 @@
 ══════════════════════════════════════════════════════════════════════ */
 .kb-card {
   position: relative;
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-sm) 0,
     100% 0,
@@ -501,7 +503,7 @@
 }
 
 .kb-action-btn {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-xs) 0,
     100% 0,
@@ -516,11 +518,11 @@
 .kb-action-btn:hover { filter: brightness(1.12); }
 
 .kb-skill {
-  border-radius: var(--r-chip) !important;
+  border-radius: 0!important;
 }
 
 .kb-summary-chip {
-  border-radius: var(--r-chip) !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-xs) 0,
     100% 0,
@@ -533,7 +535,7 @@
 
 /* Panel (detail side panel) */
 .kb-panel {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut) 0,
     100% 0,
@@ -551,7 +553,7 @@
 }
 
 .user-profile-save-btn {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-sm) 0,
     100% 0,
@@ -571,7 +573,7 @@
 ══════════════════════════════════════════════════════════════════════ */
 .buscar-transition-card {
   position: relative;
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut) 0,
     100% 0,
@@ -583,7 +585,7 @@
 }
 
 .buscar-config-btn {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-sm) 0,
     100% 0,
@@ -602,7 +604,7 @@
    TAG FILTER BAR
 ══════════════════════════════════════════════════════════════════════ */
 .tfb-tag {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-xs) 0,
     100% 0,
@@ -621,7 +623,7 @@
 ══════════════════════════════════════════════════════════════════════ */
 .cc-chip,
 .crc-chip {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-xs) 0,
     100% 0,
@@ -640,7 +642,7 @@
    SEARCH CARD BUTTON (legacy search)
 ══════════════════════════════════════════════════════════════════════ */
 .search-card-btn {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-sm) 0,
     100% 0,
@@ -665,7 +667,7 @@ input[type="text"]:not([class]),
 input[type="email"]:not([class]),
 input[type="password"]:not([class]),
 textarea:not([class]) {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-xs) 0,
     100% 0,
@@ -686,7 +688,7 @@ textarea:focus {
    BOTTOM NAV
 ══════════════════════════════════════════════════════════════════════ */
 .bottom-nav {
-  border-radius: 0 !important;
+  border-radius: 0!important;
   clip-path: polygon(
     var(--geo-cut-sm) 0,
     calc(100% - var(--geo-cut-sm)) 0,
@@ -704,7 +706,7 @@ textarea:focus {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: rgba(var(--overlay-rgb),0.08);
-  border-radius: 2px;
+  border-radius: 0;
 }
 ::-webkit-scrollbar-thumb:hover { background: rgba(var(--overlay-rgb),0.14); }
 
@@ -787,7 +789,7 @@ button:not(:disabled),
   --tag-shadow: 6px;
   position: relative;
   isolation: isolate;
-  border-radius: 0 !important;
+  border-radius: 0!important;
   padding-left: calc(1em + var(--tag-chamfer) + var(--tag-shadow)) !important;
   padding-right: calc(1em + var(--tag-chamfer)) !important;
   clip-path: polygon(
