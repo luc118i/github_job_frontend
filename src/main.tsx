@@ -10,6 +10,19 @@ import App from "./App";
 const PublicPortfolio = lazy(() => import("./components/PublicPortfolio").then((m) => ({ default: m.PublicPortfolio })));
 const portfolioMatch = window.location.pathname.match(/^\/p\/([^/]+)\/?$/);
 
+// Depois de um novo deploy, chunks antigos (hash) somem do CDN — se o navegador
+// ainda tem um index.html em cache apontando pra eles, o import dinâmico falha
+// com MIME "text/html". Recarregar a página busca o index.html atual e resolve;
+// o guard evita loop infinito caso o erro seja outra coisa.
+window.addEventListener("vite:preloadError", () => {
+  const RELOAD_KEY = "vite-preload-reload-at";
+  const last = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0);
+  if (Date.now() - last > 10000) {
+    sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+    window.location.reload();
+  }
+});
+
 console.log(
   `%c JobFinder %c v${__APP_VERSION__} %c`,
   "background:#7c3aed;color:#fff;font-weight:800;font-size:13px;padding:4px 8px;border-radius:4px 0 0 4px;font-family:monospace",
