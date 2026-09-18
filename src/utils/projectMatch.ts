@@ -83,12 +83,12 @@ export function rankProjects(projects: Project[], job: MatchJob): ProjectMatch[]
 // Metadados por categoria: rótulo (chips de filtro) e cor (borda dos
 // chips de stack / acento do card). Mesmos tokens de cor do MVC.
 export const CATEGORY: Record<ProjectCategory, { label: string; color: string }> = {
-  frontend: { label: 'Frontend', color: '#8B5CF6' },
-  backend: { label: 'Backend', color: '#14B8A6' },
-  fullstack: { label: 'Full Stack', color: '#EC4899' },
-  data: { label: 'Data', color: '#F97316' },
-  mobile: { label: 'Mobile', color: '#A78BFA' },
-  outro: { label: 'Outro', color: '#64748B' },
+  frontend: { label: 'Frontend', color: 'var(--ia-strong)' },
+  backend: { label: 'Backend', color: 'var(--teal-text)' },
+  fullstack: { label: 'Full Stack', color: 'var(--pink-text)' },
+  data: { label: 'Data', color: 'var(--orange-text)' },
+  mobile: { label: 'Mobile', color: 'var(--ia)' },
+  outro: { label: 'Outro', color: 'var(--neutral-text)' },
 };
 
 // Pistas (substrings normalizadas) por categoria. A inferência olha
@@ -166,10 +166,10 @@ export function reposToProjectInputs(repos: GitHubRepo[]): ProjectInput[] {
 
 /** Faixa qualitativa para cor/rótulo da relevância. */
 export function matchTier(score: number): { label: string; color: string } {
-  if (score >= 60) return { label: 'Alta', color: '#4ADE80' };
-  if (score >= 30) return { label: 'Média', color: '#14B8A6' };
-  if (score > 0) return { label: 'Baixa', color: '#F97316' };
-  return { label: 'Sem relação', color: '#64748B' };
+  if (score >= 60) return { label: 'Alta', color: 'var(--match-text)' };
+  if (score >= 30) return { label: 'Média', color: 'var(--teal-text)' };
+  if (score > 0) return { label: 'Baixa', color: 'var(--orange-text)' };
+  return { label: 'Sem relação', color: 'var(--neutral-text)' };
 }
 
 /**

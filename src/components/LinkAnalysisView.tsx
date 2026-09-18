@@ -28,10 +28,10 @@ function ScoreRing({ score }: { score: number }) {
     score >= 40 ? 'medio' : 'baixo';
 
   const colors: Record<string, string> = {
-    excelente: '#06b6d4',
-    alto:      '#7c3aed',
-    medio:     '#f59e0b',
-    baixo:     '#ef4444',
+    excelente: 'var(--cyan)',
+    alto:      'var(--ia)',
+    medio:     'var(--warning)',
+    baixo:     'var(--problem)',
   };
 
   return (

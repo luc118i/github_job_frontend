@@ -22,13 +22,13 @@ interface Column {
 
 // 7 etapas do Pipeline CRM (MVC v4.0) — cor = etapa = estado da candidatura.
 const COLUMNS: Column[] = [
-  { id: 'salvas',     label: 'Salvas',     accent: '#3B82F6' },
-  { id: 'preparar',   label: 'Preparar',   accent: '#14B8A6' },
-  { id: 'aplicadas',  label: 'Aplicadas',  accent: '#8B5CF6' },
-  { id: 'em_analise', label: 'Em análise', accent: '#F59E0B' },
-  { id: 'entrevista', label: 'Entrevista', accent: '#F97316' },
-  { id: 'proposta',   label: 'Proposta',   accent: '#22C55E' },
-  { id: 'contratado', label: 'Contratado', accent: '#4ADE80' },
+  { id: 'salvas',     label: 'Salvas',     accent: 'var(--brand)' },
+  { id: 'preparar',   label: 'Preparar',   accent: 'var(--teal-text)' },
+  { id: 'aplicadas',  label: 'Aplicadas',  accent: 'var(--ia-strong)' },
+  { id: 'em_analise', label: 'Em análise', accent: 'var(--warning)' },
+  { id: 'entrevista', label: 'Entrevista', accent: 'var(--orange-text)' },
+  { id: 'proposta',   label: 'Proposta',   accent: 'var(--match-text)' },
+  { id: 'contratado', label: 'Contratado', accent: 'var(--match-text)' },
 ];
 
 /** Próxima etapa do funil, relativa à coluna atual — usada pro swipe-esquerda
@@ -65,11 +65,11 @@ const DEFAULT_FILTERS: BoardFilters = {
 };
 
 const STATUS_FILTER_CHIPS: { id: KanbanStatus; label: string; accent: string }[] = [
-  { id: 'preparar',   label: 'Preparar',   accent: '#14B8A6' },
-  { id: 'aplicadas',  label: 'Aplicadas',  accent: '#8B5CF6' },
-  { id: 'em_analise', label: 'Em análise', accent: '#F59E0B' },
-  { id: 'entrevista', label: 'Entrevista', accent: '#F97316' },
-  { id: 'proposta',   label: 'Proposta',   accent: '#22C55E' },
+  { id: 'preparar',   label: 'Preparar',   accent: 'var(--teal-text)' },
+  { id: 'aplicadas',  label: 'Aplicadas',  accent: 'var(--ia-strong)' },
+  { id: 'em_analise', label: 'Em análise', accent: 'var(--warning)' },
+  { id: 'entrevista', label: 'Entrevista', accent: 'var(--orange-text)' },
+  { id: 'proposta',   label: 'Proposta',   accent: 'var(--match-text)' },
 ];
 
 type DateRange = BoardFilters['date'];
@@ -218,12 +218,12 @@ function HeaderMetrics({ jobs, get }: { jobs: JobFeedItem[]; get: (id: string) =
   }, [jobs, get]);
 
   const cards = [
-    { label: 'Aplicações', value: m.aplicadas, accent: '#8B5CF6' },
-    { label: 'Entrevistas', value: m.entrevistas, accent: '#F97316' },
-    { label: 'Propostas', value: m.propostas, accent: '#22C55E' },
-    { label: 'Taxa resposta', value: `${m.respRate}%`, accent: '#14B8A6' },
-    { label: 'Follow-up', value: m.followUps, accent: '#F59E0B' },
-    { label: 'Contratado', value: m.contratado, accent: '#4ADE80' },
+    { label: 'Aplicações', value: m.aplicadas, accent: 'var(--ia-strong)' },
+    { label: 'Entrevistas', value: m.entrevistas, accent: 'var(--orange-text)' },
+    { label: 'Propostas', value: m.propostas, accent: 'var(--match-text)' },
+    { label: 'Taxa resposta', value: `${m.respRate}%`, accent: 'var(--teal-text)' },
+    { label: 'Follow-up', value: m.followUps, accent: 'var(--warning)' },
+    { label: 'Contratado', value: m.contratado, accent: 'var(--match-text)' },
   ];
 
   return (
@@ -280,12 +280,12 @@ function PipelineAnalytics({ jobs, get }: { jobs: JobFeedItem[]; get: (id: strin
   const a = useMemo(() => {
     const c = pipelineCounts(jobs, get);
     const stages = [
-      { label: 'Salvas', n: c.salvas, accent: '#3B82F6' },
-      { label: 'Aplicadas', n: c.aplicadas, accent: '#8B5CF6' },
-      { label: 'Em análise', n: c.analise, accent: '#F59E0B' },
-      { label: 'Entrevista', n: c.entrevista, accent: '#F97316' },
-      { label: 'Proposta', n: c.proposta, accent: '#22C55E' },
-      { label: 'Contratado', n: c.contratado, accent: '#4ADE80' },
+      { label: 'Salvas', n: c.salvas, accent: 'var(--brand)' },
+      { label: 'Aplicadas', n: c.aplicadas, accent: 'var(--ia-strong)' },
+      { label: 'Em análise', n: c.analise, accent: 'var(--warning)' },
+      { label: 'Entrevista', n: c.entrevista, accent: 'var(--orange-text)' },
+      { label: 'Proposta', n: c.proposta, accent: 'var(--match-text)' },
+      { label: 'Contratado', n: c.contratado, accent: 'var(--match-text)' },
     ];
     const rate = (num: number, den: number) => (den > 0 ? Math.round((num / den) * 100) : 0);
     const conversions = [

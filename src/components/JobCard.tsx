@@ -46,15 +46,15 @@ const TECH_COLORS: Record<string, string> = {
 };
 
 function techColor(s: string): string {
-  return TECH_COLORS[s.toLowerCase()] ?? '#7aa3d8';
+  return TECH_COLORS[s.toLowerCase()] ?? 'var(--brand-text-2)';
 }
 
 // ── Link status ───────────────────────────────────────────────
 
 const LINK_META: Record<LinkStatus, { label: string; color: string } | null> = {
-  trusted:    { label: 'verificado',     color: '#4ade80' },
-  unverified: { label: 'não verificado', color: '#fbbf24' },
-  dead:       { label: 'link inativo',   color: '#f87171' },
+  trusted:    { label: 'verificado',     color: 'var(--match-text)' },
+  unverified: { label: 'não verificado', color: 'var(--warning)' },
+  dead:       { label: 'link inativo',   color: 'var(--problem)' },
   none:       null,
 };
 

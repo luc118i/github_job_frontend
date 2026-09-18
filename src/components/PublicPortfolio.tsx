@@ -10,7 +10,7 @@ interface PublicPortfolioProps {
 
 // Cor da categoria (reusa os tokens do M5); fallback p/ categorias desconhecidas.
 function catColor(category: string): string {
-  return (CATEGORY as Record<string, { color: string }>)[category]?.color ?? '#64748B';
+  return (CATEGORY as Record<string, { color: string }>)[category]?.color ?? 'var(--neutral-text)';
 }
 
 function catLabel(category: string): string {

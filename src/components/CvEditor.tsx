@@ -80,13 +80,13 @@ type MobileTab = 'editor' | 'preview';
 
 // Título padrão + cor da borda esquerda por tipo (tokens do MVC).
 const BLOCK_META: Record<CvBlockType, { title: string; color: string }> = {
-  resumo: { title: 'RESUMO PROFISSIONAL', color: '#8B5CF6' },
-  skills: { title: 'HABILIDADES TÉCNICAS', color: '#F97316' },
-  experiencia: { title: 'EXPERIÊNCIA PROFISSIONAL', color: '#14B8A6' },
-  projetos: { title: 'PROJETOS RELEVANTES', color: '#EC4899' },
-  formacao: { title: 'FORMAÇÃO ACADÊMICA', color: '#4ADE80' },
-  certificacoes: { title: 'CERTIFICAÇÕES', color: '#A78BFA' },
-  idiomas: { title: 'IDIOMAS', color: '#A78BFA' },
+  resumo: { title: 'RESUMO PROFISSIONAL', color: 'var(--ia-strong)' },
+  skills: { title: 'HABILIDADES TÉCNICAS', color: 'var(--orange-text)' },
+  experiencia: { title: 'EXPERIÊNCIA PROFISSIONAL', color: 'var(--teal-text)' },
+  projetos: { title: 'PROJETOS RELEVANTES', color: 'var(--pink-text)' },
+  formacao: { title: 'FORMAÇÃO ACADÊMICA', color: 'var(--match-text)' },
+  certificacoes: { title: 'CERTIFICAÇÕES', color: 'var(--ia)' },
+  idiomas: { title: 'IDIOMAS', color: 'var(--ia)' },
 };
 const BLOCK_TYPES = Object.keys(BLOCK_META) as CvBlockType[];
 
@@ -1767,7 +1767,7 @@ function SortableBlock({
   onOpenLibrary,
 }: SortableBlockProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
-  const accent = BLOCK_META[block.type]?.color ?? '#8B5CF6';
+  const accent = BLOCK_META[block.type]?.color ?? 'var(--ia-strong)';
 
   const style = {
     transform: CSS.Transform.toString(transform),
