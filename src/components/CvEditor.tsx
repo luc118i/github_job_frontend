@@ -137,6 +137,16 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
+/** Rótulo do botão de cada recomendação do ATS Center, conforme a ação. */
+function atsActionLabel(action: AtsAction): string {
+  switch (action.type) {
+    case 'adapt-job': return 'automatizar';
+    case 'auto-add-projects': return 'adicionar automaticamente';
+    case 'focus-contact': return 'editar contato';
+    default: return 'editar seção';
+  }
+}
+
 /** Extrai nome + linha de contato do cabeçalho de um Markdown salvo. */
 function parseCvHeader(md: string): { name: string; contact: string } {
   const lines = md.split('\n');
@@ -347,6 +357,11 @@ export function CvEditor({
     if (action.type === 'adapt-job') {
       setMobileTab('editor');
       void handleAdapt();
+      return;
+    }
+    if (action.type === 'auto-add-projects') {
+      setMobileTab('editor');
+      void autoAddTopProjects();
       return;
     }
     // edit-block: se a seção já existe, abre em edição e rola até ela; senão cria (addBlock já abre em edição).
@@ -767,9 +782,10 @@ export function CvEditor({
     });
   }
 
-  // Insere os projetos marcados no bloco "projetos" (cria se não existir).
-  function insertSelectedProjects() {
-    const chosen = projects.filter((p) => selectedProj.has(p.id));
+  // Injeta projetos reais (dados já existentes — repo/lib, nunca inventados)
+  // no bloco "projetos" (cria se não existir). Reaproveitado pela inserção
+  // manual (biblioteca) e pelo auto-preenchimento do ATS Center.
+  function insertProjectsIntoBlock(chosen: Project[]) {
     if (chosen.length === 0) return;
     const md = projectsToMarkdown(chosen);
     setBlocks((prev) => {
@@ -782,10 +798,53 @@ export function CvEditor({
       const merged = existing.content.trim() ? `${existing.content.trim()}\n\n${md}` : md;
       return prev.map((b, idx) => (idx === i ? { ...b, content: merged, visible: true } : b));
     });
+  }
+
+  // Insere os projetos marcados no bloco "projetos" (cria se não existir).
+  function insertSelectedProjects() {
+    const chosen = projects.filter((p) => selectedProj.has(p.id));
+    if (chosen.length === 0) return;
+    insertProjectsIntoBlock(chosen);
     setSelectedProj(new Set());
     setLibOpen(false);
     setSaveMsg('projetos inseridos — salve para confirmar');
     setTimeout(() => setSaveMsg(''), 3000);
+  }
+
+  // Recomendação "Adicione projetos relevantes" do ATS Center: sincroniza a
+  // biblioteca com o GitHub e insere direto os 2 projetos mais relevantes
+  // pra vaga, sem exigir que o usuário abra a biblioteca manualmente.
+  async function autoAddTopProjects() {
+    setAdapting(true);
+    setAdaptError('');
+    try {
+      let all = await fetchProjects();
+      const ghUser = profile.user.login;
+      if (ghUser) {
+        try {
+          const repos = await fetchGitHubRepos(ghUser);
+          const created = await importProjects(reposToProjectInputs(repos));
+          if (created.length) all = [...created, ...all];
+        } catch (e) {
+          console.warn('Sync de projetos do GitHub falhou:', e);
+        }
+      }
+      setProjects(all);
+      const top = rankProjects(all, { title: job.title, skills: job.skills, description: job.description })
+        .slice(0, 2)
+        .map((r) => r.project);
+      if (top.length === 0) {
+        setAdaptError('Nenhum projeto encontrado — adicione manualmente na biblioteca de projetos.');
+        return;
+      }
+      insertProjectsIntoBlock(top);
+      setSaveMsg('projetos inseridos automaticamente — salve para confirmar');
+      setTimeout(() => setSaveMsg(''), 3000);
+    } catch (e) {
+      setAdaptError((e as Error).message);
+    } finally {
+      setAdapting(false);
+    }
   }
 
   // ── Cartas/Mensagens (M6) ────────────────────────────────────────
@@ -1039,8 +1098,8 @@ export function CvEditor({
                     <span className="cv-ats-reco-dot" />
                     <span className="cv-ats-reco-label">{r.label}</span>
                     <span className="cv-ats-reco-points">+{r.points}</span>
-                    <button className="cv-ats-reco-action" onClick={() => runAtsAction(r.action)}>
-                      {r.action.type === 'adapt-job' ? 'adaptar p/ vaga' : r.action.type === 'focus-contact' ? 'editar contato' : 'editar seção'}
+                    <button className="cv-ats-reco-action" onClick={() => runAtsAction(r.action)} disabled={adapting}>
+                      {atsActionLabel(r.action)}
                     </button>
                   </div>
                 ))}
