@@ -10338,6 +10338,29 @@ select.auth-input { cursor: pointer; }
 .bv-filter-btn:hover { background: rgba(var(--overlay-rgb),0.07); color: rgba(var(--ink-rgb),0.85); border-color: var(--border-mid); }
 .bv-filter-btn--active { border-color: var(--brand-border); color: var(--brand-text); background: var(--brand-dim); }
 
+/* Tema claro: os washes translúcidos acima (calibrados pro fundo escuro)
+   ficam esmaecidos sobre o bege — aqui viram superfície sólida + borda mais
+   definida, pra não parecer botão desabilitado. */
+:root[data-theme="light"] .bv-search-input-wrap,
+:root[data-theme="light"] .bv-filter-btn {
+  background: var(--surface-modal);
+  border-color: rgba(var(--overlay-rgb),0.16);
+}
+:root[data-theme="light"] .bv-filter-btn { color: rgba(var(--ink-rgb),0.6); }
+:root[data-theme="light"] .bv-filter-btn--active {
+  background: rgba(45,95,170,0.1);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+:root[data-theme="light"] .bv-search-btn--discover {
+  background: var(--surface-modal);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+:root[data-theme="light"] .bv-search-btn--discover:hover:not(:disabled) {
+  background: rgba(45,95,170,0.08);
+}
+
 .bv-filter-dot {
   position: absolute; top: 8px; right: 8px;
   width: 6px; height: 6px; border-radius: 50%;
