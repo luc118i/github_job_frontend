@@ -18,7 +18,8 @@ export type AtsCategoryKey =
 export type AtsAction =
   | { type: 'edit-block'; blockType: CvBlockType }
   | { type: 'focus-contact' }
-  | { type: 'adapt-job' };
+  | { type: 'adapt-job' }
+  | { type: 'auto-add-projects' };
 
 export interface AtsCriterion {
   key: string;
@@ -351,12 +352,19 @@ const RECO_LABEL: Record<string, string> = {
   'links.project-link': 'Adicione um link válido (http/https) aos projetos',
 };
 
+// Critérios "present" (seção inteira ausente) exigem dado real que a IA não
+// pode inventar — ficam manuais. Todo o resto é qualidade/formatação de um
+// conteúdo que já existe com dados reais, e a mesma IA que já reescreve o CV
+// pra vaga (handleAdapt) resolve isso automaticamente, sem inventar nada.
 function actionFor(categoryKey: AtsCategoryKey, criterionKey: string): AtsAction {
   if (categoryKey === 'contact' || categoryKey === 'links') {
     if (criterionKey === 'project-link') return { type: 'edit-block', blockType: 'projetos' };
     return { type: 'focus-contact' };
   }
   if (categoryKey === 'keywords') return { type: 'adapt-job' };
+  if (categoryKey === 'estrutura') return { type: 'adapt-job' };
+  if (categoryKey === 'projetos' && criterionKey === 'present') return { type: 'auto-add-projects' };
+  if (criterionKey !== 'present') return { type: 'adapt-job' };
   const blockType = BLOCK_TYPE_BY_CATEGORY[categoryKey];
   return blockType ? { type: 'edit-block', blockType } : { type: 'focus-contact' };
 }
