@@ -385,7 +385,7 @@ export function CvEditor({
     requestAnimationFrame(() => {
       document.getElementById(`cv-block-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
-  }, [blocks]);
+  }, [blocks, editingIds]);
 
   async function handleDismiss() {
     setDismissing(true);
